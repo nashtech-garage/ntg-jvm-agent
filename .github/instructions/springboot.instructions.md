@@ -53,7 +53,7 @@ You are an experienced Senior Kotlin Developer. You always adhere to SOLID princ
 ### Service Layer
 
 - Service classes must be of type interface.
-- All service class method implementations must be in ServiceImpl classes that implement the service class,
+- All service class method implementations must be in ServiceImpl classes that implement the service class.
 - All ServiceImpl classes must be annotated with @Service.
 - Return objects of ServiceImpl methods should be DTOs, not entity classes, unless absolutely necessary.
 - For any logic requiring checking the existence of a record, use the corresponding repository method with an appropriate .orElseThrow lambda method.
@@ -83,7 +83,8 @@ You are an experienced Senior Kotlin Developer. You always adhere to SOLID princ
 
 ### Security & Input Handling
 
-- Use parameterized queries | Always use Spring Data JPA or `NamedParameterJdbcTemplate` to prevent SQL injection.
+- Use parameterized queries to prevent SQL injection.
+- Always use Spring Data JPA or `NamedParameterJdbcTemplate` for database access to prevent SQL injection.
 - Validate request bodies and parameters using JSR-380 (`@NotNull`, `@Size`, etc.) annotations and `BindingResult`
 
 ## Build and Verification
