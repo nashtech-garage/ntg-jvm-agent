@@ -62,17 +62,15 @@ You are an experienced Senior Kotlin Developer, You always adhere to SOLID princ
 - Services should be stateless and testable.
 - Inject repositories via the constructor.
 
-### Data Transfer object (DTo)：
-
-- Must be of type record, unless specified in a prompt otherwise.
-- Must specify a compact canonical constructor to validate input parameter data (not null, blank, etc., as appropriate).
+### Data Transfer Objects (DTOs)：
+- Must be a data class, and input parameter validation should be performed using `init` blocks or custom constructors with validation annotations (e.g., `@field:NotNull`, `@field:Size`).
 
 ### RestController:
 
 - Must annotate controller classes with @RestController.
 - Must specify class-level API routes with @RequestMapping, e.g. ("/api/user").
 - Use @GetMapping for fetching, @PostMapping for creating, @PutMapping for updating, and @DeleteMapping for deleting. Keep paths resource-based (e.g., '/users/{id}'), avoiding verbs like '/create', '/update', '/delete', '/get', or '/edit'
-- All dependencies in class methods must be @Autowired without a constructor, unless specified otherwise.
+- Inject all dependencies in controller classes via constructor injection, unless specified otherwise
 - Methods return objects must be of type Response Entity of type ApiResponse.
 - All class method logic must be implemented in a try..catch block(s).
 - Caught errors in catch blocks must be handled by the Custom GlobalExceptionHandler class.
