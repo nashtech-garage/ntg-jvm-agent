@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send } from "lucide-react";
 
-export default function SearchBox({
+export default function ChatBox({
   onSearch,
 }: Readonly<{
   onSearch: (q: string) => void;

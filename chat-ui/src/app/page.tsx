@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
-import SearchBox from "./components/SearchBox";
+import ChatBox from "./components/ChatBox";
 import SearchResult from "./components/SearchResult";
 
 export default function Page() {
@@ -31,7 +31,7 @@ export default function Page() {
   };
 
   const handleSearch = async (q: string) => {
-    const shortTitle = q.slice(0, 10); // Lấy 10 ký tự đầu tiên cho title
+    const shortTitle = q.split(" ").slice(0, 10).join(" "); // Lấy 10 chữ đầu tiên cho title
     const { id, body} = await fetchData(q);
 
     setSessions((prev) => {
@@ -95,7 +95,7 @@ export default function Page() {
         <div className="flex-1 overflow-y-auto p-4">
           <SearchResult results={activeSession?.results ?? []} />
         </div>
-        <SearchBox onSearch={handleSearch} />
+        <ChatBox onSearch={handleSearch} />
       </main>
     </div>
   );

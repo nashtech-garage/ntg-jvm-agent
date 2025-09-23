@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "ChatGPT UI Clone",
-  description: "Next.js app with ChatGPT-style UI",
+  title: "Chat UI",
+  description: "Next.js app with Chat-style UI",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
