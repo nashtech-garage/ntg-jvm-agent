@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "Spring Authorization Server",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Postman collection to test Spring Authorization Server with PostgreSQL",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Get Authorization Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9000/oauth2/authorize?response_type=code&client_id=demo-client&scope=openid%20profile%20chatbot.read%20chatbot.write&redirect_uri=http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9000",
+          "path": ["oauth2", "authorize"],
+          "query": [
+            { "key": "response_type", "value": "code" },
+            { "key": "client_id", "value": "demo-client" },
+            { "key": "scope", "value": "openid profile chatbot.read chatbot.write" },
+            { "key": "redirect_uri", "value": "http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Exchange Code for Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=",
+            "type": "text"
+          },
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "authorization_code" },
+            { "key": "code", "value": "<replace_with_code>" },
+            { "key": "redirect_uri", "value": "http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:9000/oauth2/token",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9000",
+          "path": ["oauth2", "token"]
+        }
+      }
+    },
+    {
+      "name": "3. Refresh Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=",
+            "type": "text"
+          },
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "refresh_token" },
+            { "key": "refresh_token", "value": "<replace_with_refresh_token>" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:9000/oauth2/token",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9000",
+          "path": ["oauth2", "token"]
+        }
+      }
+    },
+    {
+      "name": "4. UserInfo (OIDC)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer <replace_with_access_token>" }
+        ],
+        "url": {
+          "raw": "http://localhost:9000/userinfo",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9000",
+          "path": ["userinfo"]
+        }
+      }
+    }
+  ]
+}
