@@ -1,0 +1,121 @@
+name:  Build Kotlin app
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-changes:
+    name: Detect changes in modules
+    runs-on: ubuntu-latest
+    outputs:
+      auth_changed: ${{ steps.auth-check.outputs.auth_changed }}
+      orchestrator_changed: ${{ steps.auth-check.outputs.orchestrator_changed }}
+      chatui_changed: ${{ steps.auth-check.outputs.chatui_changed }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Important: full history required for diff
+
+      - name: Compare with base branch
+        id: diff
+        run: |
+          echo "BASE_REF=${{ github.event.pull_request.base.sha || 'origin/main' }}" >> $GITHUB_ENV
+
+      - name: Check for changes in authorization-server
+        id: auth-check
+        run: |
+          git fetch origin main
+          CHANGED=$(git diff --name-only origin/main...HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -q "^authorization-server/"; then
+            echo "auth_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "auth_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          if echo "$CHANGED" | grep -q "^orchestrator/"; then
+            echo "orchestrator_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "orchestrator_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+          if echo "$CHANGED" | grep -q "^chat-ui/"; then
+            echo "chatui_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "chatui_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  authorization-server:
+    name: Build Author server
+    needs: detect-changes
+    if: needs.detect-changes.outputs.auth_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build and test all modules
+        run: mvn clean install
+        working-directory: authorization-server
+
+  orchestrator:
+    name: Build orchestrator
+    needs: detect-changes
+    if: needs.detect-changes.outputs.orchestrator_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build and test all modules
+        run: mvn clean install
+        working-directory: orchestrator
+
+  chat-ui:
+    name: Build chat ui
+    needs: detect-changes
+    if: needs.detect-changes.outputs.chatui_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: chat-ui/package-lock.json
+
+
+      - name: Install dependencies
+        run: npm ci # or `npm install` if lock file doesn't exist
+        working-directory: chat-ui
+
+      - name: Run tests
+        run: npm test # or `npm run test` if using custom script
+        working-directory: chat-ui
+
+      - name: Build app (React)
+        run: npm run build
+        working-directory: chat-ui
