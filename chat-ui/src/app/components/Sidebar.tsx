@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Trash, SquarePen } from "lucide-react";
 interface SidebarProps {
   history: HistoryItem[];
   active: number | null;
+  userName: string;
   setActive: (id: number) => void;
   removeHistory: (id: number) => void;
   newChat: () => void;
@@ -14,6 +15,7 @@ interface SidebarProps {
 export default function Sidebar({
   history,
   active,
+  userName,
   setActive,
   removeHistory,
   newChat,
@@ -68,6 +70,16 @@ export default function Sidebar({
             )}
           </div>
         ))}
+      </div>
+
+      {/* Account info */}
+      <div className="px-2 mt-2">
+        <button
+          // onClick={newChat}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200"
+        >
+          {userName}
+        </button>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:9000/oauth2/authorize?response_type=code&client_id=demo-client&scope=openid%20profile%20chatbot.read%20chatbot.write&redirect_uri=http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc",
+          "raw": "http://localhost:9000/oauth2/authorize?response_type=code&client_id=demo-client&scope=openid%20profile%20chatbot.read%20chatbot.write&redirect_uri=http://localhost:3000/auth/callback",
           "protocol": "http",
           "host": ["localhost"],
           "port": "9000",
@@ -21,7 +21,7 @@
             { "key": "response_type", "value": "code" },
             { "key": "client_id", "value": "demo-client" },
             { "key": "scope", "value": "openid profile chatbot.read chatbot.write" },
-            { "key": "redirect_uri", "value": "http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc" }
+            { "key": "redirect_uri", "value": "http://localhost:3000/auth/callback" }
           ]
         }
       }
@@ -43,7 +43,7 @@
           "urlencoded": [
             { "key": "grant_type", "value": "authorization_code" },
             { "key": "code", "value": "<replace_with_code>" },
-            { "key": "redirect_uri", "value": "http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc" }
+            { "key": "redirect_uri", "value": "http://localhost:3000/auth/callback" }
           ]
         },
         "url": {
