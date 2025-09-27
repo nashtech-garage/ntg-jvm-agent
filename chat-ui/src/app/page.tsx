@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatBox from "./components/ChatBox";
 import SearchResult from "./components/SearchResult";
@@ -10,6 +10,15 @@ export default function Page() {
     { id: number; title: string; results: Result[] }[]
   >([]);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [userName, setUserName] = useState<string>('');
+
+  useEffect(() => {
+    fetch("/api/user")
+      .then((res) => res.json())
+      .then((data) => {
+        setUserName(data?.sub || 'Unknow user');
+      });
+  }, []);
 
   const fetchData = async (query: string): Promise<SearchResponse> => {
     try {
@@ -87,6 +96,7 @@ export default function Page() {
       <Sidebar
         history={sessions.map((s) => ({ id: s.id, title: s.title }))}
         active={activeId}
+        userName={userName}
         setActive={setActiveId}
         removeHistory={removeHistory}
         newChat={newChat}

@@ -21,7 +21,7 @@ INSERT INTO authorities (username, authority) VALUES ('testuser', 'ROLE_USER');
 --    'Demo Client',
 --    'client_secret_basic',
 --    'authorization_code,refresh_token',
---    'http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc,http://127.0.0.1:8081/authorized',
+--    'http://localhost:3000/auth/callback,http://127.0.0.1:8081/authorized',
 --    'openid,profile,chatbot.read,chatbot.write',
 --    '{"settings.client.require-proof-key":false,"settings.client.require-authorization-consent":true}',
 --    '{"settings.token.reuse-refresh-tokens":true,"settings.token.id-token-signature-algorithm":"RS256"}'

@@ -36,7 +36,7 @@ class RegisteredClientConfig {
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                    .redirectUri("http://127.0.0.1:8081/login/oauth2/code/demo-client-oidc")
+                    .redirectUri("http://localhost:3000/auth/callback")
                     .scope(OidcScopes.OPENID)
                     .scope(OidcScopes.PROFILE)
                     .scope("chatbot.read")
