@@ -1,4 +1,4 @@
-interface SearchResponse {
+export interface SearchResponse {
   id: number;
   title: string;
   body: string;

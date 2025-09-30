@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { SearchResponse } from '@/app/models/search-response';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

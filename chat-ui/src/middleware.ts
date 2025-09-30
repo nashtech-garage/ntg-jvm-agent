@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getRefreshToken } from './app/utils/fetchWithAuth';
-import { setTokenIntoCookie } from './app/utils/util';
+import { setTokenIntoCookie, getRefreshToken } from './app/utils/utils';
 
 export async function middleware(req: NextRequest) {
-  const token =
-    req.cookies.get('access_token') || req.cookies.get('refresh_token');
+  const token = req.cookies.get('access_token') || req.cookies.get('refresh_token');
   const isAuthPage =
-    req.nextUrl.pathname.startsWith('/login') ||
-    req.nextUrl.pathname.startsWith('/auth');
+    req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/auth');
 
   // If not login yet and not in login page → redirect to /login
   if (!token && !isAuthPage) {

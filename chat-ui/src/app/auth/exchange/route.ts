@@ -1,4 +1,4 @@
-import { setTokenIntoCookie } from '@/app/utils/util';
+import { setTokenIntoCookie } from '@/app/utils/utils';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
   const tokenJson = await tokenRes.json();
   const res = NextResponse.json({
-      success: true
-    });
+    success: true,
+  });
   return setTokenIntoCookie(tokenJson, res);
 }

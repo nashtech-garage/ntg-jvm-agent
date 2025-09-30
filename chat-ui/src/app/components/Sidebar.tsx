@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Trash, SquarePen } from 'lucide-react';
+import { HistoryItem } from '@/app/models/history';
 
 interface SidebarProps {
   history: HistoryItem[];

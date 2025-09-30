@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatBox from './components/ChatBox';
 import SearchResult from './components/SearchResult';
+import { Result } from '@/app/models/result';
+import { SearchResponse } from '@/app/models/search-response';
 
 export default function Page() {
   const [sessions, setSessions] = useState<{ id: number; title: string; results: Result[] }[]>([]);
