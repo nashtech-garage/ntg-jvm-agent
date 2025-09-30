@@ -1,12 +1,12 @@
 name:  Build Kotlin app
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+    paths:
+      - 'chat-ui/**'
+  pull_request:
+    paths:
+      - 'chat-ui/**'
 
 jobs:
   build:

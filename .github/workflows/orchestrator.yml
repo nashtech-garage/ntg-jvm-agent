@@ -1,16 +1,16 @@
 name:  Build Kotlin app
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
+    paths:
+      - 'orchestrator/**'
+  pull_request:
+    paths:
+      - 'orchestrator/**'
 
 jobs:
   build:
-    name: Build Author server
+    name: Build Orchestrator server
     runs-on: ubuntu-latest
     defaults:
       run:
