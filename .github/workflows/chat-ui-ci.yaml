@@ -35,7 +35,7 @@ jobs:
         working-directory: chat-ui
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: chat-ui
         env:

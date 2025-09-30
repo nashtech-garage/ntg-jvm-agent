@@ -1,15 +1,17 @@
-"use client";
+'use client';
 
 export default function LoginPage() {
   const startOAuth = () => {
     const params = new URLSearchParams({
-      response_type: "code",
+      response_type: 'code',
       client_id: `${process.env.NEXT_PUBLIC_CLIENT_ID}`,
       redirect_uri: `${location.origin}/auth/callback`,
       scope: `${process.env.NEXT_PUBLIC_SCOPE}`,
     });
 
-    window.location.href = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/authorize?${params.toString()}`;
+    window.location.href = `${
+      process.env.NEXT_PUBLIC_AUTH_SERVER
+    }/oauth2/authorize?${params.toString()}`;
   };
 
   return (
