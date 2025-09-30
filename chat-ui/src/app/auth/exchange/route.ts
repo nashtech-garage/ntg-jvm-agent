@@ -1,3 +1,4 @@
+import { setTokenIntoCookie } from "@/app/libs/util";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -29,28 +30,8 @@ export async function POST(req: Request) {
   }
 
   const tokenJson = await tokenRes.json();
-
-  // console.log(tokenJson.access_token);
-  // Create httpOnly cookies
-  const res = NextResponse.json({ success: true });
-  res.cookies.set("access_token", tokenJson.access_token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: tokenJson.expires_in ?? 3600,
-  });
-
-  // Keep refresh token on server-side using setting httpOnly cookie
-  if (tokenJson.refresh_token) {
-    res.cookies.set("refresh_token", tokenJson.refresh_token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+  const res = NextResponse.json({
+      success: true
     });
-  }
-
-  return res;
+  return setTokenIntoCookie(tokenJson, res);
 }

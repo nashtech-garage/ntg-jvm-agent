@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextResponse } from 'next/server';
+import { getAccessToken } from '@/app/libs/util';
 
-export async function GET() {
-  const token = (await cookies()).get("access_token")?.value;
+export async function GET(req: Request) {
+  const accessToken = await getAccessToken(req);
 
-  if (!token) {
+  if (!accessToken) {
     return NextResponse.json(null);
   }
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
