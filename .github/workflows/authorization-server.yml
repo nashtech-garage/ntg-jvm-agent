@@ -1,0 +1,30 @@
+name:  Build Kotlin app
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  authorization-server:
+    name: Build Author server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: authorization-server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build and test all modules
+        run: mvn clean install
+
