@@ -1,19 +1,29 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getAccessToken } from '@/app/utils/util';
 
-export async function GET() {
-  const token = (await cookies()).get('access_token')?.value;
-
-  if (!token) {
-    return NextResponse.json(null);
+export async function GET(req: Request) {
+  const accessToken = await getAccessToken(req);
+  if (!accessToken) {
+    return NextResponse.json(null, { status: 401 });
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
-  const data = await res.json();
-  return NextResponse.json(data);
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: 'Failed to fetch user info' },
+        { status: res.status }
+      );
+    }
+
+    return NextResponse.json(await res.json());
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Unexpected error', details: String(err) },
+      { status: 500 }
+    );
+  }
 }
