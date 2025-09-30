@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
   const tokenJson = await tokenRes.json();
 
-  console.log(tokenJson.access_token);
+  // console.log(tokenJson.access_token);
   // Create httpOnly cookies
   const res = NextResponse.json({ success: true });
   res.cookies.set("access_token", tokenJson.access_token, {

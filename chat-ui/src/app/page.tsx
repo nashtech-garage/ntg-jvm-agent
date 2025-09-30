@@ -16,7 +16,7 @@ export default function Page() {
     fetch("/api/user")
       .then((res) => res.json())
       .then((data) => {
-        setUserName(data?.sub || 'Unknow user');
+        setUserName(data?.sub || 'Unknown user');
       });
   }, []);
 

@@ -75,7 +75,6 @@ export default function Sidebar({
       {/* Account info */}
       <div className="px-2 mt-2">
         <button
-          // onClick={newChat}
           className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200"
         >
           {userName}

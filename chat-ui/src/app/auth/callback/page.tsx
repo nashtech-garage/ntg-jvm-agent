@@ -9,7 +9,6 @@ export default function CallbackPage() {
   useEffect(() => {
     const q = new URL(location.href).searchParams;
     const code = q.get("code");
-    const state = q.get("state");
     if (!code) {
       return;
     }

@@ -14,7 +14,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
-      <h3 className="mb-5">Welcome come to ntg-jvm-agent project</h3>
+      <h3 className="mb-5">Welcome to ntg-jvm-agent project</h3>
       <div className="border border-red-500 p-2 bg-green-500 rounded text-white text-center">
         <button onClick={startOAuth}>Login with Auth Server</button>
       </div>

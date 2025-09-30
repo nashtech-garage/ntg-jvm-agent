@@ -7,7 +7,7 @@ export function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith("/login") ||
     req.nextUrl.pathname.startsWith("/auth");
 
-  // Nếu chưa login và không ở trang login → redirect về /login
+  // If not login yet and not in login page → redirect to /login
   if (!accessToken && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
@@ -15,7 +15,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Áp dụng middleware cho toàn bộ routes (trừ static files)
+// apply middleware for entire routes (except static files)
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
