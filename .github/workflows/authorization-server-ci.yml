@@ -26,7 +26,18 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
-      - run: mvn clean install
+      - name: Run Maven Build Command
+        run: mvn clean install
+        working-directory: authorization-server
+      - name: Run Maven Checkstyle
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        run: mvn checkstyle:checkstyle -Dcheckstyle.output.file=checkstyle-result.xml
+        working-directory: authorization-server
+      - name: Upload Checkstyle Result
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        with:
+          path: 'authorization-server/checkstyle-result.xml'
       - name: Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
