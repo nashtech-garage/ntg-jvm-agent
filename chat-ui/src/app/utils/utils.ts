@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/app/models/token';
+import { Constants } from '@/app/utils/constant';
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
@@ -27,7 +28,8 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     }
 
     return await res.json();
-  } catch {
+  } catch (error) {
+    console.error('Token refresh failed:', error);
     return null;
   }
 }
@@ -50,7 +52,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: Constants.THIRTY_DAYS_IN_SECONDS,
     });
   }
 
