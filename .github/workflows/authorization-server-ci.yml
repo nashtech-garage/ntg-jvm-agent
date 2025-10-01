@@ -1,0 +1,58 @@
+name:  authorization-server ci
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'authorization-server/**'
+      - ".github/workflows/authorization-server-ci.yaml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'authorization-server/**'
+      - ".github/workflows/authorization-server-ci.yaml"
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - run: mvn clean install
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+        with:
+          name: authorization-server-Unit-Test-Results
+          path: "authorization-server/**/*-reports/TEST*.xml"
+          reporter: java-junit
+      - name: SonarCloud Scan
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: authorization-server
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Log in to the Container registry
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker images
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./authorization-server
+          push: true
+          tags: ghcr.io/nashtech-garage/ntg-jvm-agent-authorization-server:latest
