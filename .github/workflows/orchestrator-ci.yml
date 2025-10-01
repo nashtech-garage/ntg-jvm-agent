@@ -39,11 +39,12 @@ jobs:
             --config detekt.yml || true
         working-directory: orchestrator
 
-      - name: Upload Report
-        uses: actions/upload-artifact@v3
+      - name: Annotate Detekt Results
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
-          name: detekt-report
           path: 'orchestrator/checkstyle-result.xml'
+
       - name: Run Maven Build Command
         run: mvn clean install
         working-directory: orchestrator
