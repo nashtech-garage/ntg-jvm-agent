@@ -26,18 +26,36 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+
+      - name: Download Detekt
+        run: curl -sSLO https://github.com/detekt/detekt/releases/latest/download/detekt-cli-all.jar
+
+      - name: Run Detekt
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        run: |
+          java -jar detekt-cli-all.jar \
+            --input src/main/ \
+            --report xml:checkstyle-result.xml \
+            --config detekt.yml || true
+        working-directory: orchestrator
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: detekt-report
+          path: 'orchestrator/checkstyle-result.xml'
       - name: Run Maven Build Command
         run: mvn clean install
         working-directory: orchestrator
-      - name: Run Maven Checkstyle
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        run: mvn checkstyle:checkstyle -Dcheckstyle.output.file=checkstyle-result.xml
-        working-directory: orchestrator
-      - name: Upload Checkstyle Result
-        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-        uses: jwgmeligmeyling/checkstyle-github-action@master
-        with:
-          path: 'orchestrator/checkstyle-result.xml'
+#      - name: Run Maven Checkstyle
+#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+#        run: mvn checkstyle:checkstyle -Dcheckstyle.output.file=checkstyle-result.xml
+#        working-directory: orchestrator
+#      - name: Upload Checkstyle Result
+#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+#        uses: jwgmeligmeyling/checkstyle-github-action@master
+#        with:
+#          path: 'orchestrator/checkstyle-result.xml'
       - name: Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}

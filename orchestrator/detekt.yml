@@ -1,0 +1,66 @@
+build:
+  maxIssues: 0
+  weights:
+    complexity: 2
+    LongParameterList: 1
+    style: 1
+  excludeCorrectable: false
+
+processors:
+  active: true
+  exclude:
+    - 'FunctionCountProcessor'
+    - 'PropertyCountProcessor'
+    - 'ClassCountProcessor'
+    - 'PackageCountProcessor'
+
+config:
+  validation: true
+
+comments:
+  CommentOverPrivateFunction:
+    active: false
+
+complexity:
+  active: true
+  LongMethod:
+    threshold: 30
+  LargeClass:
+    threshold: 600
+
+style:
+  MagicNumber:
+    active: true
+    ignoreNumbers: [-1, 0, 1, 2]
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+  StringLiteralDuplication:
+    active: false
+
+naming:
+  FunctionNaming:
+    active: true
+    functionPattern: '^([a-z][a-zA-Z0-9]*)|(`.*`)$'
+  VariableNaming:
+    active: true
+    variablePattern: '^([a-z][A-Za-z0-9]*)|(`.*`)$'
+    allowedPattern: '^(_|[a-z][A-Za-z0-9]*)$'
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - "Exception"
+      - "Throwable"
+      - "RuntimeException"
+      - "Error"
+
+formatting:
+  active: true
+  autoCorrect: false
+  Indentation:
+    active: true
+    indentSize: 4
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
