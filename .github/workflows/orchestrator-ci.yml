@@ -25,11 +25,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 21
-
-
       - name: Download Detekt
         run: curl -sSLO https://github.com/detekt/detekt/releases/latest/download/detekt-cli-all.jar
-
+        working-directory: orchestrator
       - name: Run Detekt
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: |
@@ -38,11 +36,9 @@ jobs:
             --report xml:checkstyle-result.xml \
             --config detekt.yml
         working-directory: orchestrator
-
       - name: Debug - list files
         run: ls -l
         working-directory: orchestrator
-
       - name: Annotate Detekt Results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
