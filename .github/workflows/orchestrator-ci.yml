@@ -36,14 +36,19 @@ jobs:
           java -jar detekt-cli-all.jar \
             --input src/main/ \
             --report xml:checkstyle-result.xml \
-            --config detekt.yml || true
+            --config detekt.yml
+        working-directory: orchestrator
+
+      - name: Debug - list files
+        run: ls -l
         working-directory: orchestrator
 
       - name: Annotate Detekt Results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
-          path: 'orchestrator/checkstyle-result.xml'
+          path: "./orchestrator/checkstyle-result.xml"
+
 
       - name: Run Maven Build Command
         run: mvn clean install
