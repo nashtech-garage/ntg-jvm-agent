@@ -58,13 +58,18 @@ jobs:
 #        uses: jwgmeligmeyling/checkstyle-github-action@master
 #        with:
 #          path: 'orchestrator/checkstyle-result.xml'
-      - name: Test Results
+      - name: Run Kotlin Unit Tests
+        run: mvn test
+        working-directory: orchestrator
+
+      - name: Report Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
         with:
           name: orchestrator-Unit-Test-Results
-          path: "orchestrator/**/*-reports/TEST*.xml"
+          path: orchestrator/target/surefire-reports/TEST-*.xml
           reporter: java-junit
+
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: SonarSource/sonarqube-scan-action@v6
