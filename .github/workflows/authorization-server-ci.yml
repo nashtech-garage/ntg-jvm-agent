@@ -42,7 +42,7 @@ jobs:
         with:
           path: "./authorization-server/checkstyle-result.xml"
       - name: Run Maven Build Command
-        run: mvn clean install -Dskiptests
+        run: mvn clean install -DskipTests
         working-directory: authorization-server
 #      - name: Report Test Results
 #        uses: dorny/test-reporter@v1
