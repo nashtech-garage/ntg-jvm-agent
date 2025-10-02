@@ -26,12 +26,12 @@ jobs:
           distribution: 'temurin'
           java-version: 21
       - name: Download Detekt
-        run: curl -sSLO https://github.com/detekt/detekt/releases/latest/download/detekt-cli-all.jar
+        run: curl -sSLO https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar
         working-directory: orchestrator
       - name: Run Detekt
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         run: |
-          java -jar detekt-cli-all.jar \
+          java -jar detekt-cli-1.23.8-all.jar \
             --input src/main/ \
             --report xml:checkstyle-result.xml \
             --config detekt.yml
@@ -62,6 +62,10 @@ jobs:
         run: mvn test
         working-directory: orchestrator
 
+      - name: Debug test report file
+        run: ls -la target/surefire-reports
+        working-directory: orchestrator
+
       - name: Report Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
@@ -69,6 +73,7 @@ jobs:
           name: orchestrator-Unit-Test-Results
           path: orchestrator/target/surefire-reports/TEST-*.xml
           reporter: java-junit
+
 
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
