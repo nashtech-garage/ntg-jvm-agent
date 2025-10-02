@@ -36,36 +36,17 @@ jobs:
             --report xml:checkstyle-result.xml \
             --config detekt.yml
         working-directory: orchestrator
-      - name: Debug - list files
-        run: ls -l
-        working-directory: orchestrator
       - name: Annotate Detekt Results
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: jwgmeligmeyling/checkstyle-github-action@master
         with:
           path: "./orchestrator/checkstyle-result.xml"
-
-
       - name: Run Maven Build Command
         run: mvn clean install
         working-directory: orchestrator
-#      - name: Run Maven Checkstyle
-#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-#        run: mvn checkstyle:checkstyle -Dcheckstyle.output.file=checkstyle-result.xml
-#        working-directory: orchestrator
-#      - name: Upload Checkstyle Result
-#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
-#        uses: jwgmeligmeyling/checkstyle-github-action@master
-#        with:
-#          path: 'orchestrator/checkstyle-result.xml'
       - name: Run Kotlin Unit Tests
         run: mvn test
         working-directory: orchestrator
-
-      - name: Debug test report file
-        run: ls -la target/surefire-reports
-        working-directory: orchestrator
-
       - name: Report Test Results
         uses: dorny/test-reporter@v1
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
@@ -73,8 +54,6 @@ jobs:
           name: orchestrator-Unit-Test-Results
           path: orchestrator/target/surefire-reports/TEST-*.xml
           reporter: java-junit
-
-
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: SonarSource/sonarqube-scan-action@v6
