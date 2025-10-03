@@ -19,11 +19,10 @@ class ChatModelService(
         val prompt =
             Prompt(
                 """
-                                    ${Constant.SUMMARY_PROMPT}
+                ${Constant.SUMMARY_PROMPT}
                 "$question"
                 """.trimIndent(),
             )
-
         val response = chatModel.call(prompt)
         return response.result.output.text
     }

@@ -81,7 +81,7 @@ class ConversationService(
 
         val answer: String? = chatModelService.call(question)
         // Only save reply if it has actual reply
-        answer ?.let {
+        answer?.let {
             val answerMsg =
                 ChatMessageEntity(
                     content = answer,
