@@ -1,0 +1,100 @@
+{
+	"info": {
+		"_postman_id": "2bf14190-23ff-4078-ab98-270ff13df060",
+		"name": "Orchestrator",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "3387408"
+	},
+	"item": [
+		{
+			"name": "create conversation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"question\": \"Tên của bạn là gì\",\r\n    \"username\": \"testuser\",\r\n    \"conversationId\": \"6dbcafc0-166a-4499-960d-9a98b4615088\" // Delete this field in case create new conversation\r\n    // conversationId is only used when add message to existing conversation\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9001/conversations",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"conversations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list conversation by user",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/conversations/user/testuser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"conversations",
+						"user",
+						"testuser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list message by conversation",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088/messages",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"conversations",
+						"6dbcafc0-166a-4499-960d-9a98b4615088",
+						"messages"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete conversation",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"conversations",
+						"6dbcafc0-166a-4499-960d-9a98b4615088"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
