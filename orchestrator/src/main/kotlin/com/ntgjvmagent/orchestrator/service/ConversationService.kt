@@ -24,11 +24,14 @@ class ConversationService(
     private val messageRepo: ChatMessageRepository,
 ) {
     @Transactional
-    fun createConversation(chatReq: ChatRequestVm): ChatResponseVm {
+    fun createConversation(
+        chatReq: ChatRequestVm,
+        username: String,
+    ): ChatResponseVm {
         if (chatReq.conversationId != null) {
             return this.addMessage(chatReq.conversationId, chatReq.question)
         }
-        val conversationId = this.createNewConversation(chatReq)
+        val conversationId = this.createNewConversation(chatReq, username)
         return this.addMessage(conversationId, chatReq.question)
     }
 
@@ -44,12 +47,15 @@ class ConversationService(
         return this.messageRepo.listMessageByConversationId(conversationId)
     }
 
-    private fun createNewConversation(chatReq: ChatRequestVm): UUID {
+    private fun createNewConversation(
+        chatReq: ChatRequestVm,
+        username: String,
+    ): UUID {
         val titleSummarize = this.chatModelService.createSummarize(chatReq.question)
         val conversation =
             ConversationEntity(
                 title = titleSummarize ?: chatReq.question,
-                username = chatReq.username,
+                username = username,
             )
         val conversationId: UUID? = this.conversationRepo.save(conversation).id
         conversationId ?: throw BadRequestException("Can't create new conversation")

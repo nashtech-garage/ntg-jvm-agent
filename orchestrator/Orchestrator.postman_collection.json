@@ -9,11 +9,21 @@
 		{
 			"name": "create conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJhdXRoc2VydmVyLWtleSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImRlbW8tY2xpZW50IiwibmJmIjoxNzU5NzQwMDkxLCJzY29wZSI6WyJvcGVuaWQiLCJwcm9maWxlIiwiY2hhdGJvdC5yZWFkIiwiY2hhdGJvdC53cml0ZSJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjkwMDAiLCJleHAiOjE3NTk3NDAzOTEsImlhdCI6MTc1OTc0MDA5MSwianRpIjoiZDVlYWFhNzEtNjFhZC00Mjk1LTlkMjItNjE4MzgwZGYyNjY3In0.XbcW-Fvu2g9e06_b1PtiTYgon_-YJRLZOY_9rFGfW1HHVIRkr_VIKhq_zvuGS1XNMj3X3UDf987OZOkZLIOoOj6gKBmpIt3_PmvpVpP2KHyUBqQML66N7Bgj9gzfgOmwaPcqjxOvtY94L9mef4r6ug4FNWd55xHOetBahxAGOwCstZehZSBBop_0-zluFRUprDygDqnapKhXRseOfzfNfPzaofDTy5RQGd580YxTXVnoKgdMeGiXNNFnNu-g8J-qi64RAi6G6SjZcCZAZgOVGD_2SkXWDGRp-fUwsDtOxln3oaYvdocLDx3zcAA5DemCwu8Hu0PgFwn-3as8I5ImEg",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"question\": \"Tên của bạn là gì\",\r\n    \"username\": \"testuser\",\r\n    \"conversationId\": \"6dbcafc0-166a-4499-960d-9a98b4615088\" // Delete this field in case create new conversation\r\n    // conversationId is only used when add message to existing conversation\r\n}",
+					"raw": "{\r\n    \"question\": \"Teach me how to improve my english\",\r\n    \"conversationId\": \"cdfa4ff6-9269-45c3-af9f-4460a7e00d89\" // Delete this field in case create new conversation\r\n    // conversationId is only used when add message to existing conversation\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -21,13 +31,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9001/conversations",
+					"raw": "http://localhost:9001/api/conversations",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations"
 					]
 				}
@@ -37,19 +48,29 @@
 		{
 			"name": "list conversation by user",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJhdXRoc2VydmVyLWtleSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImRlbW8tY2xpZW50IiwibmJmIjoxNzU5NzQwMDkxLCJzY29wZSI6WyJvcGVuaWQiLCJwcm9maWxlIiwiY2hhdGJvdC5yZWFkIiwiY2hhdGJvdC53cml0ZSJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjkwMDAiLCJleHAiOjE3NTk3NDAzOTEsImlhdCI6MTc1OTc0MDA5MSwianRpIjoiZDVlYWFhNzEtNjFhZC00Mjk1LTlkMjItNjE4MzgwZGYyNjY3In0.XbcW-Fvu2g9e06_b1PtiTYgon_-YJRLZOY_9rFGfW1HHVIRkr_VIKhq_zvuGS1XNMj3X3UDf987OZOkZLIOoOj6gKBmpIt3_PmvpVpP2KHyUBqQML66N7Bgj9gzfgOmwaPcqjxOvtY94L9mef4r6ug4FNWd55xHOetBahxAGOwCstZehZSBBop_0-zluFRUprDygDqnapKhXRseOfzfNfPzaofDTy5RQGd580YxTXVnoKgdMeGiXNNFnNu-g8J-qi64RAi6G6SjZcCZAZgOVGD_2SkXWDGRp-fUwsDtOxln3oaYvdocLDx3zcAA5DemCwu8Hu0PgFwn-3as8I5ImEg",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/user/testuser",
+					"raw": "http://localhost:9001/api/conversations/user",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
-						"user",
-						"testuser"
+						"user"
 					]
 				}
 			},
@@ -58,16 +79,27 @@
 		{
 			"name": "list message by conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJhdXRoc2VydmVyLWtleSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImRlbW8tY2xpZW50IiwibmJmIjoxNzU5NzQwMDkxLCJzY29wZSI6WyJvcGVuaWQiLCJwcm9maWxlIiwiY2hhdGJvdC5yZWFkIiwiY2hhdGJvdC53cml0ZSJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjkwMDAiLCJleHAiOjE3NTk3NDAzOTEsImlhdCI6MTc1OTc0MDA5MSwianRpIjoiZDVlYWFhNzEtNjFhZC00Mjk1LTlkMjItNjE4MzgwZGYyNjY3In0.XbcW-Fvu2g9e06_b1PtiTYgon_-YJRLZOY_9rFGfW1HHVIRkr_VIKhq_zvuGS1XNMj3X3UDf987OZOkZLIOoOj6gKBmpIt3_PmvpVpP2KHyUBqQML66N7Bgj9gzfgOmwaPcqjxOvtY94L9mef4r6ug4FNWd55xHOetBahxAGOwCstZehZSBBop_0-zluFRUprDygDqnapKhXRseOfzfNfPzaofDTy5RQGd580YxTXVnoKgdMeGiXNNFnNu-g8J-qi64RAi6G6SjZcCZAZgOVGD_2SkXWDGRp-fUwsDtOxln3oaYvdocLDx3zcAA5DemCwu8Hu0PgFwn-3as8I5ImEg",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088/messages",
+					"raw": "http://localhost:9001/api/conversations/6dbcafc0-166a-4499-960d-9a98b4615088/messages",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088",
 						"messages"
@@ -79,16 +111,27 @@
 		{
 			"name": "delete conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJhdXRoc2VydmVyLWtleSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImRlbW8tY2xpZW50IiwibmJmIjoxNzU5NzQwMDkxLCJzY29wZSI6WyJvcGVuaWQiLCJwcm9maWxlIiwiY2hhdGJvdC5yZWFkIiwiY2hhdGJvdC53cml0ZSJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjkwMDAiLCJleHAiOjE3NTk3NDAzOTEsImlhdCI6MTc1OTc0MDA5MSwianRpIjoiZDVlYWFhNzEtNjFhZC00Mjk1LTlkMjItNjE4MzgwZGYyNjY3In0.XbcW-Fvu2g9e06_b1PtiTYgon_-YJRLZOY_9rFGfW1HHVIRkr_VIKhq_zvuGS1XNMj3X3UDf987OZOkZLIOoOj6gKBmpIt3_PmvpVpP2KHyUBqQML66N7Bgj9gzfgOmwaPcqjxOvtY94L9mef4r6ug4FNWd55xHOetBahxAGOwCstZehZSBBop_0-zluFRUprDygDqnapKhXRseOfzfNfPzaofDTy5RQGd580YxTXVnoKgdMeGiXNNFnNu-g8J-qi64RAi6G6SjZcCZAZgOVGD_2SkXWDGRp-fUwsDtOxln3oaYvdocLDx3zcAA5DemCwu8Hu0PgFwn-3as8I5ImEg",
+							"type": "string"
+						}
+					]
+				},
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088",
+					"raw": "http://localhost:9001/api/conversations/6dbcafc0-166a-4499-960d-9a98b4615088",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088"
 					]

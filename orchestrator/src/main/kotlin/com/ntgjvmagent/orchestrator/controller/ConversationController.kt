@@ -7,6 +7,8 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,20 +19,24 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/conversations")
+@RequestMapping("/api/conversations")
 class ConversationController(
     private val conversationService: ConversationService,
 ) {
     @PostMapping
     fun createConversation(
         @Valid @RequestBody req: ChatRequestVm,
-    ): ResponseEntity<ChatResponseVm> = ResponseEntity.ok(conversationService.createConversation(req))
+        authentication: Authentication,
+    ): ResponseEntity<ChatResponseVm> {
+        val username = (authentication.principal as Jwt).subject
+        return ResponseEntity.ok(conversationService.createConversation(req, username))
+    }
 
-    @GetMapping("/user/{username}")
-    fun getConversations(
-        @PathVariable username: String,
-    ): ResponseEntity<List<ConversationResponseVm>> =
-        ResponseEntity.ok(conversationService.listConversationByUser(username))
+    @GetMapping("/user")
+    fun getConversations(authentication: Authentication): ResponseEntity<List<ConversationResponseVm>> {
+        val username = (authentication.principal as Jwt).subject
+        return ResponseEntity.ok(conversationService.listConversationByUser(username))
+    }
 
     @GetMapping("/{conversationId}/messages")
     fun getMessages(
