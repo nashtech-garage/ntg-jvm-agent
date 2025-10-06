@@ -1,0 +1,75 @@
+name:  authorization-server ci
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'authorization-server/**'
+      - ".github/workflows/authorization-server-ci.yaml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'authorization-server/**'
+      - ".github/workflows/authorization-server-ci.yaml"
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+      - name: Download Detekt
+        run: curl -sSLO https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar
+        working-directory: authorization-server
+      - name: Run Detekt
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        run: |
+          java -jar detekt-cli-1.23.8-all.jar \
+            --input src/main/ \
+            --report xml:checkstyle-result.xml \
+            --config detekt.yml
+        working-directory: authorization-server
+      - name: Annotate Detekt Results
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        with:
+          path: "./authorization-server/checkstyle-result.xml"
+      - name: Run Maven Build Command
+        run: mvn clean install -DskipTests
+        working-directory: authorization-server
+#      - name: Report Test Results
+#        uses: dorny/test-reporter@v1
+#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+#        with:
+#          name: authorization-server-Unit-Test-Results
+#          path: authorization-server/target/surefire-reports/TEST-*.xml
+#          reporter: java-junit
+      - name: SonarCloud Scan
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: authorization-server
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Log in to the Container registry
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker images
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./authorization-server
+          push: true
+          tags: ghcr.io/nashtech-garage/ntg-jvm-agent-authorization-server:latest
