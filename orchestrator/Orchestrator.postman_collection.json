@@ -9,11 +9,21 @@
 		{
 			"name": "create conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "JWT_TOKEN",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"question\": \"Tên của bạn là gì\",\r\n    \"username\": \"testuser\",\r\n    \"conversationId\": \"6dbcafc0-166a-4499-960d-9a98b4615088\" // Delete this field in case create new conversation\r\n    // conversationId is only used when add message to existing conversation\r\n}",
+					"raw": "{\r\n    \"question\": \"Teach me how to improve my english\",\r\n    \"conversationId\": \"cdfa4ff6-9269-45c3-af9f-4460a7e00d89\" // Delete this field in case create new conversation\r\n    // conversationId is only used when add message to existing conversation\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -21,13 +31,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9001/conversations",
+					"raw": "http://localhost:9001/api/conversations",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations"
 					]
 				}
@@ -37,19 +48,29 @@
 		{
 			"name": "list conversation by user",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "JWT_TOKEN",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/user/testuser",
+					"raw": "http://localhost:9001/api/conversations/user",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
-						"user",
-						"testuser"
+						"user"
 					]
 				}
 			},
@@ -58,16 +79,27 @@
 		{
 			"name": "list message by conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "JWT_TOKEN",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088/messages",
+					"raw": "http://localhost:9001/api/conversations/6dbcafc0-166a-4499-960d-9a98b4615088/messages",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088",
 						"messages"
@@ -79,16 +111,27 @@
 		{
 			"name": "delete conversation",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "JWT_TOKEN",
+							"type": "string"
+						}
+					]
+				},
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:9001/conversations/6dbcafc0-166a-4499-960d-9a98b4615088",
+					"raw": "http://localhost:9001/api/conversations/6dbcafc0-166a-4499-960d-9a98b4615088",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9001",
 					"path": [
+						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088"
 					]
