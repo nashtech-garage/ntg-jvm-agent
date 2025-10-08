@@ -14,7 +14,7 @@ data class ConversationEntity(
     val title: String,
     val username: String,
     @Column(name = "is_active")
-    val isActive: Boolean = true,
+    var isActive: Boolean = true,
     @OneToMany(
         mappedBy = "conversation",
         fetch = FetchType.LAZY,

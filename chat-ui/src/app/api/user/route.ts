@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAccessToken } from '@/app/utils/utils';
+import { Constants } from '@/app/utils/constant';
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);
@@ -13,11 +14,11 @@ export async function GET(req: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: 'Failed to fetch user info' }, { status: res.status });
+      return NextResponse.json({ error: Constants.FAILED_TO_FETCH_USER_INFO_MSG }, { status: res.status });
     }
 
     return NextResponse.json(await res.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Unexpected error', details: String(err) }, { status: 500 });
+    return NextResponse.json({ error: `${Constants.FAILED_TO_FETCH_USER_INFO_MSG} ${String(err)}` }, { status: 500 });
   }
 }

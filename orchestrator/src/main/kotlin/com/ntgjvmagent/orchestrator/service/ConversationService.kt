@@ -117,6 +117,7 @@ class ConversationService(
             this.conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-        this.conversationRepo.delete(conversation)
+        conversation.isActive = false
+        this.conversationRepo.save(conversation)
     }
 }

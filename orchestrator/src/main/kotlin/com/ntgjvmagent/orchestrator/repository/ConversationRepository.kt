@@ -18,7 +18,7 @@ interface ConversationRepository : JpaRepository<ConversationEntity, UUID> {
         FROM ConversationEntity c
         WHERE c.username = :userName
         AND c.isActive = true
-        ORDER BY c.createdAt ASC
+        ORDER BY c.createdAt DESC
     """,
     )
     fun listActiveConversationsByUser(

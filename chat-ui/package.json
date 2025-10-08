@@ -21,10 +21,16 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
+    "prettier": "2.7.1",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.6.6",
+    "react-textarea-autosize": "^8.5.9",
+    "remark-gfm": "^4.0.1",
+    "sonner": "^2.0.7",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "prettier": "2.7.1"
+    "typescript": "^5"
   }
 }
