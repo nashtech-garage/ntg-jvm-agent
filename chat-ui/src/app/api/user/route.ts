@@ -14,11 +14,17 @@ export async function GET(req: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: Constants.FAILED_TO_FETCH_USER_INFO_MSG }, { status: res.status });
+      return NextResponse.json(
+        { error: Constants.FAILED_TO_FETCH_USER_INFO_MSG },
+        { status: res.status }
+      );
     }
 
     return NextResponse.json(await res.json());
   } catch (err) {
-    return NextResponse.json({ error: `${Constants.FAILED_TO_FETCH_USER_INFO_MSG} ${String(err)}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `${Constants.FAILED_TO_FETCH_USER_INFO_MSG} ${String(err)}` },
+      { status: 500 }
+    );
   }
 }
