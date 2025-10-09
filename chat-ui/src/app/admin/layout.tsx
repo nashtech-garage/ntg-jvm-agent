@@ -16,8 +16,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     email: 'admin@example.com',
     roles: ['admin'],
   };
-  // setUser(user);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen overflow-hidden">
