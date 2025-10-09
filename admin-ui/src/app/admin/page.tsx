@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { UserInfo } from '@/app/models/token';
 
 interface DashboardStats {
@@ -11,8 +11,8 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [stats, setStats] = useState<DashboardStats>({
+  const [user] = useState<UserInfo | null>(null);
+  const [stats] = useState<DashboardStats>({
     totalUsers: 0,
     activeUsers: 0,
     totalSessions: 0,

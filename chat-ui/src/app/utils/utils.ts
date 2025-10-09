@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { TokenInfo, UserInfo, JWTPayload } from '@/app/models/token';
+import { TokenInfo } from '@/app/models/token';
 import { Constants } from '@/app/utils/constant';
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
@@ -70,68 +70,4 @@ export async function getAccessToken(req: Request): Promise<string | undefined> 
   const headerToken = req.headers.get('x-access-token');
   const cookieToken = (await cookies()).get('access_token')?.value;
   return headerToken || cookieToken;
-}
-
-/**
- * Decode JWT token without verification (for client-side use only)
- * In production, always verify the token on the server side
- */
-export function decodeJWT(token: string): JWTPayload | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payload = parts[1];
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    return decoded as JWTPayload;
-  } catch (error) {
-    console.error('Failed to decode JWT:', error);
-    return null;
-  }
-}
-
-/**
- * Get user information from access token
- */
-export async function getUserInfo(req?: Request): Promise<UserInfo | null> {
-  try {
-    const token = req ? await getAccessToken(req) : (await cookies()).get('access_token')?.value;
-
-    if (!token) {
-      return null;
-    }
-
-    const payload = decodeJWT(token);
-    if (!payload) {
-      return null;
-    }
-
-    return {
-      sub: payload.sub,
-      name: payload.name,
-      email: payload.email,
-      roles: payload.roles || [],
-    };
-  } catch (error) {
-    console.error('Failed to get user info:', error);
-    return null;
-  }
-}
-
-/**
- * Check if user has admin role
- */
-export async function isAdmin(req?: Request): Promise<boolean> {
-  const userInfo = await getUserInfo(req);
-  return userInfo?.roles.includes('admin') || userInfo?.roles.includes('ADMIN') || false;
-}
-
-/**
- * Check if user has specific role
- */
-export async function hasRole(role: string, req?: Request): Promise<boolean> {
-  const userInfo = await getUserInfo(req);
-  return userInfo?.roles.includes(role) || userInfo?.roles.includes(role.toUpperCase()) || false;
 }

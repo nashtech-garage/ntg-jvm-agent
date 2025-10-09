@@ -6,31 +6,10 @@ export async function middleware(req: NextRequest) {
   const hasAuthToken = req.cookies.get('access_token') || req.cookies.get('refresh_token');
   const isAuthPage =
     req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/auth');
-  const isAdminPage = req.nextUrl.pathname.startsWith('/admin');
-  const isUnauthorizedPage = req.nextUrl.pathname.startsWith('/unauthorized');
 
   // If not login yet and not in login/auth/unauthorized page → redirect to /login
-  if (!hasAuthToken && !isAuthPage && !isUnauthorizedPage) {
+  if (!hasAuthToken && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', req.url));
-  }
-
-  // For admin pages, check if user has admin role
-  if (isAdminPage && hasAuthToken) {
-    try {
-      const { getUserInfo } = await import('./app/utils/utils');
-      const userInfo = await getUserInfo(req);
-      console.log('User Info in Middleware:', userInfo);
-
-      if (
-        !userInfo ||
-        !userInfo.roles.map(role => role.toLowerCase()).includes('admin')
-      ) {
-        return NextResponse.redirect(new URL('/unauthorized', req.url));
-      }
-    } catch (error) {
-      console.error('Error checking admin access:', error);
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
   }
 
   // Handle refreshing token

@@ -161,7 +161,7 @@ export default function AdminAnalytics() {
           </div>
           <div className="p-6">
             <div className="space-y-3">
-              {analytics.pageViews.map((day, index) => (
+              {analytics.pageViews.map((day) => (
                 <div key={day.date} className="flex items-center">
                   <div className="w-20 text-sm text-gray-600">{day.date.slice(5)}</div>
                   <div className="flex-1 mx-3">
