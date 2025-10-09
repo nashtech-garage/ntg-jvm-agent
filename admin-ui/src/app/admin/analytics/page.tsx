@@ -128,13 +128,15 @@ export default function AdminAnalytics() {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600">Bounce Rate</p>
-            <p className="text-2xl font-bold text-gray-900">24%</p>
-            <p className="text-xs text-red-600">+2% from last week</p>
-          </div>
-          <div className="p-3 bg-yellow-100 rounded-full">
-            <span className="text-2xl">📊</span>
+          <div className="flex items-center">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600">Bounce Rate</p>
+              <p className="text-2xl font-bold text-gray-900">24%</p>
+              <p className="text-xs text-red-600">+2% from last week</p>
+            </div>
+            <div className="p-3 bg-yellow-100 rounded-full">
+              <span className="text-2xl">📊</span>
+            </div>
           </div>
         </div>
 
