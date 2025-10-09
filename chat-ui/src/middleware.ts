@@ -21,9 +21,10 @@ export async function middleware(req: NextRequest) {
       const userInfo = await getUserInfo(req);
       console.log('User Info in Middleware:', userInfo);
 
-      if (!userInfo || !userInfo.roles.some(role =>
-        role.toLowerCase() === 'admin' || role === 'ADMIN'
-      )) {
+      if (
+        !userInfo ||
+        !userInfo.roles.map(role => role.toLowerCase()).includes('admin')
+      ) {
         return NextResponse.redirect(new URL('/unauthorized', req.url));
       }
     } catch (error) {
