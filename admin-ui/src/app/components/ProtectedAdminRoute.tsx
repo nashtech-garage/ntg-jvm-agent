@@ -89,7 +89,7 @@ export default function ProtectedAdminRoute({ children, fallback }: ProtectedAdm
                 Access Denied
               </h2>
               <p className="mt-2 text-center text-sm text-gray-600">
-                You don't have permission to access this page. Admin role required.
+                You don&apos;t have permission to access this page. Admin role required.
               </p>
               <div className="mt-6">
                 <button

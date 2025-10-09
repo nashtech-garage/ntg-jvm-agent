@@ -27,7 +27,7 @@ export default function ForbiddenPage() {
           <h1 className="mt-6 text-center text-4xl font-extrabold text-gray-900">403</h1>
           <h2 className="mt-2 text-center text-2xl font-bold text-gray-900">Access Forbidden</h2>
           <p className="mt-4 text-center text-sm text-gray-600">
-            You don't have permission to access this resource. Admin role required.
+            You don&#39;t have permission to access this resource. Admin role required.
           </p>
           <div className="mt-8 space-y-4">
             <button
