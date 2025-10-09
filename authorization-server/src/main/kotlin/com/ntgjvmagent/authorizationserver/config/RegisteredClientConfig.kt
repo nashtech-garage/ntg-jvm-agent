@@ -25,7 +25,7 @@ class RegisteredClientConfig {
         return CommandLineRunner {
             val clientId = "demo-client"
 
-            // Check if client exists
+            // Check if client exists, then register new or update existing client as needed
             val existing = (registeredClientRepository as? JdbcRegisteredClientRepository)
                 ?.findByClientId(clientId)
 
