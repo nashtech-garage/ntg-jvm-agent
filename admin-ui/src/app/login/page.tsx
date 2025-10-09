@@ -37,7 +37,13 @@ export default function LoginPage() {
     setError(null);
 
     // Redirect to authorization server for OAuth flow
-    const authUrl = new URL(process.env.NEXT_PUBLIC_AUTH_SERVER + '/oauth2/authorize');
+    const baseAuthServer = process.env.NEXT_PUBLIC_AUTH_SERVER;
+    if (!baseAuthServer) {
+      setIsLoading(false);
+      setError('Authorization server URL is not configured. Please contact your administrator.');
+      return;
+    }
+    const authUrl = new URL('/oauth2/authorize', baseAuthServer);
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', 'demo-client');
     authUrl.searchParams.set('redirect_uri', `${window.location.origin}/auth/callback`);
