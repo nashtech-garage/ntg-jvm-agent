@@ -45,7 +45,7 @@ export default function LoginPage() {
     }
     const authUrl = new URL('/oauth2/authorize', baseAuthServer);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('client_id', 'demo-client');
+    authUrl.searchParams.set('client_id', process.env.CLIENT_ID || 'demo-client');
     authUrl.searchParams.set('redirect_uri', `${window.location.origin}/auth/callback`);
     authUrl.searchParams.set(
       'scope',
