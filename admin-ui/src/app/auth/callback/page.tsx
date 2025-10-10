@@ -38,7 +38,8 @@ function CallbackPageContent() {
           // Login successful, redirect to intended destination
           window.location.href = `${window.location.origin}/${state}`;
         } else if (response.status === 403) {
-          setError('Access denied. Admin role required.');
+          // redirect to forbidden page if user lacks admin role
+          router.replace('/forbidden');
         } else {
           setError('Authentication failed. Please try again.');
         }

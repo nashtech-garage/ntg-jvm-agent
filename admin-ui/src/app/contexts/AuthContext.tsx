@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useMemo,
+  useCallback,
+} from 'react';
 import { UserInfo, TokenInfo } from '../models/token';
 
 interface AuthContextType {
@@ -61,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const login = async (code: string, redirectUri: string): Promise<boolean> => {
+  const login = useCallback(async (code: string, redirectUri: string): Promise<boolean> => {
     try {
       setIsLoading(true);
 
@@ -86,9 +94,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     fetch('/api/auth/logout', {
       method: 'POST',
       credentials: 'include',
@@ -100,7 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null);
         setToken(null);
       });
-  };
+  }, []);
 
   const contextValue = useMemo(
     () => ({

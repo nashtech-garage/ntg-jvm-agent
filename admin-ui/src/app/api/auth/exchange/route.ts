@@ -1,3 +1,4 @@
+import { decodeToken } from '@/app/utils/utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -37,13 +38,11 @@ export async function POST(request: NextRequest) {
     const tokenData = await tokenResponse.json();
 
     // Get user info from decoded access token
-    const decodedToken = JSON.parse(
-      Buffer.from(tokenData.access_token.split('.')[1], 'base64').toString()
-    );
+    const decodedToken = decodeToken(tokenData.access_token);
     const userInfo = {
-      id: decodedToken.sub,
-      username: decodedToken.sub,
-      roles: decodedToken.roles || [],
+      id: decodedToken?.sub,
+      username: decodedToken?.sub,
+      roles: decodedToken?.roles || [],
     };
     console.log('Decoded token:', decodedToken);
 
