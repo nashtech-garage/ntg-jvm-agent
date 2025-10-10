@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "2bf14190-23ff-4078-ab98-270ff13df060",
+		"_postman_id": "968e470e-3473-4b97-b6c1-9127111cdf91",
 		"name": "Orchestrator",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "3387408"
@@ -134,6 +134,46 @@
 						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "import knowledge document",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "JWT_TOKEN",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/DatPhamQuoc/Downloads/ABC_company_policy.txt"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:9001/api/knowledge",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"api",
+						"knowledge"
 					]
 				}
 			},
