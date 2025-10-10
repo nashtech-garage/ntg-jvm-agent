@@ -25,31 +25,37 @@ class RegisteredClientConfig {
         return CommandLineRunner {
             val clientId = "demo-client"
 
-            // only register if not exists
+            // Check if client exists, then register new or update existing client as needed
             val existing = (registeredClientRepository as? JdbcRegisteredClientRepository)
                 ?.findByClientId(clientId)
 
-            if (existing == null) {
-                val registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId(clientId)
-                    .clientSecret(passwordEncoder.encode("demo-secret"))
-                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                    .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                    .redirectUri("http://localhost:3000/auth/callback")
-                    .scope(OidcScopes.OPENID)
-                    .scope(OidcScopes.PROFILE)
-                    .scope("chatbot.read")
-                    .scope("chatbot.write")
-                    .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-                    .build()
+            // Create the correct client configuration
+            val correctClient = RegisteredClient.withId(existing?.id ?: UUID.randomUUID().toString())
+                .clientId(clientId)
+                .clientSecret(passwordEncoder.encode("demo-secret"))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .redirectUri("http://localhost:3000/auth/callback") // Chat UI
+                .redirectUri("http://localhost:3001/auth/callback") // Admin UI
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                .scope("chatbot.read")
+                .scope("chatbot.write")
+                .scope("admin.read")
+                .scope("admin.write")
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .build()
 
-                registeredClientRepository.save(registeredClient)
-                println("Registered demo client with clientId=demo-client / secret=demo-secret")
+            if (existing == null) {
+                // Register new client
+                registeredClientRepository.save(correctClient)
+                println("Registered new demo client with clientId=demo-client / secret=demo-secret")
             } else {
-                println("Client $clientId already exists, skipping")
+                // Update existing client to ensure correct configuration
+                registeredClientRepository.save(correctClient)
+                println("Updated existing demo client with correct redirect URIs")
             }
         }
     }
 }
-

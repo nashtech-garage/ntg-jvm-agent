@@ -1,10 +1,14 @@
 -- ============================================================
 -- USERS (BCrypt encoded password: "password")
+-- ADMIN (BCrypt encoded password: "password")
 -- ============================================================
 INSERT INTO users (username, password, enabled)
 VALUES ('testuser', '{bcrypt}$2a$10$qTfVZZmyoQoom30ApjtoBuX5ebMe1WT4WNBuYQ4pBT43SLUld7tvq', true);
+INSERT INTO users (username, password, enabled)
+VALUES ('admin', '{bcrypt}$2a$10$qTfVZZmyoQoom30ApjtoBuX5ebMe1WT4WNBuYQ4pBT43SLUld7tvq', true);
 
 INSERT INTO authorities (username, authority) VALUES ('testuser', 'ROLE_USER');
+INSERT INTO authorities (username, authority) VALUES ('admin', 'ROLE_ADMIN');
 
 -- ============================================================
 -- DEMO CLIENT (client_id=demo-client / client_secret=demo-secret)

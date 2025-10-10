@@ -12,10 +12,16 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
@@ -97,5 +103,34 @@ class AuthorizationServerConfig {
     @Bean
     fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)
+    }
+
+    /**
+     * Customizes JWT tokens to include user roles and authorities.
+     * This ensures that JWT access tokens and ID tokens contain the user's roles
+     * for proper authorization in resource servers and client applications.
+     */
+    @Bean
+    fun jwtTokenCustomizer(): OAuth2TokenCustomizer<JwtEncodingContext> {
+        return OAuth2TokenCustomizer { context ->
+            val principal: Authentication = context.getPrincipal()
+            val authorities: Collection<GrantedAuthority> = principal.authorities
+
+            // Extract roles from authorities (remove ROLE_ prefix for cleaner claims)
+            val roles = authorities.map { authority ->
+                authority.authority.removePrefix("ROLE_")
+            }.toSet()
+
+            // Add roles to both access tokens and ID tokens
+            if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
+                context.claims.claim("roles", roles)
+                context.claims.claim("authorities", authorities.map { it.authority })
+            }
+
+            // For ID tokens (OIDC), include roles in the standard way
+            if (context.tokenType.value == OidcParameterNames.ID_TOKEN) {
+                context.claims.claim("roles", roles)
+            }
+        }
     }
 }
