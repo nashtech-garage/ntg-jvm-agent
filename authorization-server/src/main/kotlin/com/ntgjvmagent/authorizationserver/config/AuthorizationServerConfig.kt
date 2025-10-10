@@ -119,7 +119,7 @@ class AuthorizationServerConfig {
             // Extract roles from authorities (remove ROLE_ prefix for cleaner claims)
             val roles = authorities.map { authority ->
                 authority.authority.removePrefix("ROLE_")
-            }.toSet()
+            }
 
             // Add roles to both access tokens and ID tokens
             if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
