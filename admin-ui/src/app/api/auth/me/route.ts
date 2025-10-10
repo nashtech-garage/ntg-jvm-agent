@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { decodeToken } from '@/app/utils/utils';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = cookies();
     const accessToken = (await cookieStore).get('access_token')?.value;
