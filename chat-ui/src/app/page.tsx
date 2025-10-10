@@ -3,105 +3,140 @@
 import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatBox from './components/ChatBox';
-import SearchResult from './components/SearchResult';
-import { Result } from '@/app/models/result';
-import { SearchResponse } from '@/app/models/search-response';
+import ChatResult from './components/ChatResult';
+import { ChatResponse } from '@/app/models/chat-response';
+import { ChatMessage } from './models/chat-message';
+import { Conversation } from './models/conversation';
+import { toast } from 'sonner';
+import { Constants } from './utils/constant';
 
 export default function Page() {
-  const [sessions, setSessions] = useState<{ id: number; title: string; results: Result[] }[]>([]);
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [userName, setUserName] = useState<string>('');
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch('/api/user')
-      .then((res) => res.json())
-      .then((data) => {
-        setUserName(data?.sub || 'Unknown user');
-      });
+    const fetchAll = async () => {
+      try {
+        const [userInfoRes, conversationsRes] = await Promise.all([
+          fetch('/api/user'),
+          fetch('/api/chat'),
+        ]);
+
+        const [userInfoData, conversationsData] = await Promise.all([
+          userInfoRes.json(),
+          conversationsRes.json(),
+        ]);
+
+        setUserName(userInfoData?.sub || 'Unknown user');
+        setConversations(conversationsData);
+      } catch (error) {
+        toast.error(`Error fetching user information or conversations: ${error}`);
+      }
+    };
+
+    fetchAll();
   }, []);
 
-  const fetchData = async (query: string): Promise<SearchResponse> => {
-    try {
-      // fake API
-      const res = await fetch(`/api/search?q=${query}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch');
-      }
-      const jsonResult = await res.json();
-      return jsonResult;
-    } catch (err) {
-      console.error(err);
-      return {
-        id: Date.now(),
-        title: `Kết quả cho "${query}" - 1`,
-        body: 'Đã có lỗi xảy ra trong quá trình tìm kiếm',
-      };
+  const askQuestion = async (
+    question: string,
+    conversationId: string | null
+  ): Promise<ChatResponse | Error> => {
+    const res = await fetch(`/api/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ question, conversationId: conversationId }),
+    });
+    const jsonResult = await res.json();
+    if (!res.ok) {
+      return new Error(jsonResult.error);
     }
+    return jsonResult;
   };
 
-  const handleSearch = async (q: string) => {
-    const shortTitle = q.split(' ').slice(0, 10).join(' '); // Lấy 10 chữ đầu tiên cho title
-    const { id, body } = await fetchData(q);
+  const handleAsk = async (q: string) => {
+    setIsTyping(true);
+    const question = {
+      id: `${Date.now()}`,
+      content: q,
+      createdAt: new Date().toISOString(),
+      type: 1,
+    };
+    /* Show question in screen immediately */
+    setChatMessages([...chatMessages, question]);
 
-    setSessions((prev) => {
+    /* Call to Orchestrator */
+    const result = await askQuestion(q, activeId);
+
+    setIsTyping(false);
+    if (result instanceof Error) {
+      toast.error(result.message);
+      return;
+    }
+
+    const { conversation, message: answer } = result;
+
+    setConversations((prev: Conversation[]) => {
       if (activeId === null) {
-        // Tạo session mới từ search đầu tiên
-        const newSession = {
-          id: id,
-          title: shortTitle,
-          results: [{ id: id, query: q, answer: body }],
-        };
-        setActiveId(newSession.id);
-        return [newSession, ...prev];
+        // Create new conversation from first chat
+        setActiveId(conversation.id);
+        setChatMessages([...chatMessages, question, answer]);
+        return [conversation, ...prev];
       } else {
-        // Append vào session đang active
-        return prev.map((s) => {
-          if (s.id === activeId) {
-            const updatedTitle = s.results.length === 0 ? shortTitle : s.title; // update title nếu là câu hỏi đầu tiên
-            return {
-              ...s,
-              title: updatedTitle,
-              results: [...s.results, { id: id, query: q, answer: body }],
-            };
-          }
-          return s;
-        });
+        setChatMessages([...chatMessages, question, answer]);
+        return [...prev];
       }
     });
   };
 
-  const removeHistory = (id: number) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+  const removeConversation = async (id: string) => {
+    const res = await fetch(`/api/chat?conversationId=${id}`, {
+      method: 'DELETE',
+    });
+    const jsonResult = await res.json();
+    if (!res.ok) {
+      toast.error(jsonResult.error);
+      return;
+    }
+
+    setConversations((prev) => prev.filter((s) => s.id !== id));
     if (activeId === id) setActiveId(null);
+    setChatMessages([]);
+    toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
+  };
+
+  const setActiveConversation = async (id: string) => {
+    const res = await fetch(`/api/chat?conversationId=${id}`);
+    const jsonResult = await res.json();
+    if (!res.ok) {
+      toast.error(jsonResult.error);
+      return;
+    }
+    setActiveId(id);
+    setChatMessages(jsonResult);
   };
 
   const newChat = () => {
-    const newSession = {
-      id: Date.now(),
-      title: 'New Chat',
-      results: [],
-    };
-    setSessions((prev) => [newSession, ...prev]);
-    setActiveId(newSession.id);
+    setActiveId(null);
+    setChatMessages([]);
   };
-
-  const activeSession = sessions.find((s) => s.id === activeId);
 
   return (
     <div className="flex h-screen">
       <Sidebar
-        history={sessions.map((s) => ({ id: s.id, title: s.title }))}
-        active={activeId}
+        conversations={conversations}
+        activeConversationId={activeId}
         userName={userName}
-        setActive={setActiveId}
-        removeHistory={removeHistory}
+        setActiveConversation={setActiveConversation}
+        removeConversation={removeConversation}
         newChat={newChat}
       />
       <main className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto p-4">
-          <SearchResult results={activeSession?.results ?? []} />
+          <ChatResult results={chatMessages} isTyping={isTyping} />
         </div>
-        <ChatBox onSearch={handleSearch} />
+        <ChatBox onAsk={handleAsk} />
       </main>
     </div>
   );

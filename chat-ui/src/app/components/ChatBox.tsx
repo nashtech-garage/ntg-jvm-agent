@@ -1,35 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
+import TextareaAutosize from 'react-textarea-autosize';
 
 export default function ChatBox({
-  onSearch,
+  onAsk,
 }: Readonly<{
-  onSearch: (q: string) => void;
+  onAsk: (q: string) => void;
 }>) {
   const [input, setInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      onSearch(input.trim());
+      onAsk(input.trim());
       setInput('');
+      textareaRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t">
-      <input
-        type="text"
+    <div className="flex items-end gap-2 border-t p-4 bg-white">
+      <TextareaAutosize
+        ref={textareaRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type your question..."
-        className="flex-1 px-3 py-2 rounded border border-gray-300 focus:outline-none"
+        onKeyDown={handleKeyDown}
+        placeholder="Type your message..."
+        minRows={1}
+        maxRows={8}
+        className="flex-1 resize-none rounded-lg border p-2 outline-none focus:ring focus:ring-blue-300"
       />
-      <button type="submit" className="p-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+      <button
+        onClick={handleSend}
+        disabled={!input.trim()}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+      >
         <Send size={18} />
       </button>
-    </form>
+    </div>
   );
 }

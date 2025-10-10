@@ -2,23 +2,23 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Trash, SquarePen } from 'lucide-react';
-import { HistoryItem } from '@/app/models/history';
+import { Conversation } from '@/app/models/conversation';
 
 interface SidebarProps {
-  history: HistoryItem[];
-  active: number | null;
+  conversations: Conversation[];
+  activeConversationId: string | null;
   userName: string;
-  setActive: (id: number) => void;
-  removeHistory: (id: number) => void;
+  setActiveConversation: (id: string) => void;
+  removeConversation: (id: string) => void;
   newChat: () => void;
 }
 
 export default function Sidebar({
-  history,
-  active,
+  conversations,
+  activeConversationId,
   userName,
-  setActive,
-  removeHistory,
+  setActiveConversation,
+  removeConversation,
   newChat,
 }: Readonly<SidebarProps>) {
   const [collapsed, setCollapsed] = useState(false);
@@ -38,7 +38,7 @@ export default function Sidebar({
       <div className="px-2 mt-2">
         <button
           onClick={newChat}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200"
+          className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200 cursor-pointer"
         >
           <SquarePen size={16} />
           {!collapsed && <span>New Chat</span>}
@@ -47,12 +47,12 @@ export default function Sidebar({
 
       {/* History list */}
       <div className="flex-1 overflow-y-auto space-y-2 mt-4 px-2">
-        {history.map((item) => (
+        {conversations.map((item) => (
           <div
             key={item.id}
-            onClick={() => setActive(item.id)}
+            onClick={() => setActiveConversation(item.id)}
             className={`flex justify-between items-center px-2 py-2 rounded cursor-pointer ${
-              active === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
+              activeConversationId === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
             }`}
           >
             <span className="truncate text-sm">{item.title}</span>
@@ -61,7 +61,7 @@ export default function Sidebar({
                 size={16}
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeHistory(item.id);
+                  removeConversation(item.id);
                 }}
                 className="hover:text-red-400"
               />
@@ -71,8 +71,8 @@ export default function Sidebar({
       </div>
 
       {/* Account info */}
-      <div className="px-2 mt-2">
-        <button className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200">
+      <div className="px-2 mt-7">
+        <button className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200 cursor-pointer">
           {userName}
         </button>
       </div>
