@@ -42,15 +42,15 @@ jobs:
         with:
           path: "./authorization-server/checkstyle-result.xml"
       - name: Run Maven Build Command
-        run: mvn clean install -DskipTests
+        run: mvn clean install
         working-directory: authorization-server
-#      - name: Report Test Results
-#        uses: dorny/test-reporter@v1
-#        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
-#        with:
-#          name: authorization-server-Unit-Test-Results
-#          path: authorization-server/target/surefire-reports/TEST-*.xml
-#          reporter: java-junit
+      - name: Report Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+        with:
+          name: authorization-server-Unit-Test-Results
+          path: authorization-server/target/surefire-reports/TEST-*.xml
+          reporter: java-junit
       - name: SonarCloud Scan
         if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
         uses: SonarSource/sonarqube-scan-action@v6
