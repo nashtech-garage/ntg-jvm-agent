@@ -17,9 +17,12 @@ class AuthorizationServerApplicationIT(
     @Test
     fun `verify Flyway migration applied`() {
         dataSource.connection.use { conn: Connection ->
-            val rs = conn.createStatement().executeQuery("SELECT * FROM users")
-            assert(rs.next()) { "Flyway migration not applied properly!" }
-            println("Flyway migration executed successfully, found user: ${rs.getString("username")}")
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("SELECT * FROM users").use { rs ->
+                    assert(rs.next()) { "Flyway migration not applied properly!" }
+                    println("Flyway migration executed successfully, found user: ${rs.getString("username")}")
+                }
+            }
         }
     }
 
