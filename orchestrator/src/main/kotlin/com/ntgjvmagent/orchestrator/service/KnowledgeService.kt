@@ -4,6 +4,7 @@ import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
+import org.slf4j.LoggerFactory
 import org.springframework.ai.document.Document
 import org.springframework.ai.transformer.splitter.TokenTextSplitter
 import org.springframework.ai.vectorstore.VectorStore
@@ -14,8 +15,10 @@ import org.springframework.web.multipart.MultipartFile
 class KnowledgeService(
     private val vectorStore: VectorStore,
 ) {
+    private val logger = LoggerFactory.getLogger(KnowledgeService::class.java)
+
     fun importDocument(file: MultipartFile): KnowledgeImportingResponseVm {
-        println("Importing document: ${file.originalFilename}, file type: ${file.contentType}")
+        logger.info("Importing document: {}, file type: {}", file.originalFilename, file.contentType)
         val fileName = file.originalFilename ?: file.name
         val fileExtension = fileName.substringAfterLast('.', "").lowercase()
         val contentType = file.contentType
@@ -77,7 +80,7 @@ class KnowledgeService(
     ): Boolean {
         val fileSupportedExtensions =
             arrayOf("txt", "md").filter { ext -> fileExtension == ext }
-        return fileSupportedExtensions.isNotEmpty() || contentType!!.startsWith("text/")
+        return fileSupportedExtensions.isNotEmpty() || contentType?.startsWith("text/") == true
     }
 
     private fun isPDFFile(

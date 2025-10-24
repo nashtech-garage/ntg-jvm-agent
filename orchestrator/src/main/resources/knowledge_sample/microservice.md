@@ -2,7 +2,7 @@
 
 ## 1. Microservices là gì?
 
-**Microservices** (kiến trúc vi dịch vụ này) là một phong cách thiết kế phần mềm trong đó hệ thống được chia nhỏ thành nhiều dịch vụ độc lập.
+**Microservices** (kiến trúc vi dịch vụ) là một phong cách thiết kế phần mềm trong đó hệ thống được chia nhỏ thành nhiều dịch vụ độc lập.
 Mỗi dịch vụ đảm nhiệm một chức năng cụ thể, có thể phát triển, triển khai và mở rộng độc lập với các dịch vụ khác.
 
 Ví dụ:
