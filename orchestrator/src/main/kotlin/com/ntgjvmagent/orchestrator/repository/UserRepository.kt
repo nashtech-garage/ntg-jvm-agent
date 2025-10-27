@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.repository
 
-import com.ntgjvmagent.orchestrator.entity.Role
 import com.ntgjvmagent.orchestrator.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID

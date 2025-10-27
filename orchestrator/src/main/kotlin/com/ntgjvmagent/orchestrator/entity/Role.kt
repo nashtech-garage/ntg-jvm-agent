@@ -18,5 +18,5 @@ class Role(
     @Column(unique = true, nullable = false)
     var name: String,
     @Column(length = 500)
-    var description: String? = null
+    var description: String? = null,
 )

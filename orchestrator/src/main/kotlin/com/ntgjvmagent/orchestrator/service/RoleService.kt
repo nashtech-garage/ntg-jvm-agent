@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.entity.Role
+import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.RoleRepository
 import com.ntgjvmagent.orchestrator.repository.UserRepository
 import com.ntgjvmagent.orchestrator.viewmodel.RoleRequestVm
@@ -19,8 +19,8 @@ class RoleService(
 
     fun createRole(request: RoleRequestVm): RoleResponseVm {
         // ensure no duplicate role name
-        if (roleRepository.existsByName(request.name)) {
-            throw IllegalArgumentException("Role with name '${request.name}' already exists")
+        require(!roleRepository.existsByName(request.name)) {
+            "Role with name '${request.name}' already exists"
         }
 
         val saved = roleRepository.save(Role(name = request.name, description = request.description))
@@ -50,7 +50,10 @@ class RoleService(
     }
 
     @Transactional
-    fun assignRolesToUser(username: String, rolename: String) {
+    fun assignRolesToUser(
+        username: String,
+        rolename: String,
+    ) {
         val user =
             userRepository
                 .findByUsername(username)

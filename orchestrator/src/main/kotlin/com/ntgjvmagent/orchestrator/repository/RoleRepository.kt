@@ -7,5 +7,6 @@ import java.util.UUID
 
 interface RoleRepository : JpaRepository<Role, UUID> {
     fun existsByName(name: String): Boolean
+
     fun findByName(name: String): Role?
 }
