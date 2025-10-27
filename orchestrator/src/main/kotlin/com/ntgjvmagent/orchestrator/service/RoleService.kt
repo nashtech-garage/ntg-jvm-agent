@@ -6,7 +6,6 @@ import com.ntgjvmagent.orchestrator.repository.RoleRepository
 import com.ntgjvmagent.orchestrator.repository.UserRepository
 import com.ntgjvmagent.orchestrator.viewmodel.RoleRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.RoleResponseVm
-import com.ntgjvmagent.orchestrator.viewmodel.UserRoleAssignmentVm
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
