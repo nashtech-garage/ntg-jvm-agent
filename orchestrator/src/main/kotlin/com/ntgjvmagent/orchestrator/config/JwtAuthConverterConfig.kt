@@ -23,6 +23,13 @@ class JwtAuthConverterConfig {
                     else -> emptyList()
                 }
             authorities.addAll(scpScopes.map { SimpleGrantedAuthority("SCOPE_$it") })
+            val roleClaims =
+                when (val roles = jwt.claims["roles"]) {
+                    is String -> roles.split(",").map { it.trim() }.filter(String::isNotBlank)
+                    is Collection<*> -> roles.mapNotNull { it?.toString() }
+                    else -> emptyList()
+                }
+            authorities.addAll(roleClaims.map { SimpleGrantedAuthority("ROLE_$it") })
             // Return authorities
             authorities
         }
@@ -38,6 +45,7 @@ class JwtAuthConverterConfig {
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers("/public/**").permitAll()
+                it.requestMatchers("/api/knowledge").hasRole("ADMIN")
                 it
                     .requestMatchers(
                         HttpMethod.GET,
