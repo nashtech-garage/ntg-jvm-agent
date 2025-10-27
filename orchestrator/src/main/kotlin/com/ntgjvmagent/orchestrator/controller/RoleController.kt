@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.service.RoleService
+import com.ntgjvmagent.orchestrator.viewmodel.AssignRoleRequest
 import com.ntgjvmagent.orchestrator.viewmodel.RoleRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.RoleResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.UserRoleAssignmentVm
@@ -47,10 +48,9 @@ class RoleController(
 
     @PostMapping("/assign")
     fun assignRoles(
-        @RequestParam userId: UUID,
-        @RequestParam roleName: String
+        @RequestBody request: AssignRoleRequest,
     ): ResponseEntity<Void> {
-        roleService.assignRolesToUser(userId, roleName)
+        roleService.assignRolesToUser(request.username, request.rolename)
         return ResponseEntity.noContent().build()
     }
 }
