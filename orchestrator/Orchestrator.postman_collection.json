@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "968e470e-3473-4b97-b6c1-9127111cdf91",
+		"_postman_id": "a4b09b84-7b5b-4fdc-b245-046536b43bac",
 		"name": "Orchestrator",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "3387408"
+		"_exporter_id": "3162504"
 	},
 	"item": [
 		{
@@ -77,6 +77,36 @@
 			"response": []
 		},
 		{
+			"name": "list role",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJhdXRoc2VydmVyLWtleSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ0ZXN0dXNlciIsImF1ZCI6ImRlbW8tY2xpZW50IiwibmJmIjoxNzYxNTUwNzI4LCJzY29wZSI6WyJvcGVuaWQiLCJwcm9maWxlIiwiY2hhdGJvdC5yZWFkIiwiY2hhdGJvdC53cml0ZSJdLCJyb2xlcyI6WyJVU0VSIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMCIsImV4cCI6MTc2MTU1MTAyOCwiaWF0IjoxNzYxNTUwNzI4LCJqdGkiOiI4MjI4N2RkYS1hNjM4LTRkNTMtYjc2Zi1jMTM2MWZhOTQ3ZjAiLCJhdXRob3JpdGllcyI6WyJST0xFX1VTRVIiXX0.3Xtu5EeGEw08rAzZ5nyBLPQP1Hg4YJUhKmVi-_1q6C6_flXjrDX0Oqfu1UG0wvWNdR7zgFVK2P6R3Q1cRlE2tgkQ0ASWgRuh6WJwzUI_mVAk28pioGWJqzvw50SuL_F0QCLG_QptvMkxQJ96T4noYxlis6tUnL48mO10ljBzSDx56n6qQzv1Ox_Gw7Qs3ogC-xQ_vjojZnt4zHiAF76fA9qBf9ERyeeIzR6TekJuDqYRXiEMTktRzTXy-J9Wq8r4CU5V0mDu-As7sRAVpv1pMD2069BPeTJd0upR_Uu4RuafbnXYzHVbEdqWSlMqlreYfvHHSyKi6ZKMO4tojPHoQQ",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/api/roles",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"api",
+						"roles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "list message by conversation",
 			"request": {
 				"auth": {
@@ -134,46 +164,6 @@
 						"api",
 						"conversations",
 						"6dbcafc0-166a-4499-960d-9a98b4615088"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "import knowledge document",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "JWT_TOKEN",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "file",
-							"type": "file",
-							"src": "/C:/Users/DatPhamQuoc/Downloads/ABC_company_policy.txt"
-						}
-					]
-				},
-				"url": {
-					"raw": "http://localhost:9001/api/knowledge",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "9001",
-					"path": [
-						"api",
-						"knowledge"
 					]
 				}
 			},
