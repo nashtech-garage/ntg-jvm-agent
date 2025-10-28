@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
 data class AssignRoleRequest(
-    val username: String,
-    val rolename: String,
+    @field:NotBlank val username: String,
+    @field:NotBlank val rolename: String,
 )

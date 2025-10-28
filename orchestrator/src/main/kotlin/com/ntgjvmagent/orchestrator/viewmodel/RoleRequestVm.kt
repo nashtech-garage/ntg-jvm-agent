@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
 data class RoleRequestVm(
-    val name: String,
+    @field:NotBlank val name: String,
     val description: String?,
 )
