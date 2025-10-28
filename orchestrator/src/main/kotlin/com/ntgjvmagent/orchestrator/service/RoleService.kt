@@ -35,6 +35,10 @@ class RoleService(
             roleRepository
                 .findById(roleId)
                 .orElseThrow { ResourceNotFoundException("Role with id $roleId not found") }
+        // ensure no duplicate role name
+        require(!roleRepository.existsByName(request.name)) {
+            "Role with name '${request.name}' already exists"
+        }
 
         role.name = request.name
         role.description = request.description
@@ -61,19 +65,14 @@ class RoleService(
 
         val roles = roleRepository.findByName(rolename)
 
-        if (roles != null) {
-            user.role = roles
-            userRepository.save(user)
-        } else {
-            throw ResourceNotFoundException("Role with name $rolename not found")
-        }
+        user.role = roles ?: throw ResourceNotFoundException("Role with name $rolename not found")
+        userRepository.save(user)
     }
 
     // Use an explicit function that safely reads the Role id
     private fun Role.toResponseVm(): RoleResponseVm {
-        val roleId = this.id
         return RoleResponseVm(
-            id = roleId,
+            id = this.id,
             name = this.name,
             description = this.description,
         )

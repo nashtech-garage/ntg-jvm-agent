@@ -45,7 +45,7 @@ class RoleController(
 
     @PostMapping("/assign")
     fun assignRoles(
-        @RequestBody request: AssignRoleRequest,
+        @Valid @RequestBody request: AssignRoleRequest,
     ): ResponseEntity<Void> {
         roleService.assignRolesToUser(request.username, request.rolename)
         return ResponseEntity.noContent().build()

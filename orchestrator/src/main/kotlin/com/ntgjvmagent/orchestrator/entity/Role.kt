@@ -1,4 +1,3 @@
-// src/main/kotlin/com/ntgjvmagent/orchestrator/model/UserRole.kt
 package com.ntgjvmagent.orchestrator.entity
 
 import jakarta.persistence.Column

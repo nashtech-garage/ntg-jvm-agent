@@ -1,4 +1,3 @@
-// src/main/kotlin/com/ntgjvmagent/orchestrator/repository/RoleRepository.kt
 package com.ntgjvmagent.orchestrator.repository
 
 import com.ntgjvmagent.orchestrator.entity.Role

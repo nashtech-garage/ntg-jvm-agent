@@ -46,6 +46,7 @@ class JwtAuthConverterConfig {
             .authorizeHttpRequests {
                 it.requestMatchers("/public/**").permitAll()
                 it.requestMatchers("/api/knowledge").hasRole("ADMIN")
+                it.requestMatchers("/api/roles").hasRole("ADMIN")
                 it
                     .requestMatchers(
                         HttpMethod.GET,
