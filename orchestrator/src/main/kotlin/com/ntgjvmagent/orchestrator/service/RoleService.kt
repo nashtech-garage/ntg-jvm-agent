@@ -56,16 +56,19 @@ class RoleService(
     @Transactional
     fun assignRolesToUser(
         username: String,
-        rolename: String,
+        roleNames: List<String>,
     ) {
         val user =
             userRepository
                 .findByUsername(username)
                 ?: throw ResourceNotFoundException("User with username $username not found")
 
-        val roles = roleRepository.findByName(rolename)
+        val roles = roleRepository.findByNameIn(roleNames)
+        if (roles.isEmpty()) {
+            throw ResourceNotFoundException("No roles found for given names: $roleNames")
+        }
 
-        user.role = roles ?: throw ResourceNotFoundException("Role with name $rolename not found")
+        user.userRoles.addAll(roles)
         userRepository.save(user)
     }
 

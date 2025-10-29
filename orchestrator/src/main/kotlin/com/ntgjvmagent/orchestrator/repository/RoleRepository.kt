@@ -8,4 +8,6 @@ interface RoleRepository : JpaRepository<Role, UUID> {
     fun existsByName(name: String): Boolean
 
     fun findByName(name: String): Role?
+
+    fun findByNameIn(names: List<String>): List<Role>
 }
