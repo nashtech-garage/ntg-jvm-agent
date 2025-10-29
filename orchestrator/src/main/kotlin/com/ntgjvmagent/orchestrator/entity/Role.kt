@@ -5,8 +5,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.Table
 import jakarta.persistence.ManyToMany
+import jakarta.persistence.Table
 import java.util.UUID
 
 @Entity
@@ -19,6 +19,6 @@ class Role(
     var name: String,
     @Column(length = 500)
     var description: String? = null,
-    @ManyToMany(mappedBy = "roles")
-    var users: MutableSet<User> = mutableSetOf()
+    @ManyToMany(mappedBy = "userRoles")
+    var users: MutableSet<User> = mutableSetOf(),
 )

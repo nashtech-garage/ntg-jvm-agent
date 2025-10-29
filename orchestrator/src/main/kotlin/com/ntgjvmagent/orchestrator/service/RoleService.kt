@@ -73,11 +73,10 @@ class RoleService(
     }
 
     // Use an explicit function that safely reads the Role id
-    private fun Role.toResponseVm(): RoleResponseVm {
-        return RoleResponseVm(
+    private fun Role.toResponseVm(): RoleResponseVm =
+        RoleResponseVm(
             id = this.id,
             name = this.name,
             description = this.description,
         )
-    }
 }
