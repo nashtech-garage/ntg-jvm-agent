@@ -8,23 +8,23 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 
+@TestConfiguration
+class MockConfig {
+    @Bean
+    fun toolCallbackProvider(): ToolCallbackProvider = mock(ToolCallbackProvider::class.java)
+
+    @Bean
+    fun toolCallingManager(): ToolCallingManager = mock(ToolCallingManager::class.java)
+}
+
 @SpringBootTest(
+    classes = [MockConfig::class],
     properties = [
         "spring.ai.mcp.client.enabled=false",
-        "spring.autoconfigure.exclude=" +
-            "org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration",
+        "spring.autoconfigure.exclude=org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration",
     ],
 )
 class OrchestratorApplicationTests {
-    @TestConfiguration
-    class MockConfig {
-        @Bean
-        fun toolCallbackProvider(): ToolCallbackProvider = mock(ToolCallbackProvider::class.java)
-
-        @Bean
-        fun toolCallingManager(): ToolCallingManager = mock(ToolCallingManager::class.java)
-    }
-
     @Test
     fun contextLoads() {
     }

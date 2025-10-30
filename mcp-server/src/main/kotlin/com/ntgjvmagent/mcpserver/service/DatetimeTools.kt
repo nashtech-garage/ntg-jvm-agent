@@ -16,11 +16,14 @@ class DatetimeTools {
     )
     fun getCurrentDatetime(): ToolResponseMessage.ToolResponse {
         val now = LocalDateTime.now(ZoneOffset.UTC)
-        val formatter = DateTimeFormatter.ofPattern(Constant.FULL_DATETIME_FORMAT)
         return ToolResponseMessage.ToolResponse(
             UUID.randomUUID().toString(),
             "Result of getCurrentDatetime tool",
-            now.format(formatter),
+            now.format(FORMATTER),
         )
+    }
+
+    companion object {
+        private val FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern(Constant.FULL_DATETIME_FORMAT)
     }
 }
