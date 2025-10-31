@@ -5,12 +5,14 @@ import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.prompt.Prompt
+import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.stereotype.Service
 
 @Service
 class ChatModelService(
     private val chatModel: ChatModel,
     private val qaAdvisor: QuestionAnswerAdvisor,
+    private val mcpClientToolCallbackProvider: ToolCallbackProvider,
 ) {
     fun call(message: String): String? {
         val chatClient = ChatClient.builder(chatModel).build()
@@ -18,6 +20,7 @@ class ChatModelService(
             chatClient
                 .prompt()
                 .advisors(qaAdvisor)
+                .toolCallbacks(mcpClientToolCallbackProvider)
                 .user(message)
                 .call()
                 .content()
