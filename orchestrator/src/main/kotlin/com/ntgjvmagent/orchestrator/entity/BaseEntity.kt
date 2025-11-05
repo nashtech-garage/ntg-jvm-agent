@@ -17,7 +17,7 @@ abstract class BaseEntity {
     var id: UUID? = null
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    lateinit var createdAt: ZonedDateTime
+    var createdAt: ZonedDateTime = ZonedDateTime.now()
 
     @Column(name = "updated_at")
     var updatedAt: ZonedDateTime? = null

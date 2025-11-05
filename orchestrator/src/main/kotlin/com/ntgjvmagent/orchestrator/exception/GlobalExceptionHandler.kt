@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.exception
 
 import com.ntgjvmagent.orchestrator.viewmodel.ErrorResponseVm
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -41,6 +42,17 @@ class GlobalExceptionHandler {
                 message = errors.values.toList().toString(),
             )
         return ResponseEntity(error, HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(EntityNotFoundException::class)
+    fun handleNotFound(ex: EntityNotFoundException): ResponseEntity<ErrorResponseVm> {
+        val body =
+            ErrorResponseVm(
+                status = HttpStatus.NOT_FOUND.value(),
+                error = HttpStatus.NOT_FOUND.reasonPhrase,
+                message = ex.message ?: "Resource not found",
+            )
+        return ResponseEntity(body, HttpStatus.NOT_FOUND)
     }
 
     @ExceptionHandler(Exception::class)

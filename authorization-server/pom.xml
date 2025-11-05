@@ -224,6 +224,8 @@
           <schemas>
             <schema>public</schema>
           </schemas>
+          <baselineOnMigrate>true</baselineOnMigrate>
+          <table>flyway_schema_history_auth</table>
           <cleanDisabled>false</cleanDisabled>
         </configuration>
       </plugin>
