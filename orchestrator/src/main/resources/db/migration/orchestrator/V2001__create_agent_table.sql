@@ -1,7 +1,6 @@
 -- ====================================================================
 -- Purpose: Create the agent table to support AI Agent Management
 -- Database: PostgreSQL
--- Author: [Your Name]
 -- ====================================================================
 
 -- === UP Migration ===

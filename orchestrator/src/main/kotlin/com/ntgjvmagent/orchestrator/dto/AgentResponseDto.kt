@@ -1,9 +1,9 @@
-package com.ntgjvmagent.orchestrator.agent.web.dto
+package com.ntgjvmagent.orchestrator.dto
 
 import java.time.LocalDateTime
 import java.util.UUID
 
-data class AgentResponse(
+data class AgentResponseDto(
     val id: UUID,
     val name: String,
     val model: String,

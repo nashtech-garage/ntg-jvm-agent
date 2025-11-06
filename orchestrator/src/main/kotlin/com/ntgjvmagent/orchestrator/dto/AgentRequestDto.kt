@@ -1,6 +1,6 @@
-package com.ntgjvmagent.orchestrator.agent.web.dto
+package com.ntgjvmagent.orchestrator.dto
 
-import com.ntgjvmagent.orchestrator.agent.domain.Agent
+import com.ntgjvmagent.orchestrator.entity.Agent
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Max
@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class AgentRequest(
+data class AgentRequestDto(
     @field:NotBlank(message = "Agent name must not be blank")
     @field:Size(max = 100, message = "Agent name must not exceed 100 characters")
     val name: String,

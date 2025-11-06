@@ -1,16 +1,16 @@
-package com.ntgjvmagent.orchestrator.agent.web.mapper
+package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.agent.domain.Agent
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentRequest
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentResponse
+import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.entity.Agent
 import java.math.BigDecimal
 
 object AgentMapper {
-    fun toEntity(request: AgentRequest): Agent =
+    fun toEntity(request: AgentRequestDto): Agent =
         Agent(
-            name = request.name.trim(),
-            model = request.model.trim(),
-            description = request.description?.trim(),
+            name = request.name,
+            model = request.model,
+            description = request.description,
             temperature = request.temperature.toBigDecimalOrDefault(Agent.DEFAULT_TEMPERATURE),
             maxTokens = request.maxTokens,
             topP = request.topP.toBigDecimalOrDefault(Agent.DEFAULT_TOP_P),
@@ -21,8 +21,8 @@ object AgentMapper {
             settings = request.settings,
         )
 
-    fun toResponse(agent: Agent): AgentResponse =
-        AgentResponse(
+    fun toResponse(agent: Agent): AgentResponseDto =
+        AgentResponseDto(
             id = agent.id!!,
             name = agent.name,
             model = agent.model,

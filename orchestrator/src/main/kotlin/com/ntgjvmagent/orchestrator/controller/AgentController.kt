@@ -1,8 +1,8 @@
-package com.ntgjvmagent.orchestrator.agent.web
+package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.agent.service.AgentService
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentRequest
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentResponse
+import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.service.AgentService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -28,30 +28,30 @@ class AgentController(
     @GetMapping
     @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ADMIN')")
     @Operation(summary = "List all active agents")
-    fun getAllActive(): List<AgentResponse> = service.getAllActive()
+    fun getAllActive(): List<AgentResponseDto> = service.getAllActive()
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ADMIN')")
     @Operation(summary = "Get agent by ID")
     fun getById(
         @PathVariable id: UUID,
-    ): AgentResponse = service.getById(id)
+    ): AgentResponseDto = service.getById(id)
 
     @PostMapping
     @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new agent")
     fun create(
-        @Valid @RequestBody request: AgentRequest,
-    ): AgentResponse = service.create(request)
+        @Valid @RequestBody request: AgentRequestDto,
+    ): AgentResponseDto = service.create(request)
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")
     @Operation(summary = "Update an existing agent")
     fun update(
         @PathVariable id: UUID,
-        @Valid @RequestBody request: AgentRequest,
-    ): AgentResponse = service.update(id, request)
+        @Valid @RequestBody request: AgentRequestDto,
+    ): AgentResponseDto = service.update(id, request)
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")

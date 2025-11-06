@@ -1,10 +1,10 @@
 package com.ntgjvmagent.orchestrator.unit.agent
 
-import com.ntgjvmagent.orchestrator.agent.domain.Agent
-import com.ntgjvmagent.orchestrator.agent.domain.AgentRepository
-import com.ntgjvmagent.orchestrator.agent.service.AgentService
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentRequest
-import com.ntgjvmagent.orchestrator.agent.web.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.entity.Agent
+import com.ntgjvmagent.orchestrator.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.service.AgentService
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -170,7 +170,7 @@ class AgentServiceTest {
     private fun buildRequest(
         name: String = "Test Agent",
         temperature: Double = 0.7,
-    ) = AgentRequest(
+    ) = AgentRequestDto(
         name = name,
         model = "gpt-4o-mini",
         description = "desc",

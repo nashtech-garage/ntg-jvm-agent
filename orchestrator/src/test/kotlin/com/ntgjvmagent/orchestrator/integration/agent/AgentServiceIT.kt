@@ -1,10 +1,10 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.agent.domain.Agent
-import com.ntgjvmagent.orchestrator.agent.domain.AgentRepository
-import com.ntgjvmagent.orchestrator.agent.service.AgentService
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentRequest
+import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.entity.Agent
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.service.AgentService
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -25,7 +25,7 @@ class AgentServiceIT(
     private fun buildRequest(
         name: String = "Agent A",
         active: Boolean = true,
-    ) = AgentRequest(
+    ) = AgentRequestDto(
         name = name,
         model = "gpt-4o-mini",
         description = "integration test agent",

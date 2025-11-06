@@ -1,5 +1,6 @@
-package com.ntgjvmagent.orchestrator.agent.domain
+package com.ntgjvmagent.orchestrator.repository
 
+import com.ntgjvmagent.orchestrator.entity.Agent
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository

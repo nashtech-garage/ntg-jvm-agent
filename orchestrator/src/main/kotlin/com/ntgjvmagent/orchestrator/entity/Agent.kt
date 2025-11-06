@@ -1,6 +1,5 @@
-package com.ntgjvmagent.orchestrator.agent.domain
+package com.ntgjvmagent.orchestrator.entity
 
-import com.ntgjvmagent.orchestrator.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Index

@@ -1,9 +1,9 @@
-package com.ntgjvmagent.orchestrator.agent.service
+package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.agent.domain.AgentRepository
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentRequest
-import com.ntgjvmagent.orchestrator.agent.web.dto.AgentResponse
-import com.ntgjvmagent.orchestrator.agent.web.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,17 +15,17 @@ class AgentService(
     private val repo: AgentRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getAllActive(): List<AgentResponse> = repo.findAllActive().map(AgentMapper::toResponse)
+    fun getAllActive(): List<AgentResponseDto> = repo.findAllActive().map(AgentMapper::toResponse)
 
     @Transactional(readOnly = true)
-    fun getById(id: UUID): AgentResponse =
+    fun getById(id: UUID): AgentResponseDto =
         repo
             .findByIdNotDeleted(id)
             .map(AgentMapper::toResponse)
             .orElseThrow { EntityNotFoundException("Agent not found: $id") }
 
     @Transactional
-    fun create(request: AgentRequest): AgentResponse {
+    fun create(request: AgentRequestDto): AgentResponseDto {
         val entity = AgentMapper.toEntity(request)
         return AgentMapper.toResponse(repo.save(entity))
     }
@@ -33,8 +33,8 @@ class AgentService(
     @Transactional
     fun update(
         id: UUID,
-        request: AgentRequest,
-    ): AgentResponse {
+        request: AgentRequestDto,
+    ): AgentResponseDto {
         val existing =
             repo
                 .findByIdNotDeleted(id)
