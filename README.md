@@ -14,8 +14,12 @@ This project aims to practice building a chatbot in Kotlin
 - Open terminal of your choice, go to ntg-jvm-agent directory, run docker compose up
 
 ### Services
-- PgAdmin: http://localhost:3560/ Account login: admin@ntg.com / admin. Register a server: postgres, port 5432, username admin, password admin. 
+- PgAdmin: http://localhost:3560/ Account login: admin@ntg.com / admin. Register a server: postgres, port 5432, username admin, password admin.
 - The Postgresql server: servername: localhost, port: 5432, username: admin, password: admin
+- Grafana: http://localhost:3030/ Account login: admin / admin. Used to visualize metrics, logs, and traces from Prometheus, Loki, and Tempo.
+- Prometheus: http://localhost:9090/ Used to collect and store metrics.
+- Loki: http://localhost:3100/ Used to collect and store logs.
+- Tempo: http://localhost:3200/ Used to collect and store traces.
 
 ## Contributing
 
@@ -25,4 +29,4 @@ This project aims to practice building a chatbot in Kotlin
 - Propose new features
 - Submit pull requests. If you are new to GitHub, consider to [learn how to contribute to a project through forking](https://docs.github.com/en/get-started/quickstart/contributing-to-projects)
 
-By contributing, you agree that your contributions will be licensed under MIT license. 
+By contributing, you agree that your contributions will be licensed under MIT license.
