@@ -39,6 +39,16 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
         remarkPlugins={[remarkGfm]}
         components={{
           code: CodeComponent,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-yellow-600 hover:underline cursor-pointer"
+            >
+              {children}
+            </a>
+          ),
         }}
       >
         {content}
