@@ -14,16 +14,29 @@ class ChatModelService(
     private val qaAdvisor: QuestionAnswerAdvisor,
     private val mcpClientToolCallbackProvider: ToolCallbackProvider,
 ) {
-    fun call(message: String): String? {
+    fun call(
+        message: String,
+        history: List<String> = emptyList(),
+    ): String? {
+        val combinedPrompt =
+            buildString {
+                history.forEach { item ->
+                    appendLine(item)
+                }
+                appendLine("User: $message")
+            }
+
         val chatClient = ChatClient.builder(chatModel).build()
+
         val response =
             chatClient
                 .prompt()
                 .advisors(qaAdvisor)
                 .toolCallbacks(mcpClientToolCallbackProvider)
-                .user(message)
+                .user(combinedPrompt)
                 .call()
                 .content()
+
         return response
     }
 
@@ -35,6 +48,7 @@ class ChatModelService(
                 "$question"
                 """.trimIndent(),
             )
+
         val response = chatModel.call(prompt)
         return response.result.output.text
     }
