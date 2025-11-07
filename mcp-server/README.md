@@ -1,51 +1,51 @@
-# Hướng dẫn tạo Google API Key và Search Engine ID (CX) cho Custom Search API
+# Guide to Creating a Google API Key and Search Engine ID (CX) for the Custom Search API
 
-## 1️⃣ Tạo Google API Key
+## 1️⃣ Create a Google API Key
 
-### Bước 1: Truy cập Google Cloud Console
-- Truy cập: [https://console.cloud.google.com/](https://console.cloud.google.com/)
-- Đăng nhập bằng tài khoản Google của bạn.
-
----
-
-### Bước 2: Tạo (hoặc chọn) một Project
-1. Ở góc trên cùng, chọn **Select a project** → **New Project**
-2. Nhập tên ví dụ: `customsearch-demo`
-3. Nhấn **Create**
+### Step 1: Go to Google Cloud Console
+- Visit: [https://console.cloud.google.com/](https://console.cloud.google.com/)
+- Sign in with your Google account.
 
 ---
 
-### Bước 3: Bật Custom Search API
-1. Vào menu: **APIs & Services → Library**
-2. Gõ vào ô tìm kiếm: `Custom Search API`
-3. Nhấn **Enable**
+### Step 2: Create (or select) a Project
+1. At the top, click **Select a project** → **New Project**
+2. Enter a name, for example: `customsearch-demo`
+3. Click **Create**
 
 ---
 
-### Bước 4: Tạo API Key
-1. Vào **APIs & Services → Credentials**
-2. Nhấn **Create Credentials → API Key**
-3. Google sẽ hiển thị chuỗi key như:
+### Step 3: Enable the Custom Search API
+1. Go to: **APIs & Services → Library**
+2. In the search box, type: `Custom Search API`
+3. Click **Enable**
+
+---
+
+### Step 4: Create an API Key
+1. Go to **APIs & Services → Credentials**
+2. Click **Create Credentials → API Key**
+3. Google will display an API key string like:
 AIzaSyD4...XYZ
 
-## 2️⃣ Tạo Search Engine ID (CX)
+## 2️⃣ Create a Search Engine ID (CX)
 
-### Bước 1: Truy cập Google Programmable Search Engine
+### Step 1: Go to Google Programmable Search Engine
  [https://programmablesearchengine.google.com/](https://programmablesearchengine.google.com/)
 
 ---
 
-### Bước 2: Tạo Search Engine mới
-1. Nhấn **“Add”** hoặc **“Create a search engine”**
-2. Ở ô **Sites to search**, nhập:
-- `www.google.com` (nếu muốn test nhanh)
-- hoặc `*` nếu muốn cho phép tìm trên toàn web (bật ở bước sau)
-3. Nhấn **Create**
+### Step 2: Create a New Search Engine
+1. Click **“Add”** or **“Create a search engine”**
+2. In the **Sites to search**, enter:
+- `www.google.com` (for quick testing)
+- or `*` if you want to allow searching across the entire web (enable this in the next step).
+3. Click **Create**
 
 ---
 
-### Bước 3: Lấy Search Engine ID
-1. Sau khi tạo xong, vào trang quản lý search engine
-2. Mở **Control Panel → Details**
-3. Ở mục **Search engine ID**, bạn sẽ thấy:
+### Step 3: Get the Search Engine ID
+1. After creating your search engine, go to the management page.
+2. Open **Control Panel → Details**
+3. Under **Search engine ID**, you’ll see something like:
    1234567890abcdefg:abcde12345
