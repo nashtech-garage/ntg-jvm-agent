@@ -40,6 +40,7 @@ class KnowledgeService(
     ): KnowledgeImportingResponseVm {
         val documents = chunkDocuments(fileName, text)
         vectorStore.accept(documents)
+        logger.info("Document imported")
 
         return KnowledgeImportingResponseVm(
             originalFilename = fileName,

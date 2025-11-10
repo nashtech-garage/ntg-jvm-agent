@@ -7,3 +7,49 @@ export function decodeToken(token: string) {
     return null;
   }
 }
+
+export const getFileExtension = (file: File) => {
+  const fileName = file.name;
+  const extension = fileName.substring(fileName.lastIndexOf("."));
+  return extension;
+}
+
+export const allowedExtensionsRegx = /(\.txt|\.md|\.pdf)$/i;
+
+export const checkFileType = (file: File, allowedExtensionsRegex: RegExp = allowedExtensionsRegx): boolean => {
+  const extension = getFileExtension(file);
+  if (!extension) {
+    return false;
+  }
+
+  const allowed = allowedExtensionsRegex.test(extension);
+  return allowed;
+}
+
+const PDFExtension = ".pdf";
+
+/**
+ * PDF format's magic numbers, in base 10.
+ * @see https://en.wikipedia.org/wiki/List_of_file_signatures#cite_ref-36
+*/
+const PDFMagicNumbers = [37, 80, 68, 70, 45];
+
+export const isPDFFile = (file: File): boolean => {
+  const extension = getFileExtension(file);
+  return extension === PDFExtension;
+}
+
+/**
+ * Check if a file is a PDF file by checking file extension and PDF's magic numbers.
+ * @param file the input file
+ * @returns true if file is a PDF file, false otherwise
+ */
+export const isValidPDFFile = async (file: File) => {
+  if (isPDFFile(file)) {
+    const arrayBuffer  = (await file.slice(0, 5).arrayBuffer()); // get first 5 bytes
+    const bytes = new Uint8Array(arrayBuffer);
+    const isPDFHeader = bytes.every((b, i) => PDFMagicNumbers[i] === b);
+    return isPDFHeader;
+  }
+  return false;
+}

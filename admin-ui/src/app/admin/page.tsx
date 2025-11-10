@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { UserInfo } from '@/app/models/token';
+import AddKnowledge from '../components/AddKnowledge';
 
 interface DashboardStats {
   totalUsers: number;
@@ -25,7 +26,8 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <div className="text-sm text-gray-500">Welcome back, {user?.name || user?.email}</div>
       </div>
-
+      {/* Temporary put here for easy to use */}
+      <AddKnowledge />
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow">
