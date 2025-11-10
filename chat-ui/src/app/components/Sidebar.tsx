@@ -93,7 +93,7 @@ export default function Sidebar({
           }`}
         >
           <div className="text-sm flex">
-            Wellcome:
+            Welcome:
             <p className="ml-1 text-green-700">{userName}</p>
           </div>
         </div>
