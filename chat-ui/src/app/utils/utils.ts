@@ -3,9 +3,18 @@ import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/app/models/token';
 import { Constants } from '@/app/utils/constant';
 
+const isServer = typeof window === "undefined";
+export const AUTH_SERVER_URL = isServer
+  ? process.env.AUTH_SERVER_INTERNAL_URL
+  : process.env.NEXT_PUBLIC_AUTH_SERVER;
+
+export const ORCHESTRATOR_URL = isServer
+  ? process.env.ORCHESTRATOR_INTERNAL_URL
+  : process.env.NEXT_PUBLIC_ORCHESTRATOR;
+
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
-    const tokenUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/token`;
+    const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');

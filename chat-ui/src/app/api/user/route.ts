@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/app/utils/utils';
+import { AUTH_SERVER_URL, getAccessToken } from '@/app/utils/utils';
 import { Constants } from '@/app/utils/constant';
 
 export async function GET(req: Request) {
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
+    const res = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

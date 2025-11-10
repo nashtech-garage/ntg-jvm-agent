@@ -1,10 +1,10 @@
-import { setTokenIntoCookie } from '@/app/utils/utils';
+import { AUTH_SERVER_URL, setTokenIntoCookie } from '@/app/utils/utils';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   const { code, redirect_uri } = await req.json();
 
-  const tokenUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/token`;
+  const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
   const clientId = process.env.CLIENT_ID;
   const clientSecret = process.env.CLIENT_SECRET;
 

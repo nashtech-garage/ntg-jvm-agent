@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/app/utils/utils';
+import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/utils';
 import { ChatRequest } from '@/app/models/chat-request';
 import { Constants } from '@/app/utils/constant';
 
-const baseUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/conversations`;
+const baseUrl = `${ORCHESTRATOR_URL}/api/conversations`;
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);
