@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -32,7 +33,9 @@ import java.security.interfaces.RSAPublicKey
 
 @Configuration
 @EnableWebSecurity
-class AuthorizationServerConfig {
+class AuthorizationServerConfig(
+    @Value("\${jwt.issuer}") private val issuer: String
+) {
 
     @Bean
     @Order(1) // Run this filter chain first
@@ -80,6 +83,7 @@ class AuthorizationServerConfig {
     @Bean
     fun authorizationServerSettings(): AuthorizationServerSettings =
         AuthorizationServerSettings.builder()
+            .issuer(issuer)
             .build()
 
     @Bean
