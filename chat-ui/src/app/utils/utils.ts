@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/app/models/token';
 import { Constants } from '@/app/utils/constant';
 
-const isServer = typeof window === "undefined";
+const isServer = typeof window === 'undefined';
 export const AUTH_SERVER_URL = isServer
   ? process.env.AUTH_SERVER_INTERNAL_URL
   : process.env.NEXT_PUBLIC_AUTH_SERVER;
