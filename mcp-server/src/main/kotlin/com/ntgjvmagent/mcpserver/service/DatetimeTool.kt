@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Service
-class DatetimeTools {
+class DatetimeTool {
     @Tool(
         description = "Return current datetime in UTC format",
     )
