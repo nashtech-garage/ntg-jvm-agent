@@ -39,7 +39,7 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
         remarkPlugins={[remarkGfm]}
         components={{
           code: CodeComponent,
-          a: ({ href, children }: { href?: string, children?: React.ReactNode}) => (
+          a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
             <a
               href={href}
               target="_blank"
