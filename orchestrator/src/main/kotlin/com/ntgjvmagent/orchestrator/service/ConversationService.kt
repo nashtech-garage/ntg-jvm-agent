@@ -4,6 +4,7 @@ import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
+import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
@@ -85,7 +86,17 @@ class ConversationService(
                 conversation.createdAt,
             )
 
-        val answer: String? = chatModelService.call(question)
+        val history =
+            messageRepo
+                .listMessageByConversationId(conversationId)
+                .map { ChatMessageMapper.toHistoryFormat(it) }
+
+        val answer: String? =
+            chatModelService.call(
+                message = question,
+                history = history,
+            )
+
         // Only save reply if it has actual reply
         answer?.let {
             val answerMsg =
