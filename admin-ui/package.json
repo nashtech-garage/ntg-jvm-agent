@@ -10,10 +10,13 @@
     "format": "npx prettier --write ."
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.66.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -23,8 +26,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
+    "prettier": "2.7.1",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "prettier": "2.7.1"
+    "typescript": "^5"
   }
 }

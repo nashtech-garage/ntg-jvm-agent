@@ -33,7 +33,7 @@ export default function ChatBox({
   };
 
   return (
-    <div className="flex items-end gap-2 border-t p-4 bg-white">
+    <div className="flex items-end gap-2 p-4 bg-white">
       <TextareaAutosize
         ref={textareaRef}
         value={input}
