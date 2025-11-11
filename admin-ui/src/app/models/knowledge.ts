@@ -1,9 +1,9 @@
 export type KnowledgeInput = {
-    knowledge: FileList
-}
+  knowledge: FileList;
+};
 
 export type KnowledgeResponse = {
-    success: boolean,
-    error?: string,
-    message?: string
-}
+  success: boolean;
+  error?: string;
+  message?: string;
+};
