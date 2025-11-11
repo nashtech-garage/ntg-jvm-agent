@@ -50,6 +50,10 @@ FrontEnd
 ### Services
 - PgAdmin: http://localhost:3560/ Account login: admin@ntg.com / admin. Register a server: postgres, port 5432, username admin, password admin.
 - The Postgresql server: servername: localhost, port: 5432, username: admin, password: admin
+- Grafana: http://localhost:3030/ Account login: admin / admin. Used to visualize metrics, logs, and traces from Prometheus, Loki, and Tempo.
+- Prometheus: http://localhost:9090/ Used to collect and store metrics.
+- Loki: http://localhost:3100/ Used to collect and store logs.
+- Tempo: http://localhost:3200/ Used to collect and store traces.
 
 ## Contributing
 

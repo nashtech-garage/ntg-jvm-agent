@@ -24,6 +24,60 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     networks:
       - ntg-network
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: orchestrator-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    networks:
+      - ntg-network
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: orchestrator-grafana
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - ntg-network
+
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: orchestrator-loki
+    command: [ "-config.file=/etc/loki/local-config.yaml" ]
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - ntg-network
+  tempo:
+    image: grafana/tempo:2.3.0
+    container_name: orchestrator-tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317" # gRPC (OTLP)
+      - "4318:4318" # HTTP (OTLP)
+    volumes:
+      - tempo:/tmp/tempo
+      - ./docker/tempo/tempo-local.yaml:/etc/tempo/config.yaml
+    command: [ "-config.file=/etc/tempo/config.yaml" ]
+    networks:
+      - ntg-network
 
   mcp-server:
     build:
@@ -135,3 +189,7 @@ networks:
 volumes:
   postgres:
   pgadmin:
+  grafana:
+  tempo:
+  prometheus:
+  loki-data:
