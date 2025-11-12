@@ -1,8 +1,5 @@
 package com.ntgjvmagent.orchestrator.entity
 
-import jakarta.persistence.CollectionTable
-import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
@@ -13,23 +10,16 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "users")
-class User(
+class UserEntity(
     @Id
     val username: String,
     val password: String,
     val enabled: Boolean = true,
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-        name = "authorities",
-        joinColumns = [JoinColumn(name = "username")],
-    )
-    @Column(name = "authority")
-    val roles: Set<String> = setOf("ROLE_USER"),
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
         joinColumns = [JoinColumn(name = "username")],
         inverseJoinColumns = [JoinColumn(name = "role_id")],
     )
-    var userRoles: MutableSet<Role> = mutableSetOf(),
+    var userRoles: MutableSet<RoleEntity> = mutableSetOf(),
 )
