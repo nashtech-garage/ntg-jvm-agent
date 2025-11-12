@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { TokenInfo } from '../models/token';
 import { Constants } from './constants';
+import { cookies } from 'next/headers';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
 export function decodeToken(token: string) {
@@ -54,7 +55,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
     });
   }
 
-  // Keep refresh token on server-side using setting httpOnly cookie
+  // Keep refresh token on server-side by setting an httpOnly cookie
   if (tokenInfo.refresh_token) {
     res.cookies.set('refresh_token', tokenInfo.refresh_token, {
       httpOnly: true,
@@ -66,6 +67,22 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
   }
 
   return res;
+}
+
+/**
+ * Get access token from custom header or cookie.
+ *
+ * @param req The inbound request
+ *
+ * @returns A Promise that resolve to an access token string
+ * or undefined if no access token is set.
+ */
+export async function getAccessToken(req: Request): Promise<string | undefined> {
+  const headerToken = req.headers.get('x-access-token');
+  if (headerToken) {
+    return headerToken;
+  }
+  return (await cookies()).get('access_token')?.value;
 }
 
 export const getFileExtension = (file: File) => {
