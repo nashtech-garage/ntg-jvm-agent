@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { decodeToken } from '@/app/utils/utils';
+import { decodeToken, getAccessToken } from '@/app/utils/utils';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const cookieStore = cookies();
-    const accessToken = (await cookieStore).get('access_token')?.value;
+    const accessToken = await getAccessToken(req);
 
     if (!accessToken) {
       return NextResponse.json({ error: 'No access token found' }, { status: 401 });
