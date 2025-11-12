@@ -18,7 +18,7 @@ class SecurityConfig(
 ) {
 
     @Bean
-    @Order(2) // Run this after the AS chain
+    @Order(3) // Run this after the AS chain
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
             // match everything ELSE, excluding SAS endpoints
