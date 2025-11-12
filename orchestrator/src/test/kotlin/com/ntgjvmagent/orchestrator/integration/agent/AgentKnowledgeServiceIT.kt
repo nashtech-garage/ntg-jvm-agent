@@ -27,6 +27,7 @@ class AgentKnowledgeServiceIT
         @BeforeEach
         fun setUp() {
             repo.deleteAll()
+            repo.flush()
             knowledge =
                 repo.save(
                     AgentKnowledge(

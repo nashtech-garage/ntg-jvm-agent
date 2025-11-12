@@ -27,6 +27,7 @@ class AgentToolServiceIT
         @BeforeEach
         fun setUp() {
             repo.deleteAll()
+            repo.flush()
             tool =
                 repo.save(
                     AgentTool(
