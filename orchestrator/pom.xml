@@ -173,6 +173,12 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-vector</artifactId>
+      <version>6.6.33.Final</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>

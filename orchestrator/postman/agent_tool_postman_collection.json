@@ -1,0 +1,142 @@
+{
+  "info": {
+    "name": "Agent Tool API",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Postman collection for managing AI Tools assignable to agents",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:9001"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "tool_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Get All Active Tools",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/tools",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tools"]
+        }
+      }
+    },
+    {
+      "name": "Get Tool By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/tools/{{tool_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tools", "{{tool_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Create Tool",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Example Tool\",\n  \"description\": \"Tool description\",\n  \"type\": \"AI\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/tools",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tools"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if(jsonData.id){",
+              "    pm.collectionVariables.set(\"tool_id\", jsonData.id);",
+              "    console.log(\"Saved tool_id:\", jsonData.id);",
+              "} else {",
+              "    console.warn(\"No id found in response\");",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Tool",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Tool\",\n  \"description\": \"Updated description\",\n  \"type\": \"AI\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/tools/{{tool_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tools", "{{tool_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Tool",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/tools/{{tool_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tools", "{{tool_id}}"]
+        }
+      }
+    }
+  ]
+}

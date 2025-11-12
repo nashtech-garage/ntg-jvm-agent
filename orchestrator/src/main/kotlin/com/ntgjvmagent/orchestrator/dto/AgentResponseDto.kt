@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.dto
 
-import java.time.LocalDateTime
 import java.util.UUID
 
 data class AgentResponseDto(
@@ -16,6 +15,4 @@ data class AgentResponseDto(
     val active: Boolean,
     val provider: String?,
     val settings: Map<String, Any>?,
-    val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime?,
 )

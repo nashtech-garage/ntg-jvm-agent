@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.mapper
 
 import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
-import com.ntgjvmagent.orchestrator.entity.Agent
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import java.math.BigDecimal
 
 object AgentMapper {
@@ -16,10 +16,9 @@ object AgentMapper {
             topP = request.topP.toBigDecimalOrDefault(Agent.DEFAULT_TOP_P),
             frequencyPenalty = request.frequencyPenalty.toBigDecimalOrDefault(Agent.DEFAULT_FREQUENCY_PENALTY),
             presencePenalty = request.presencePenalty.toBigDecimalOrDefault(Agent.DEFAULT_PRESENCE_PENALTY),
-            active = request.active,
             provider = request.provider,
             settings = request.settings,
-        )
+        ).apply { active = request.active }
 
     fun toResponse(agent: Agent): AgentResponseDto =
         AgentResponseDto(
@@ -35,8 +34,6 @@ object AgentMapper {
             active = agent.active,
             provider = agent.provider,
             settings = agent.settings,
-            createdAt = agent.createdAt.toLocalDateTime(),
-            updatedAt = agent.updatedAt?.toLocalDateTime(),
         )
 
     /**

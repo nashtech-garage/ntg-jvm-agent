@@ -1,26 +1,19 @@
-package com.ntgjvmagent.orchestrator.entity
+package com.ntgjvmagent.orchestrator.entity.agent
 
+import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
+import com.ntgjvmagent.orchestrator.entity.base.listener.SoftDeleteListener
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.Index
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
-import java.time.ZonedDateTime
 
 @Entity
-@Table(
-    name = "agent",
-    indexes = [
-        Index(name = "idx_agent_name", columnList = "name"),
-        Index(name = "idx_agent_model", columnList = "model"),
-        Index(name = "idx_agent_provider", columnList = "provider"),
-        Index(name = "idx_agent_active", columnList = "active"),
-        Index(name = "idx_agent_deleted_at", columnList = "deleted_at"),
-    ],
-)
+@Table(name = "agent")
+@EntityListeners(SoftDeleteListener::class)
 data class Agent(
     @Column(nullable = false, length = 100)
     var name: String,
@@ -58,8 +51,6 @@ data class Agent(
      */
     @Column(name = "presence_penalty", nullable = false, precision = 3, scale = 2)
     var presencePenalty: BigDecimal = DEFAULT_PRESENCE_PENALTY,
-    @Column(nullable = false)
-    var active: Boolean = true,
     @Column(length = 50)
     var provider: String? = null, // e.g. "openai", "anthropic", "local"
     @JdbcTypeCode(SqlTypes.JSON)
@@ -68,9 +59,7 @@ data class Agent(
     @Version
     @Column(nullable = false)
     var version: Int = 0,
-    @Column(name = "deleted_at")
-    var deletedAt: ZonedDateTime? = null,
-) : BaseEntity() {
+) : SoftDeletableEntity() {
     companion object {
         /** Default OpenAI-compatible parameter values **/
         val DEFAULT_TEMPERATURE: BigDecimal = BigDecimal("0.7")

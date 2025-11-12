@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "Agent Knowledge API",
+    "_postman_id": "abcd1234-5678-efgh-ijkl-9876543210mn",
+    "description": "Postman collection for AgentKnowledge and KnowledgeChunk management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Agent Knowledge",
+      "item": [
+        {
+          "name": "Get All Active Knowledge",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+            ],
+            "url": {"raw": "{{base_url}}/api/knowledge", "host": ["{{base_url}}"], "path": ["api","knowledge"]}
+          }
+        },
+        {
+          "name": "Get Knowledge By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+            ],
+            "url": {"raw": "{{base_url}}/api/knowledge/{{knowledgeId}}", "host": ["{{base_url}}"], "path": ["api","knowledge","{{knowledgeId}}"]}
+          }
+        },
+        {
+          "name": "Create Knowledge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example Knowledge\",\n  \"sourceType\": \"url\",\n  \"sourceUri\": \"https://example.com\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/knowledge", "host": ["{{base_url}}"], "path": ["api","knowledge"]}
+          }
+        },
+        {
+          "name": "Update Knowledge",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json", "type": "text"},
+              {"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Knowledge\",\n  \"sourceType\": \"pdf\",\n  \"sourceUri\": \"https://example.com/file.pdf\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/api/knowledge/{{knowledgeId}}", "host": ["{{base_url}}"], "path": ["api","knowledge","{{knowledgeId}}"]}
+          }
+        },
+        {
+          "name": "Delete Knowledge",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+            ],
+            "url": {"raw": "{{base_url}}/api/knowledge/{{knowledgeId}}", "host": ["{{base_url}}"], "path": ["api","knowledge","{{knowledgeId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Chunks",
+      "item": [
+        {
+          "name": "List Chunks",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization","value":"Bearer {{access_token}}","type":"text"}],
+            "url": {"raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks","host":["{{base_url}}"],"path":["api","knowledge","{{knowledgeId}}","chunks"]}
+          }
+        },
+        {
+          "name": "Count Chunks",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization","value":"Bearer {{access_token}}","type":"text"}],
+            "url": {"raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks/count","host":["{{base_url}}"],"path":["api","knowledge","{{knowledgeId}}","chunks","count"]}
+          }
+        },
+        {
+          "name": "Create Chunk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type","value":"application/json","type":"text"},
+              {"key": "Authorization","value":"Bearer {{access_token}}","type":"text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Example chunk content\",\n  \"metadata\": {\"source\": \"manual\"}\n}"
+            },
+            "url": {"raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks","host":["{{base_url}}"],"path":["api","knowledge","{{knowledgeId}}","chunks"]}
+          }
+        },
+        {
+          "name": "Update Chunk",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type","value":"application/json","type":"text"},
+              {"key": "Authorization","value":"Bearer {{access_token}}","type":"text"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated chunk content\",\n  \"metadata\": {\"source\": \"manual update\"}\n}"
+            },
+            "url": {"raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks/{{chunkId}}","host":["{{base_url}}"],"path":["api","knowledge","{{knowledgeId}}","chunks","{{chunkId}}"]}
+          }
+        },
+        {
+          "name": "Import File as Chunks",
+          "request": {
+            "method": "POST",
+            "header":[{"key":"Authorization","value":"Bearer {{access_token}}","type":"text"}],
+            "body": {
+              "mode":"formdata",
+              "formdata":[{"key":"file","type":"file","src":""}]
+            },
+            "url":{"raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks/import","host":["{{base_url}}"],"path":["api","knowledge","{{knowledgeId}}","chunks","import"]}
+          }
+        },
+        {
+          "name": "Search Similar Chunks",
+          "request": {
+            "method": "GET",
+            "header":[{"key":"Authorization","value":"Bearer {{access_token}}","type":"text"}],
+            "url": {
+              "raw":"{{base_url}}/api/knowledge/{{knowledgeId}}/chunks/search?query={{query}}&topK={{topK}}",
+              "host":["{{base_url}}"],
+              "path":["api","knowledge","{{knowledgeId}}","chunks","search"],
+              "query":[{"key":"query","value":"{{query}}"},{"key":"topK","value":"{{topK}}"}]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key":"base_url","value":"http://localhost:9001"},
+    {"key":"access_token","value":""},
+    {"key":"knowledgeId","value":""},
+    {"key":"chunkId","value":""},
+    {"key":"query","value":"example search text"},
+    {"key":"topK","value":"5"}
+  ]
+}

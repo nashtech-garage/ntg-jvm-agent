@@ -83,7 +83,7 @@ class ConversationService(
             ConversationResponseVmImpl(
                 conversationId,
                 conversation.title,
-                conversation.createdAt,
+                conversation.createdAt!!,
             )
 
         val history =
@@ -111,7 +111,7 @@ class ConversationService(
                 ChatMessageResponseVmImpl(
                     answerMsgEntity.id ?: UUID.randomUUID(),
                     answerMsgEntity.content,
-                    answerMsgEntity.createdAt,
+                    answerMsgEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
                 ),
             )
