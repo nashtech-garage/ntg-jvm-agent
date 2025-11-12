@@ -17,12 +17,24 @@ class ChatModelService(
     fun call(
         message: String,
         history: List<String> = emptyList(),
+        summary: String,
     ): String? {
         val combinedPrompt =
             buildString {
-                history.forEach { item ->
-                    appendLine(item)
+                if (summary.isNotBlank()) {
+                    appendLine("Conversation summary so far:")
+                    appendLine(summary)
+                    appendLine()
                 }
+
+                if (history.isNotEmpty()) {
+                    appendLine("Chat history:")
+                    history.forEach { item ->
+                        appendLine(item)
+                    }
+                    appendLine()
+                }
+
                 appendLine("User: $message")
             }
 
@@ -51,5 +63,19 @@ class ChatModelService(
 
         val response = chatModel.call(prompt)
         return response.result.output.text
+    }
+
+    fun runPrompt(promptText: String): String? {
+        val prompt = Prompt(promptText)
+        val chatClient = ChatClient.builder(chatModel).build()
+
+        val response =
+            chatClient
+                .prompt(prompt)
+                .advisors(qaAdvisor)
+                .toolCallbacks(mcpClientToolCallbackProvider)
+                .call()
+
+        return response.content()
     }
 }

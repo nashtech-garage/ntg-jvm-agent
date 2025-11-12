@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.entity.ConversationSummaryEntity
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
@@ -14,8 +15,9 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
-import jakarta.transaction.Transactional
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
@@ -23,6 +25,8 @@ class ConversationService(
     private val chatModelService: ChatModelService,
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
+    private val conversationSummaryService: ConversationSummaryService,
+    private val historyLimit: Int = 10,
 ) {
     @Transactional
     fun createConversation(
@@ -45,6 +49,7 @@ class ConversationService(
         this.conversationRepo
             .findById(conversationId)
             .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
         return this.messageRepo.listMessageByConversationId(conversationId)
     }
 
@@ -52,14 +57,29 @@ class ConversationService(
         chatReq: ChatRequestVm,
         username: String,
     ): UUID {
-        val titleSummarize = this.chatModelService.createSummarize(chatReq.question)
+        val titleSummarize = chatModelService.createSummarize(chatReq.question)
+
         val conversation =
             ConversationEntity(
                 title = titleSummarize ?: chatReq.question,
                 username = username,
             )
-        val conversationId: UUID? = this.conversationRepo.save(conversation).id
-        conversationId ?: throw BadRequestException("Can't create new conversation")
+
+        val savedConversation =
+            conversationRepo.save(conversation)
+
+        val conversationId =
+            savedConversation.id
+                ?: throw BadRequestException("Can't create new conversation")
+
+        val initialSummary =
+            ConversationSummaryEntity(
+                conversation = savedConversation,
+                summaryText = "",
+            )
+
+        conversationSummaryService.saveInitialSummary(initialSummary)
+
         return conversationId
     }
 
@@ -67,58 +87,83 @@ class ConversationService(
         conversationId: UUID,
         question: String,
     ): ChatResponseVm {
-        val conversation =
-            this.conversationRepo
-                .findById(conversationId)
-                .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-        // Save question into DB first
-        val questionMsg =
+        val conversation = findConversationOrThrow(conversationId)
+        saveQuestion(conversation, question)
+        val conversationResponse = buildConversationResponse(conversation)
+        val history =
+            messageRepo
+                .findByConversationIdOrderByCreatedAtAsc(conversationId, PageRequest.of(0, historyLimit))
+                .map { ChatMessageMapper.toHistoryFormat(it) }
+        val currentSummary =
+            conversationSummaryService
+                .getSummary(conversationId)
+                .orEmpty()
+        val answer =
+            chatModelService.call(
+                message = question,
+                history = history,
+                summary = currentSummary,
+            )
+
+        return if (answer != null) {
+            saveAnswerAndUpdateSummary(conversation, question, answer, conversationResponse)
+        } else {
+            ChatResponseVm(conversationResponse, null)
+        }
+    }
+
+    private fun findConversationOrThrow(conversationId: UUID) =
+        conversationRepo
+            .findById(conversationId)
+            .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
+    private fun saveQuestion(
+        conversation: ConversationEntity,
+        question: String,
+    ): ChatMessageEntity =
+        messageRepo.save(
             ChatMessageEntity(
                 content = question,
                 conversation = conversation,
                 type = Constant.QUESTION_TYPE,
-            )
-        this.messageRepo.save(questionMsg)
-        val conversationResponse: ConversationResponseVm =
-            ConversationResponseVmImpl(
-                conversationId,
-                conversation.title,
-                conversation.createdAt,
-            )
+            ),
+        )
 
-        val history =
-            messageRepo
-                .listMessageByConversationId(conversationId)
-                .map { ChatMessageMapper.toHistoryFormat(it) }
+    private fun buildConversationResponse(conversation: ConversationEntity) =
+        ConversationResponseVmImpl(
+            conversation.id!!,
+            conversation.title,
+            conversation.createdAt,
+        )
 
-        val answer: String? =
-            chatModelService.call(
-                message = question,
-                history = history,
-            )
-
-        // Only save reply if it has actual reply
-        answer?.let {
-            val answerMsg =
+    private fun saveAnswerAndUpdateSummary(
+        conversation: ConversationEntity,
+        question: String,
+        answer: String,
+        conversationResponse: ConversationResponseVm,
+    ): ChatResponseVm {
+        val answerMsgEntity =
+            messageRepo.save(
                 ChatMessageEntity(
                     content = answer,
                     conversation = conversation,
                     type = Constant.ANSWER_TYPE,
-                )
-            val answerMsgEntity = this.messageRepo.save(answerMsg)
-            return ChatResponseVm(
-                conversationResponse,
-                ChatMessageResponseVmImpl(
-                    answerMsgEntity.id ?: UUID.randomUUID(),
-                    answerMsgEntity.content,
-                    answerMsgEntity.createdAt,
-                    type = Constant.ANSWER_TYPE,
                 ),
             )
-        }
+
+        conversationSummaryService.updateSummary(
+            conversation = conversation,
+            latestMessage = "$question\nAssistant: $answer",
+        )
+
         return ChatResponseVm(
             conversationResponse,
-            null,
+            ChatMessageResponseVmImpl(
+                answerMsgEntity.id ?: UUID.randomUUID(),
+                answerMsgEntity.content,
+                answerMsgEntity.createdAt,
+                type = Constant.ANSWER_TYPE,
+            ),
         )
     }
 
@@ -128,6 +173,7 @@ class ConversationService(
             this.conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
         conversation.isActive = false
         this.conversationRepo.save(conversation)
     }
