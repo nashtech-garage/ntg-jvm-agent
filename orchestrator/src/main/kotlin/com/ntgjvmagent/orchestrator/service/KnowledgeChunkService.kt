@@ -7,7 +7,7 @@ import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.ai.document.Document
 import org.springframework.ai.embedding.EmbeddingModel
-import org.springframework.ai.vectorstore.pgvector.PgVectorStore
+import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +17,7 @@ import java.util.UUID
 class KnowledgeChunkService(
     private val chunkRepo: KnowledgeChunkRepository,
     private val knowledgeRepo: AgentKnowledgeRepository,
-    private val vectorStore: PgVectorStore,
+    private val vectorStore: VectorStore,
     private val embeddingModel: EmbeddingModel,
 ) {
     @Transactional
@@ -51,9 +51,8 @@ class KnowledgeChunkService(
         newMetadata: Map<String, Any>? = null,
     ): KnowledgeChunkResponseDto {
         val chunk =
-            chunkRepo
-                .findById(chunkId)
-                .orElseThrow { IllegalArgumentException("Chunk not found: $chunkId") }
+            chunkRepo.findByIdOrNull(chunkId)
+                ?: throw EntityNotFoundException("Chunk not found: $chunkId")
 
         chunk.content = newContent
         chunk.metadata = newMetadata

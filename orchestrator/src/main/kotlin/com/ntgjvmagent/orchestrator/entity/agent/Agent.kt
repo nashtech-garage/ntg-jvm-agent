@@ -1,10 +1,8 @@
 package com.ntgjvmagent.orchestrator.entity.agent
 
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
-import com.ntgjvmagent.orchestrator.entity.base.listener.SoftDeleteListener
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
@@ -13,7 +11,6 @@ import java.math.BigDecimal
 
 @Entity
 @Table(name = "agent")
-@EntityListeners(SoftDeleteListener::class)
 data class Agent(
     @Column(nullable = false, length = 100)
     var name: String,

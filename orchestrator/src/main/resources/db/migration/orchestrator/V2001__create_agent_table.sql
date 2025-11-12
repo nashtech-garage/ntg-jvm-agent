@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     knowledge_id  UUID NOT NULL,
     content       TEXT NOT NULL,
     metadata      JSONB,
-    embedding     vector(1536),
+    embedding     vector(${spring.ai.vectorstore.pgvector.embedding-dimension}),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT fk_knowledge_chunk_knowledge_id FOREIGN KEY (knowledge_id)
         REFERENCES agent_knowledge(id) ON DELETE CASCADE
