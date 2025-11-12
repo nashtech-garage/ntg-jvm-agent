@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
     if (!accessToken) {
       if (refreshToken) {
-        const tokenInfo = await getRefreshToken(refreshToken.value || '');
+        const tokenInfo = await getRefreshToken(refreshToken.value);
         if (tokenInfo) {
           const res = NextResponse.next();
           /* 

@@ -22,6 +22,12 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     const tokenUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/token`;
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error('Missing required environment variables: CLIENT_ID and/or CLIENT_SECRET');
+      return null;
+    }
+
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const body = new URLSearchParams();
@@ -38,6 +44,8 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     });
 
     if (!res.ok) {
+      const errorBody = await res.text();
+      console.error(`Token refresh failed: HTTP ${res.status} - ${errorBody}`);
       return null;
     }
 
