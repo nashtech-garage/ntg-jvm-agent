@@ -282,7 +282,7 @@
         <artifactId>flyway-maven-plugin</artifactId>
         <version>11.14.0</version>
         <configuration>
-          <url>jdbc:postgresql://localhost:5432/orchestrator</url>
+          <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent</url>
           <user>admin</user>
           <password>admin</password>
           <schemas>
