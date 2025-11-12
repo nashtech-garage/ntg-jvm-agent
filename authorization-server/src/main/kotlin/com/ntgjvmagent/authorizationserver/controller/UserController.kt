@@ -1,0 +1,26 @@
+package com.ntgjvmagent.authorizationserver.controller
+
+import com.ntgjvmagent.authorizationserver.dto.UserPageDto
+import com.ntgjvmagent.authorizationserver.service.UserService
+import com.ntgjvmagent.authorizationserver.utils.Constant
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/api/users")
+class UserController(
+    private val userService: UserService
+) {
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    fun getUsers(
+        @RequestParam(defaultValue = Constant.PAGE_NUMBER, required = false) pageNumber: Int,
+        @RequestParam(defaultValue = Constant.PAGE_SIZE, required = false) pageSize: Int
+    ): ResponseEntity<UserPageDto> {
+        return ResponseEntity.ok(userService.getUsers(pageNumber, pageSize))
+    }
+}

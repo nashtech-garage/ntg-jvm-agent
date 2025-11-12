@@ -3,54 +3,42 @@
 import { useEffect, useState } from 'react';
 
 interface User {
-  id: string;
+  username: string;
+  enabled: boolean;
   name: string;
   email: string;
   roles: string[];
-  status: 'active' | 'inactive';
-  lastLogin?: string;
-  createdAt: string;
+}
+
+interface UserPageResponse {
+  users: User[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  lastPage: boolean;
 }
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Mock users data - replace with actual API call
-        const mockUsers: User[] = [
-          {
-            id: '1',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            roles: ['admin'],
-            status: 'active',
-            lastLogin: '2024-01-15T10:30:00Z',
-            createdAt: '2024-01-01T00:00:00Z',
-          },
-          {
-            id: '2',
-            name: 'Jane Smith',
-            email: 'jane.smith@example.com',
-            roles: ['user'],
-            status: 'active',
-            lastLogin: '2024-01-14T15:45:00Z',
-            createdAt: '2024-01-02T00:00:00Z',
-          },
-          {
-            id: '3',
-            name: 'Bob Johnson',
-            email: 'bob.johnson@example.com',
-            roles: ['user', 'moderator'],
-            status: 'inactive',
-            createdAt: '2024-01-03T00:00:00Z',
-          },
-        ];
-        setUsers(mockUsers);
+        setLoading(true);
+        const response = await fetch(`/api/users?page=${page}&size=10`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+
+        const data: UserPageResponse = await response.json();
+        setUsers(data.users || []);
+        setTotalPages(data.totalPages);
       } catch (error) {
         console.error('Failed to fetch users:', error);
       } finally {
@@ -59,35 +47,21 @@ export default function UserManagement() {
     };
 
     fetchUsers();
-  }, []);
+  }, [page]);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.roles.includes(filterRole);
-    return matchesSearch && matchesRole;
-  });
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const handleStatusToggle = async (userId: string) => {
+  const handleStatusToggle = async (username: string) => {
     // Mock status toggle - replace with actual API call
     setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
-          : user
-      )
+      prev.map((user) => (user.username === username ? { ...user, enabled: !user.enabled } : user))
     );
+  };
+
+  const nextPage = () => {
+    if (page < totalPages - 1) setPage((prev) => prev + 1);
+  };
+
+  const prevPage = () => {
+    if (page > 0) setPage((prev) => prev - 1);
   };
 
   if (loading) {
@@ -155,8 +129,8 @@ export default function UserManagement() {
             </label>
             <select
               id="role-filter"
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
+              // value={filterRole}
+              // onChange={(e) => setFilterRole(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Roles</option>
@@ -175,16 +149,19 @@ export default function UserManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Roles
+                  UserName
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Login
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Roles
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -192,37 +169,23 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+              {users.map((user) => (
+                <tr key={user.username} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       {user.roles.map((role) => (
                         <span
                           key={role}
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            role === 'admin'
+                            role === 'ROLE_ADMIN'
                               ? 'bg-red-100 text-red-800'
-                              : role === 'moderator'
-                              ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {role}
+                          {role.replace('ROLE_', '')}
                         </span>
                       ))}
                     </div>
@@ -230,32 +193,27 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                        user.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {user.status}
+                      {user.enabled ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <td className="px-6 py-4 whitespace-nowrap space-x-2">
                     <button
-                      onClick={() => handleStatusToggle(user.id)}
+                      onClick={() => handleStatusToggle(user.username)}
                       className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        user.status === 'active'
+                        user.enabled
                           ? 'bg-red-100 text-red-700 hover:bg-red-200'
                           : 'bg-green-100 text-green-700 hover:bg-green-200'
                       }`}
                     >
-                      {user.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {user.enabled ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium transition-colors">
+                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                       Edit
                     </button>
-                    <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
+                    <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
                       Delete
                     </button>
                   </td>
@@ -266,11 +224,26 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {filteredUsers.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No users found matching your criteria.</div>
-        </div>
-      )}
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={prevPage}
+          disabled={page === 0}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-200"
+        >
+          Previous
+        </button>
+        <span className="text-sm text-gray-600">
+          Page {page + 1} of {totalPages}
+        </span>
+        <button
+          onClick={nextPage}
+          disabled={page >= totalPages - 1}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded disabled:opacity-50 hover:bg-gray-200"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
