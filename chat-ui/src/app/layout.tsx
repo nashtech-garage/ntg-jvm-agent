@@ -6,7 +6,7 @@ export const metadata = {
   description: 'Next.js app with Chat-style UI',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="h-screen flex">

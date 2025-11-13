@@ -2,28 +2,56 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Trash, SquarePen } from 'lucide-react';
-import { Conversation } from '@/app/models/conversation';
 import { useRouter } from 'next/navigation';
+import { useChatContext } from '../contexts/ChatContext';
+import { toast } from 'sonner';
+import { Constants } from '../utils/constant';
 
-interface SidebarProps {
-  conversations: Conversation[];
-  activeConversationId: string | null;
-  userName: string;
-  setActiveConversation: (id: string) => void;
-  removeConversation: (id: string) => void;
-  newChat: () => void;
-}
-
-export default function Sidebar({
-  conversations,
-  activeConversationId,
-  userName,
-  setActiveConversation,
-  removeConversation,
-  newChat,
-}: Readonly<SidebarProps>) {
+export default function Sidebar() {
+  const {
+    conversations,
+    activeConversationId,
+    userName,
+    setActiveConversationId,
+    setChatMessages,
+    setConversations,
+  } = useChatContext();
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
+
+  const setActiveConversation = async (id: string) => {
+    try {
+      const res = await fetch(`/api/chat?conversationId=${id}`);
+      const jsonResult = await res.json();
+      setChatMessages(jsonResult);
+      setActiveConversationId(id);
+      router.push(`/c/${id}`);
+    } catch (error) {
+      toast.error(`Error fetching conversation: ${error}`);
+    }
+  };
+
+  const removeConversation = async (id: string) => {
+    const res = await fetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
+    const jsonResult = await res.json();
+    if (!res.ok) {
+      toast.error(jsonResult.error);
+      return;
+    }
+
+    setConversations(conversations.filter((s) => s.id !== id));
+    if (activeConversationId === id) {
+      setActiveConversationId(null);
+      router.replace(`/`);
+    }
+    toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
+  };
+
+  const newChat = () => {
+    setActiveConversationId(null);
+    setChatMessages([]);
+    router.replace(`/`);
+  };
 
   const handleLogout = async () => {
     try {
