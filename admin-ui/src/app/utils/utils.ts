@@ -16,7 +16,7 @@ export const AUTH_SERVER_URL = isServer
 export const ORCHESTRATOR_URL = isServer
   ? process.env.ORCHESTRATOR_INTERNAL_URL
   : process.env.NEXT_PUBLIC_ORCHESTRATOR;
-  
+
 export const getFileExtension = (file: File) => {
   const fileName = file.name;
   const extension = fileName.substring(fileName.lastIndexOf('.'));
