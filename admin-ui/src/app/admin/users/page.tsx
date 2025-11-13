@@ -10,7 +10,7 @@ interface User {
   roles: string[];
 }
 
-interface UserPageResponse {
+interface UserPageDto {
   users: User[];
   pageNumber: number;
   pageSize: number;
@@ -36,7 +36,7 @@ export default function UserManagement() {
           throw new Error('Failed to fetch users');
         }
 
-        const data: UserPageResponse = await response.json();
+        const data: UserPageDto = await response.json();
         setUsers(data.users || []);
         setTotalPages(data.totalPages);
       } catch (error) {
@@ -152,9 +152,6 @@ export default function UserManagement() {
                   UserName
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -162,6 +159,9 @@ export default function UserManagement() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Roles
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions

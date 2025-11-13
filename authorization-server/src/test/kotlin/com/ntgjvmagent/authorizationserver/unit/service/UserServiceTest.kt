@@ -2,7 +2,7 @@ package com.ntgjvmagent.authorizationserver.unit.service
 
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
-import com.ntgjvmagent.authorizationserver.service.UserService
+import com.ntgjvmagent.authorizationserver.service.impl.UserServiceImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,7 +23,7 @@ class UserServiceTest {
     private lateinit var userRepository: UserRepository
 
     @InjectMocks
-    private lateinit var userService: UserService
+    private lateinit var userService: UserServiceImpl
 
     @Test
     fun `getUsers return paginated users`() {
