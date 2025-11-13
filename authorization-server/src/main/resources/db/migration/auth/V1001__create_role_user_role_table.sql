@@ -1,4 +1,4 @@
----- Enable pgcrypto extension for gen_random_uuid()
+-- Enable pgcrypto extension for gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS roles (
