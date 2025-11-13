@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.repository
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
-import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -12,16 +11,14 @@ import java.util.UUID
 interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
     @Query(
 """
-        SELECT m.id AS id,
-               m.content AS content,
-               m.createdAt AS createdAt,
-               m.type AS type
+        SELECT m
         FROM ChatMessageEntity m
+        LEFT JOIN FETCH m.messageMedias
         WHERE m.conversation.id = :conversationId
         ORDER BY m.createdAt ASC
     """,
     )
     fun listMessageByConversationId(
         @Param("conversationId") conversationId: UUID,
-    ): List<ChatMessageResponseVm>
+    ): List<ChatMessageEntity>
 }

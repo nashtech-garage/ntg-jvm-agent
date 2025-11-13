@@ -7,6 +7,7 @@ import { ChatResponse } from '@/app/models/chat-response';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
+import { FileSelectInfo } from '../models/file-select-info';
 
 export default function Page() {
   const {
@@ -21,11 +22,23 @@ export default function Page() {
 
   const askQuestion = async (
     question: string,
-    conversationId: string | null
+    conversationId: string | null,
+    files: FileSelectInfo[]
   ): Promise<ChatResponse | Error> => {
+    const formData = new FormData();
+    formData.append('question', question);
+    if (conversationId) {
+      formData.append('conversationId', conversationId);
+    }
+    if (files && files.length) {
+      for (const file of files) {
+        formData.append('files', file.file);
+      }
+    }
+
     const res = await fetch(`/api/chat`, {
       method: 'POST',
-      body: JSON.stringify({ question, conversationId: conversationId }),
+      body: formData,
     });
     const jsonResult = await res.json();
     if (!res.ok) {
@@ -34,11 +47,16 @@ export default function Page() {
     return jsonResult;
   };
 
-  const handleAsk = async (q: string) => {
+  const handleAsk = async (q: string, files: FileSelectInfo[]) => {
     setIsTyping(true);
     const question = {
       id: `${Date.now()}`,
       content: q,
+      medias: files.map((f) => ({
+        contentType: f.file.type,
+        data: f.url,
+        fileName: f.file.name,
+      })),
       createdAt: new Date().toISOString(),
       type: 1,
     };
@@ -46,7 +64,7 @@ export default function Page() {
     setChatMessages([...chatMessages, question]);
 
     /* Call to Orchestrator */
-    const result = await askQuestion(q, activeConversationId);
+    const result = await askQuestion(q, activeConversationId, files);
 
     setIsTyping(false);
     if (result instanceof Error) {

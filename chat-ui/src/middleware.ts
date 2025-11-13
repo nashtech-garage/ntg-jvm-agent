@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { setTokenIntoCookie, getRefreshToken } from './app/utils/utils';
+import { setTokenIntoCookie, getRefreshToken } from './app/utils/server-utils';
 
 export async function middleware(req: NextRequest) {
   const hasAuthToken = req.cookies.get('access_token') || req.cookies.get('refresh_token');

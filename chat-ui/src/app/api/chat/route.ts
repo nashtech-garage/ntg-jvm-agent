@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/utils';
+import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
 import { ChatRequest } from '@/app/models/chat-request';
 import { Constants } from '@/app/utils/constant';
 
@@ -43,14 +43,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    const chatRequest: ChatRequest = await req.json();
+    const formData = await req.formData();
     const res = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(chatRequest),
+      body: formData,
     });
 
     const jsonResult = await res.json();

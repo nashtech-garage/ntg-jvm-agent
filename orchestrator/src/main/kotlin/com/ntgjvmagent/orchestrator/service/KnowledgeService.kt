@@ -39,7 +39,7 @@ class KnowledgeService(
         text: String,
     ): KnowledgeImportingResponseVm {
         val documents = chunkDocuments(fileName, text)
-        vectorStore.accept(documents)
+        vectorStore.add(documents)
         logger.info("Document imported: {}, segments: {}", fileName, documents.size)
 
         return KnowledgeImportingResponseVm(

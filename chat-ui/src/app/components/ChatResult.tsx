@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef } from 'react';
 import { ChatMessage } from '../models/chat-message';
 import RichTextPresenter from './RichTextPresenter';
@@ -30,8 +32,19 @@ export default function ChatResult({
         <div key={r.id} className="">
           {Constants.QUESTION_TYPE === r.type && (
             <div className="flex justify-end">
-              <div className="inline-flex bg-gray-100 text-blue-500 p-1 rounded-lg max-w-[75%]">
+              <div className="flex flex-col inline-flex bg-gray-100 text-blue-500 p-1 rounded-lg max-w-[75%]">
                 <p className="font-medium">{r.content}</p>
+                <div className="mt-5">
+                  {r.medias &&
+                    r.medias.map((media) => (
+                      <img
+                        key={media.fileName}
+                        src={media.data}
+                        alt={media.fileName}
+                        className="mb-3 max-h-40 rounded-md w-[200px] h-[200px]"
+                      />
+                    ))}
+                </div>
               </div>
             </div>
           )}
