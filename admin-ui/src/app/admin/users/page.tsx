@@ -249,12 +249,6 @@ export default function UserManagement() {
           Next
         </button>
       </div>
-
-      {filteredUsers.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No users found matching your criteria.</div>
-        </div>
-      )}
     </div>
   );
 }
