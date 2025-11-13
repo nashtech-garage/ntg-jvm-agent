@@ -49,7 +49,11 @@ class KnowledgeImportServiceIT
 
         @Test
         fun `importDocument should save txt file chunks to DB`() {
-            val content = "This is a simple text document for testing."
+            val content =
+                "This is a test document for chunking. " +
+                    "It should produce multiple chunks when the chunk size is small.\n" +
+                    "We are testing whether the chunker splits text correctly based on the chunk size property.\n" +
+                    "Each sentence should ideally appear in a separate chunk to verify the correctness."
             val file =
                 MockMultipartFile(
                     "file",
@@ -58,16 +62,21 @@ class KnowledgeImportServiceIT
                     content.toByteArray(StandardCharsets.UTF_8),
                 )
 
-            val response: KnowledgeImportingResponseVm =
-                service.importDocument(knowledge.id!!, file)
+            val response: KnowledgeImportingResponseVm = service.importDocument(knowledge.id!!, file)
 
             assertEquals("test.txt", response.originalFilename)
-            assertTrue(response.numberOfSegment > 0)
+            assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for test.txt")
 
             // Verify chunks saved in DB
-            val savedChunks = chunkRepo.findAllByKnowledgeId(knowledge.id!!)
+            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
             assertEquals(response.numberOfSegment, savedChunks.size)
-            assertTrue(savedChunks.any { it.content.contains("simple text") })
+            assertTrue(savedChunks.any { it.content.contains("It should produce multiple chunks") })
+
+            // Verify chunk_order sequence
+            val firstOrder = savedChunks.minOf { it.chunkOrder }
+            savedChunks.forEachIndexed { index, chunk ->
+                assertEquals(firstOrder + index, chunk.chunkOrder)
+            }
         }
 
         @Test
@@ -82,7 +91,7 @@ class KnowledgeImportServiceIT
                     contentStream.beginText()
                     contentStream.setFont(PDType1Font.HELVETICA, 12f)
                     contentStream.newLineAtOffset(100f, 700f)
-                    contentStream.showText("PDF test content")
+                    contentStream.showText("PDF test content for chunking.")
                     contentStream.endText()
                     contentStream.close()
                     document.save(out)
@@ -101,24 +110,40 @@ class KnowledgeImportServiceIT
             val response = service.importDocument(knowledge.id!!, file)
 
             assertEquals("test.pdf", response.originalFilename)
-            assertTrue(response.numberOfSegment > 0)
+            assertTrue(response.numberOfSegment > 0, "Expected at least one chunk for PDF")
 
             // Verify chunks saved in DB
-            val savedChunks = chunkRepo.findAllByKnowledgeId(knowledge.id!!)
+            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
             assertEquals(response.numberOfSegment, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("PDF test content") })
+
+            // Verify chunk_order sequence
+            val firstOrder = savedChunks.minOf { it.chunkOrder }
+            savedChunks.forEachIndexed { index, chunk ->
+                assertEquals(firstOrder + index, chunk.chunkOrder)
+            }
         }
 
         @Test
-        fun `importText should save chunks to DB`() {
-            val text = "Some sample text for direct importText."
-            val response = service.importText(knowledge.id!!, "sample.txt", text)
+        fun `importDocument should handle unknown file extension using default profile`() {
+            val content = "This is a test file with an unknown extension to trigger default profile."
+            val file =
+                MockMultipartFile(
+                    "file",
+                    "unknown.xyz",
+                    "text/plain",
+                    content.toByteArray(StandardCharsets.UTF_8),
+                )
 
-            assertEquals("sample.txt", response.originalFilename)
-            assertTrue(response.numberOfSegment > 0)
+            val response = service.importDocument(knowledge.id!!, file)
 
-            val savedChunks = chunkRepo.findAllByKnowledgeId(knowledge.id!!)
-            assertEquals(response.numberOfSegment, savedChunks.size)
-            assertTrue(savedChunks.any { it.content.contains("sample text") })
+            assertEquals("unknown.xyz", response.originalFilename)
+            assertTrue(response.numberOfSegment >= 1)
+
+            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
+            val firstOrder = savedChunks.minOf { it.chunkOrder }
+            savedChunks.forEachIndexed { index, chunk ->
+                assertEquals(firstOrder + index, chunk.chunkOrder)
+            }
         }
     }

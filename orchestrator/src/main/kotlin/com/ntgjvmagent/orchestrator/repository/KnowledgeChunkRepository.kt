@@ -10,6 +10,8 @@ import java.util.UUID
 interface KnowledgeChunkRepository : JpaRepository<KnowledgeChunk, UUID> {
     fun findAllByKnowledgeId(knowledgeId: UUID): List<KnowledgeChunk>
 
+    fun findAllByKnowledgeIdOrderByChunkOrderAsc(knowledgeId: UUID): List<KnowledgeChunk>
+
     fun countByKnowledgeId(knowledgeId: UUID): Long
 
     /**
@@ -23,4 +25,7 @@ interface KnowledgeChunkRepository : JpaRepository<KnowledgeChunk, UUID> {
     """,
     )
     fun findAllKnowledgeIdsActive(): List<UUID>
+
+    @Query("SELECT MAX(c.chunkOrder) FROM KnowledgeChunk c WHERE c.knowledge.id = :knowledgeId")
+    fun findMaxChunkOrderByKnowledgeId(knowledgeId: UUID): Int?
 }

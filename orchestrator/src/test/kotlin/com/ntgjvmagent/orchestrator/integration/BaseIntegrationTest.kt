@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
@@ -33,6 +34,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Container spins up once per class
 @ContextConfiguration(initializers = [PostgresTestContainer.Initializer::class])
 @Tag("integration")
+@ActiveProfiles("test")
 abstract class BaseIntegrationTest {
     @Autowired
     protected lateinit var mockMvc: MockMvc

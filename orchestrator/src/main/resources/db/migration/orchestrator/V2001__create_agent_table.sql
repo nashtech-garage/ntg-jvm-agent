@@ -116,17 +116,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_not_deleted ON agent_k
 CREATE TABLE IF NOT EXISTS knowledge_chunk (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     knowledge_id  UUID NOT NULL,
+    chunk_order   INTEGER NOT NULL,
     content       TEXT NOT NULL,
     metadata      JSONB,
     embedding     vector(${spring.ai.vectorstore.pgvector.embedding-dimension}),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT fk_knowledge_chunk_knowledge_id FOREIGN KEY (knowledge_id)
-        REFERENCES agent_knowledge(id) ON DELETE CASCADE
+        REFERENCES agent_knowledge(id) ON DELETE CASCADE,
+    CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)
 );
 
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding
   ON knowledge_chunk USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_knowledge_id ON knowledge_chunk (knowledge_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_order ON knowledge_chunk (knowledge_id, chunk_order);
 CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata jsonb_ops);
 
 -- =======================

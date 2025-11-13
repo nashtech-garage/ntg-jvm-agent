@@ -1,16 +1,24 @@
 package com.ntgjvmagent.orchestrator.unit.agent
 
+import com.ntgjvmagent.orchestrator.chunking.ChunkerProfileDetector
+import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
+import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
+import com.ntgjvmagent.orchestrator.config.ChunkerProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
-import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.pdmodel.PDPageContentStream
+import org.apache.pdfbox.pdmodel.font.PDType1Font
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockMultipartFile
+import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -18,15 +26,66 @@ import kotlin.test.assertFailsWith
 
 class KnowledgeImportServiceTest {
     private lateinit var chunkService: KnowledgeChunkService
+    private lateinit var documentChunker: DocumentChunker
     private lateinit var service: KnowledgeImportService
 
     @BeforeEach
     fun setUp() {
         chunkService = mockk()
-        service = KnowledgeImportService(chunkService)
 
-        // Mock addChunk to return dummy KnowledgeChunkResponseDto
-        every { chunkService.addChunk(any(), any(), any()) } answers {
+        // DocumentChunker with small chunk sizes for deterministic multi-chunk output
+        val chunkerProperties =
+            ChunkerProperties().apply {
+                profiles["default"] =
+                    ChunkerProperties.ChunkerProfile().apply {
+                        chunkSize = 50
+                        minChunkSizeChars = 10
+                        minChunkLengthToEmbed = 5
+                        maxNumChunks = 100
+                        keepSeparator = true
+                    }
+                profiles["markdown"] =
+                    ChunkerProperties.ChunkerProfile().apply {
+                        chunkSize = 50
+                        minChunkSizeChars = 10
+                        minChunkLengthToEmbed = 5
+                        maxNumChunks = 100
+                        keepSeparator = true
+                    }
+                profiles["loose"] =
+                    ChunkerProperties.ChunkerProfile().apply {
+                        chunkSize = 50
+                        minChunkSizeChars = 10
+                        minChunkLengthToEmbed = 5
+                        maxNumChunks = 100
+                        keepSeparator = true
+                    }
+                profiles["tight"] =
+                    ChunkerProperties.ChunkerProfile().apply {
+                        chunkSize = 30
+                        minChunkSizeChars = 10
+                        minChunkLengthToEmbed = 5
+                        maxNumChunks = 200
+                        keepSeparator = true
+                    }
+                profiles["code"] =
+                    ChunkerProperties.ChunkerProfile().apply {
+                        chunkSize = 50
+                        minChunkSizeChars = 10
+                        minChunkLengthToEmbed = 5
+                        maxNumChunks = 500
+                        keepSeparator = true
+                    }
+            }
+        val textExtractor = DocumentTextExtractor()
+        val profileDetector = ChunkerProfileDetector()
+        documentChunker = DocumentChunker(chunkerProperties, textExtractor, profileDetector)
+
+        service = KnowledgeImportService(chunkService, documentChunker)
+
+        // Mock chunkService methods
+        every { chunkService.getNextChunkOrderForKnowledge(any()) } returns 0
+        every { chunkService.addChunk(any(), any(), any(), any()) } answers {
             KnowledgeChunkResponseDto(
                 id = UUID.randomUUID(),
                 content = secondArg(),
@@ -37,7 +96,7 @@ class KnowledgeImportServiceTest {
 
     @Test
     fun `importDocument should process txt file correctly`() {
-        val content = "This is a test document content."
+        val content = (1..20).joinToString(" ") { "Sentence $it" } // deterministic multi-chunk text
         val file =
             MockMultipartFile(
                 "file",
@@ -46,16 +105,15 @@ class KnowledgeImportServiceTest {
                 content.toByteArray(StandardCharsets.UTF_8),
             )
 
-        val response: KnowledgeImportingResponseVm =
-            service.importDocument(UUID.randomUUID(), file)
+        val response = service.importDocument(UUID.randomUUID(), file)
 
         assertEquals("test.txt", response.originalFilename)
-        assertEquals(1, response.numberOfSegment)
+        assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for txt file")
     }
 
     @Test
     fun `importDocument should process md file correctly`() {
-        val content = "# Markdown Title\nSome text here."
+        val content = (1..20).joinToString(" ") { "# Heading $it Some markdown text." }
         val file =
             MockMultipartFile(
                 "file",
@@ -67,24 +125,7 @@ class KnowledgeImportServiceTest {
         val response = service.importDocument(UUID.randomUUID(), file)
 
         assertEquals("test.md", response.originalFilename)
-        assertEquals(1, response.numberOfSegment)
-    }
-
-    @Test
-    fun `importDocument should throw BadRequestException for unsupported file`() {
-        val file =
-            MockMultipartFile(
-                "file",
-                "unsupported.exe",
-                "application/octet-stream",
-                byteArrayOf(0x00),
-            )
-
-        val exception =
-            assertFailsWith<BadRequestException> {
-                service.importDocument(UUID.randomUUID(), file)
-            }
-        assert(exception.message!!.contains("Only support"))
+        assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for md file")
     }
 
     @Test
@@ -105,18 +146,24 @@ class KnowledgeImportServiceTest {
     }
 
     @Test
-    fun `importText should create chunks and return response`() {
-        val text = "Some sample text for direct importText."
-        val response = service.importText(UUID.randomUUID(), "sample.txt", text)
-
-        assertEquals("sample.txt", response.originalFilename)
-        assertEquals(1, response.numberOfSegment)
-    }
-
-    @Test
     fun `importDocument should process pdf file correctly`() {
-        // Arrange
-        val pdfBytes = ByteArray(10) { 0 }
+        val pdfBytes =
+            ByteArrayOutputStream().use { out ->
+                val document = PDDocument()
+                val page = PDPage()
+                document.addPage(page)
+                val contentStream = PDPageContentStream(document, page)
+                contentStream.beginText()
+                contentStream.setFont(PDType1Font.HELVETICA, 12f)
+                contentStream.newLineAtOffset(100f, 700f)
+                contentStream.showText("PDF test content for chunking with multiple lines.")
+                contentStream.endText()
+                contentStream.close()
+                document.save(out)
+                document.close()
+                out.toByteArray()
+            }
+
         val file =
             MockMultipartFile(
                 "file",
@@ -125,21 +172,9 @@ class KnowledgeImportServiceTest {
                 pdfBytes,
             )
 
-        val serviceSpy = spyk(service, recordPrivateCalls = true)
+        val response = service.importDocument(UUID.randomUUID(), file)
 
-        // Mock the private method extractTextFromPdf(file)
-        every { serviceSpy invoke "extractTextFromPdf" withArguments listOf(file) } returns "Hello PDF text content"
-
-        // Mock addChunk()
-        every {
-            chunkService.addChunk(any(), any(), any())
-        } returns KnowledgeChunkResponseDto(UUID.randomUUID(), "Chunk 1", mapOf("source" to "test.pdf"))
-
-        // Act
-        val response = serviceSpy.importDocument(UUID.randomUUID(), file)
-
-        // Assert
         assertEquals("test.pdf", response.originalFilename)
-        assertEquals(1, response.numberOfSegment)
+        assertTrue(response.numberOfSegment >= 1, "Expected at least one chunk for PDF")
     }
 }

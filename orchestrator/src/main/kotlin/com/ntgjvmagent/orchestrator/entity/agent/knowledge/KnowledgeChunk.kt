@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 import java.util.UUID
 
+@Suppress("LongParameterList")
 @Entity
 @Table(name = "knowledge_chunk")
 class KnowledgeChunk(
@@ -25,6 +26,8 @@ class KnowledgeChunk(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "knowledge_id", nullable = false)
     var knowledge: AgentKnowledge,
+    @Column(name = "chunk_order", nullable = false)
+    val chunkOrder: Int = 0,
     @Column(nullable = false, columnDefinition = "TEXT")
     var content: String,
     @JdbcTypeCode(SqlTypes.JSON)

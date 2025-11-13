@@ -12,6 +12,7 @@ import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
@@ -38,7 +39,10 @@ class KnowledgeChunkControllerIT
             chunkRepo.deleteAllInBatch()
             knowledgeRepo.deleteAllInBatch()
 
-            knowledge = knowledgeRepo.save(AgentKnowledge(name = "K1").apply { active = true })
+            knowledge =
+                knowledgeRepo.save(
+                    AgentKnowledge(name = "K1").apply { active = true },
+                )
         }
 
         private fun createKnowledgeChunkRequest(content: String = "Test content") =
@@ -49,14 +53,13 @@ class KnowledgeChunkControllerIT
 
         @Test
         fun `createChunk endpoint should return 201 and persist embedding`() {
-            val request = KnowledgeChunkRequestDto("Test chunk", emptyMap())
+            val request = createKnowledgeChunkRequest("Test chunk")
 
             mockMvc
                 .perform(
                     postAuth("/api/knowledge/${knowledge.id}/chunks", request, roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isCreated)
 
-            // Verify that the chunk was persisted
             val persisted = chunkRepo.findAll()
             assertEquals(1, persisted.size)
             assertEquals("Test chunk", persisted[0].content)
@@ -79,7 +82,6 @@ class KnowledgeChunkControllerIT
 
             // ------------------ CREATE CHUNK ------------------
             val createReq = createKnowledgeChunkRequest("Hello World")
-
             val chunkId =
                 mockMvc
                     .perform(
@@ -93,7 +95,6 @@ class KnowledgeChunkControllerIT
 
             // ------------------ UPDATE CHUNK ------------------
             val updateReq = createKnowledgeChunkRequest("Updated content")
-
             mockMvc
                 .perform(
                     putAuth("/api/knowledge/$knowledgeId/chunks/$chunkId", updateReq, roles = listOf("ROLE_ADMIN")),
@@ -113,20 +114,35 @@ class KnowledgeChunkControllerIT
                 .andExpect(content().string("1"))
 
             // ------------------ IMPORT TXT FILE ------------------
+            val longTxtContent =
+                buildString {
+                    repeat(10) { append("This is sentence $it for testing chunking. ") }
+                }
             val txtFile =
                 MockMultipartFile(
                     "file",
                     "test.txt",
                     MediaType.TEXT_PLAIN_VALUE,
-                    "This is a simple text file for testing import.".toByteArray(),
+                    longTxtContent.toByteArray(),
                 )
 
-            mockMvc
-                .perform(
-                    multipartAuth("/api/knowledge/$knowledgeId/chunks/import", txtFile, roles = listOf("ROLE_ADMIN")),
-                ).andExpect(status().isCreated)
-                .andExpect(jsonPath("$.originalFilename").value("test.txt"))
-                .andExpect(jsonPath("$.numberOfSegment").isNumber)
+            val txtResponse =
+                mockMvc
+                    .perform(
+                        multipartAuth(
+                            "/api/knowledge/$knowledgeId/chunks/import",
+                            txtFile,
+                            roles = listOf("ROLE_ADMIN"),
+                        ),
+                    ).andExpect(status().isCreated)
+                    .andExpect(jsonPath("$.originalFilename").value("test.txt"))
+                    .andExpect(jsonPath("$.numberOfSegment").isNumber)
+                    .andReturn()
+                    .response
+
+            val txtChunksCount =
+                objectMapper.readTree(txtResponse.contentAsString).get("numberOfSegment").asInt()
+            assertTrue(txtChunksCount >= 1, "Expected at least one chunk for txt")
 
             // ------------------ IMPORT PDF FILE ------------------
             val pdfBytes =
@@ -138,7 +154,8 @@ class KnowledgeChunkControllerIT
                             cs.beginText()
                             cs.setFont(PDType1Font.HELVETICA, 12f)
                             cs.newLineAtOffset(50f, 700f)
-                            cs.showText("PDF test content for multiple chunks")
+                            // Repeat text to generate multiple chunks
+                            repeat(10) { cs.showText("PDF test content sentence $it. ") }
                             cs.endText()
                         }
                         doc.save(out)
@@ -154,7 +171,7 @@ class KnowledgeChunkControllerIT
                     pdfBytes,
                 )
 
-            val pdfImportResult =
+            val pdfResponse =
                 mockMvc
                     .perform(
                         multipartAuth(
@@ -167,10 +184,10 @@ class KnowledgeChunkControllerIT
                     .andExpect(jsonPath("$.numberOfSegment").isNumber)
                     .andReturn()
                     .response
-                    .let { objectMapper.readTree(it.contentAsString).get("numberOfSegment").asInt() }
 
-            // Ensure multiple chunks created
-            assert(pdfImportResult > 0)
+            val pdfChunksCount =
+                objectMapper.readTree(pdfResponse.contentAsString).get("numberOfSegment").asInt()
+            assertTrue(pdfChunksCount >= 1, "Expected at least one chunk for PDF")
 
             // ------------------ SEARCH CHUNKS ------------------
             mockMvc

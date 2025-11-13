@@ -25,16 +25,19 @@ class KnowledgeChunkService(
         knowledgeId: UUID,
         content: String,
         metadata: Map<String, Any>? = null,
+        chunkOrder: Int? = null,
     ): KnowledgeChunkResponseDto {
         val knowledge =
             knowledgeRepo.findByIdOrNull(knowledgeId)
                 ?: throw EntityNotFoundException("Knowledge not found: $knowledgeId")
 
+        val order = chunkOrder ?: getNextChunkOrderForKnowledge(knowledgeId)
         val embedding = embeddingModel.embed(content)
 
         val chunk =
             KnowledgeChunk(
                 knowledge = knowledge,
+                chunkOrder = order,
                 content = content,
                 metadata = metadata,
                 embedding = embedding,
@@ -72,6 +75,12 @@ class KnowledgeChunkService(
     fun countByKnowledge(knowledgeId: UUID): Long = chunkRepo.countByKnowledgeId(knowledgeId)
 
     @Transactional(readOnly = true)
+    fun getNextChunkOrderForKnowledge(knowledgeId: UUID): Int {
+        val currentOrder = chunkRepo.findMaxChunkOrderByKnowledgeId(knowledgeId) ?: 0
+        return currentOrder + 1
+    }
+
+    @Transactional(readOnly = true)
     fun searchSimilarChunks(
         query: String,
         topK: Int = 5,
@@ -93,6 +102,7 @@ class KnowledgeChunkService(
                 mapOf(
                     "chunk_id" to chunk.id.toString(),
                     "knowledge_id" to chunk.knowledge.id.toString(),
+                    "chunk_order" to chunk.chunkOrder.toString(),
                 )
         return Document(chunk.id.toString(), chunk.content, metadata)
     }
