@@ -61,7 +61,7 @@ export default function Page() {
       setConversations((prev) => [conversation, ...prev]);
       router.replace(`/c/${conversation.id}`);
     }
-    setChatMessages([...chatMessages, question, answer]);
+    setChatMessages((prev) => [...prev, answer]);
   };
 
   return (

@@ -19,16 +19,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
 
-  const setActiveConversation = async (id: string) => {
-    try {
-      const res = await fetch(`/api/chat?conversationId=${id}`);
-      const jsonResult = await res.json();
-      setChatMessages(jsonResult);
-      setActiveConversationId(id);
-      router.push(`/c/${id}`);
-    } catch (error) {
-      toast.error(`Error fetching conversation: ${error}`);
-    }
+  const changeConversation = async (id: string) => {
+    router.push(`/c/${id}`);
   };
 
   const removeConversation = async (id: string) => {
@@ -39,9 +31,10 @@ export default function Sidebar() {
       return;
     }
 
-    setConversations(conversations.filter((s) => s.id !== id));
+    setConversations((prev) => prev.filter((s) => s.id !== id));
     if (activeConversationId === id) {
       setActiveConversationId(null);
+      setChatMessages([]);
       router.replace(`/`);
     }
     toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
@@ -95,7 +88,7 @@ export default function Sidebar() {
           conversations.map((item) => (
             <div
               key={item.id}
-              onClick={() => setActiveConversation(item.id)}
+              onClick={() => changeConversation(item.id)}
               className={`flex justify-between items-center px-2 py-2 rounded cursor-pointer ${
                 activeConversationId === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
               }`}

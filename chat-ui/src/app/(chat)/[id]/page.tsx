@@ -15,6 +15,11 @@ export default function ConversationPage() {
     const fetchConversation = async () => {
       try {
         const res = await fetch(`/api/chat?conversationId=${id}`);
+        if (!res.ok) {
+          const error = await res.json();
+          toast.error(error.error || 'Failed to fetch conversation');
+          return;
+        }
         const messages = await res.json();
         setChatMessages(messages);
         setActiveConversationId(id);
@@ -25,5 +30,6 @@ export default function ConversationPage() {
     fetchConversation();
   }, [id, setChatMessages, setActiveConversationId]);
 
+  // Reuses the main chat page component to maintain consistent UI
   return <ChatPage />;
 }

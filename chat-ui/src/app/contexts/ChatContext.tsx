@@ -8,6 +8,7 @@ import {
   ReactNode,
   Dispatch,
   SetStateAction,
+  useMemo,
 } from 'react';
 import { Conversation } from '@/app/models/conversation';
 import { ChatMessage } from '@/app/models/chat-message';
@@ -53,21 +54,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     fetchAll();
   }, []);
 
-  return (
-    <ChatContext.Provider
-      value={{
-        conversations,
-        chatMessages,
-        activeConversationId,
-        userName,
-        setConversations,
-        setChatMessages,
-        setActiveConversationId,
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
+  const value = useMemo(
+    () => ({
+      conversations,
+      chatMessages,
+      activeConversationId,
+      userName,
+      setConversations,
+      setChatMessages,
+      setActiveConversationId,
+    }),
+    [conversations, chatMessages, activeConversationId, userName]
   );
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 export const useChatContext = () => {
