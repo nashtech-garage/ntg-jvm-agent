@@ -8,6 +8,15 @@ export function decodeToken(token: string) {
   }
 }
 
+const isServer = typeof window === 'undefined';
+export const AUTH_SERVER_URL = isServer
+  ? process.env.AUTH_SERVER_INTERNAL_URL
+  : process.env.NEXT_PUBLIC_AUTH_SERVER;
+
+export const ORCHESTRATOR_URL = isServer
+  ? process.env.ORCHESTRATOR_INTERNAL_URL
+  : process.env.NEXT_PUBLIC_ORCHESTRATOR;
+  
 export const getFileExtension = (file: File) => {
   const fileName = file.name;
   const extension = fileName.substring(fileName.lastIndexOf('.'));

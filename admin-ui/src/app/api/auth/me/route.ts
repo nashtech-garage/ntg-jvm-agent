@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { decodeToken } from '@/app/utils/utils';
+import { AUTH_SERVER_URL, decodeToken } from '@/app/utils/utils';
 
 export async function GET() {
   try {
@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     // Fetch user info from the OAuth2 provider
-    const userInfoResponse = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
+    const userInfoResponse = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
