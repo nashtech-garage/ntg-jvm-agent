@@ -12,12 +12,12 @@ import java.util.UUID
 
 @Entity
 @Table(name = "user_roles")
-class UserRoleEntity (
+class UserRoleEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     val role: RoleEntity,
 

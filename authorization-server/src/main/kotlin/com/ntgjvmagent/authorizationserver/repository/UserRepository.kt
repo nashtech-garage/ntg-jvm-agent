@@ -20,7 +20,9 @@ interface UserRepository :
         WHERE u.username = :username
     """,
     )
-    fun findUserByUserName(@Param("username") username: String): Optional<UserEntity>
+    fun findUserByUserName(
+        @Param("username") username: String
+    ): Optional<UserEntity>
 }
 
 
