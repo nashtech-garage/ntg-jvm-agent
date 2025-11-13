@@ -3,7 +3,7 @@ services:
     image: pgvector/pgvector:pg17
     hostname: ${POSTGRES_HOST}
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:${DOCKER_POSTGRES_PORT}"
     volumes:
       - ./db/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
       - postgres:/var/lib/postgresql/data
