@@ -1,15 +1,16 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
+import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
+import com.ntgjvmagent.orchestrator.repository.ChatMessageMediaRepository
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
-import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVmImpl
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
@@ -23,6 +24,7 @@ class ConversationService(
     private val chatModelService: ChatModelService,
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
+    private val messageMediaRepo: ChatMessageMediaRepository,
 ) {
     @Transactional
     fun createConversation(
@@ -30,10 +32,10 @@ class ConversationService(
         username: String,
     ): ChatResponseVm {
         if (chatReq.conversationId != null) {
-            return this.addMessage(chatReq.conversationId, chatReq.question)
+            return this.addMessage(chatReq.conversationId, chatReq)
         }
         val conversationId = this.createNewConversation(chatReq, username)
-        return this.addMessage(conversationId, chatReq.question)
+        return this.addMessage(conversationId, chatReq)
     }
 
     fun listConversationByUser(username: String): List<ConversationResponseVm> {
@@ -45,7 +47,7 @@ class ConversationService(
         this.conversationRepo
             .findById(conversationId)
             .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-        return this.messageRepo.listMessageByConversationId(conversationId)
+        return this.messageRepo.listMessageByConversationId(conversationId).map { ChatMessageMapper.toResponse(it) }
     }
 
     private fun createNewConversation(
@@ -65,7 +67,7 @@ class ConversationService(
 
     private fun addMessage(
         conversationId: UUID,
-        question: String,
+        request: ChatRequestVm,
     ): ChatResponseVm {
         val conversation =
             this.conversationRepo
@@ -74,11 +76,12 @@ class ConversationService(
         // Save question into DB first
         val questionMsg =
             ChatMessageEntity(
-                content = question,
+                content = request.question,
                 conversation = conversation,
                 type = Constant.QUESTION_TYPE,
             )
-        this.messageRepo.save(questionMsg)
+        val questionEntity = this.messageRepo.save(questionMsg)
+        saveMessageMedia(request, questionEntity)
         val conversationResponse: ConversationResponseVm =
             ConversationResponseVmImpl(
                 conversationId,
@@ -93,7 +96,7 @@ class ConversationService(
 
         val answer: String? =
             chatModelService.call(
-                message = question,
+                request = request,
                 history = history,
             )
 
@@ -108,11 +111,12 @@ class ConversationService(
             val answerMsgEntity = this.messageRepo.save(answerMsg)
             return ChatResponseVm(
                 conversationResponse,
-                ChatMessageResponseVmImpl(
+                ChatMessageResponseVm(
                     answerMsgEntity.id ?: UUID.randomUUID(),
                     answerMsgEntity.content,
                     answerMsgEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
+                    medias = emptyList(),
                 ),
             )
         }
@@ -130,5 +134,27 @@ class ConversationService(
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
         conversation.isActive = false
         this.conversationRepo.save(conversation)
+    }
+
+    private fun saveMessageMedia(
+        chatReq: ChatRequestVm,
+        questionEntity: ChatMessageEntity,
+    ) {
+        if (chatReq.files == null || chatReq.files.isEmpty()) {
+            return
+        }
+
+        // Save media if it has
+        val mediaEntities =
+            chatReq.files.map {
+                ChatMessageMediaEntity(
+                    fileName = it.originalFilename ?: it.name,
+                    contentType = it.contentType ?: Constant.PNG_CONTENT_TYPE,
+                    chatMessage = questionEntity,
+                    data = it.bytes,
+                    fileSize = it.size,
+                )
+            }
+        messageMediaRepo.saveAll(mediaEntities)
     }
 }

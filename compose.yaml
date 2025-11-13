@@ -3,14 +3,14 @@ services:
     image: pgvector/pgvector:pg17
     hostname: ${POSTGRES_HOST}
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:${DOCKER_POSTGRES_PORT}"
     volumes:
       - ./db/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
       - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=orchestrator
+      - POSTGRES_DB=ntg_jvm_agent
     networks:
       - ntg-network
   pgadmin:
@@ -113,7 +113,7 @@ services:
       - "9000:9000"
     environment:
       SERVER_PORT: 9000
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_ISSUER: ${AUTH_SERVER}
@@ -134,10 +134,10 @@ services:
       - "9001:9001"
     environment:
       SERVER_PORT: 9001
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${AUTH_SERVER}

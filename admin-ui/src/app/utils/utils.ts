@@ -1,13 +1,3 @@
-// Decodes the payload of a JWT token from base64 and parses it as JSON.
-export function decodeToken(token: string) {
-  try {
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch (error) {
-    console.error('Failed to decode token:', error);
-    return null;
-  }
-}
-
 export const getFileExtension = (file: File) => {
   const fileName = file.name;
   const extension = fileName.substring(fileName.lastIndexOf('.'));
@@ -45,8 +35,6 @@ export const isPDFFile = (file: File): boolean => {
  * @returns true if file is a PDF file, false otherwise
  */
 export const isValidPDFFile = async (file: File) => {
-  console.log('check fpd file');
-
   if (isPDFFile(file)) {
     const arrayBuffer = await file.slice(0, 5).arrayBuffer(); // get first 5 bytes
     const bytes = new Uint8Array(arrayBuffer);

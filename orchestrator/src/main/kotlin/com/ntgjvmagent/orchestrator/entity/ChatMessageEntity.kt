@@ -1,11 +1,13 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
@@ -17,4 +19,11 @@ data class ChatMessageEntity(
     @JoinColumn(name = "conversation_id", nullable = false)
     val conversation: ConversationEntity,
     val type: Int,
+    @OneToMany(
+        mappedBy = "chatMessage",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+    )
+    val messageMedias: MutableList<ChatMessageMediaEntity> = mutableListOf(),
 ) : BaseEntity()
