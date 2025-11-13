@@ -5,6 +5,11 @@
     "description": "Postman collection to test Spring Authorization Server with PostgreSQL",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "auth_code", "value": "" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
+  ],
   "item": [
     {
       "name": "1. Get Authorization Code",
@@ -31,18 +36,14 @@
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Authorization",
-            "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=",
-            "type": "text"
-          },
-          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+          { "key": "Authorization", "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=" }
         ],
         "body": {
           "mode": "urlencoded",
           "urlencoded": [
             { "key": "grant_type", "value": "authorization_code" },
-            { "key": "code", "value": "<replace_with_code>" },
+            { "key": "code", "value": "{{auth_code}}" },
             { "key": "redirect_uri", "value": "http://localhost:3000/auth/callback" }
           ]
         },
@@ -53,25 +54,33 @@
           "port": "9000",
           "path": ["oauth2", "token"]
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.collectionVariables.set('access_token', jsonData.access_token);",
+              "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "3. Refresh Token",
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Authorization",
-            "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=",
-            "type": "text"
-          },
-          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+          { "key": "Authorization", "value": "Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=" }
         ],
         "body": {
           "mode": "urlencoded",
           "urlencoded": [
             { "key": "grant_type", "value": "refresh_token" },
-            { "key": "refresh_token", "value": "<replace_with_refresh_token>" }
+            { "key": "refresh_token", "value": "{{refresh_token}}" }
           ]
         },
         "url": {
@@ -81,14 +90,26 @@
           "port": "9000",
           "path": ["oauth2", "token"]
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.collectionVariables.set('access_token', jsonData.access_token);",
+              "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "4. UserInfo (OIDC)",
       "request": {
         "method": "GET",
         "header": [
-          { "key": "Authorization", "value": "Bearer <replace_with_access_token>" }
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
         ],
         "url": {
           "raw": "http://localhost:9000/userinfo",

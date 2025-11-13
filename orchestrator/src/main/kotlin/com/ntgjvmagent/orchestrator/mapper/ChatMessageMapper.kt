@@ -21,7 +21,7 @@ object ChatMessageMapper {
         ChatMessageResponseVm(
             id = chatMessage.id!!,
             content = chatMessage.content,
-            createdAt = chatMessage.createdAt,
+            createdAt = chatMessage.createdAt!!,
             type = chatMessage.type,
             medias =
                 chatMessage.messageMedias.map { mm ->

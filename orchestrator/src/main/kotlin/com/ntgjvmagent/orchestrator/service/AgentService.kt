@@ -7,7 +7,7 @@ import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.UUID
 
 @Service
@@ -15,12 +15,12 @@ class AgentService(
     private val repo: AgentRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getAllActive(): List<AgentResponseDto> = repo.findAllActive().map(AgentMapper::toResponse)
+    fun getAllActive(): List<AgentResponseDto> = repo.findAllByActiveTrue().map(AgentMapper::toResponse)
 
     @Transactional(readOnly = true)
     fun getById(id: UUID): AgentResponseDto =
         repo
-            .findByIdNotDeleted(id)
+            .findById(id)
             .map(AgentMapper::toResponse)
             .orElseThrow { EntityNotFoundException("Agent not found: $id") }
 
@@ -37,7 +37,7 @@ class AgentService(
     ): AgentResponseDto {
         val existing =
             repo
-                .findByIdNotDeleted(id)
+                .findById(id)
                 .orElseThrow { EntityNotFoundException("Agent not found: $id") }
 
         existing.apply {
@@ -60,9 +60,9 @@ class AgentService(
     fun softDelete(id: UUID) {
         val agent =
             repo
-                .findByIdNotDeleted(id)
+                .findById(id)
                 .orElseThrow { EntityNotFoundException("Agent not found: $id") }
-        agent.deletedAt = ZonedDateTime.now()
+        agent.deletedAt = OffsetDateTime.now()
         repo.save(agent)
     }
 }

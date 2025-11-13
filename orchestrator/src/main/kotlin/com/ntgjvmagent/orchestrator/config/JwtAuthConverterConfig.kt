@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -45,16 +44,6 @@ class JwtAuthConverterConfig {
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers("/public/**").permitAll()
-                it.requestMatchers("/api/knowledge").hasRole("ADMIN")
-                it.requestMatchers("/api/roles").hasRole("ADMIN")
-                it
-                    .requestMatchers(
-                        HttpMethod.GET,
-                        "/api/**",
-                    ).hasAnyAuthority("SCOPE_chatbot.read", "SCOPE_chatbot.write")
-                listOf(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE).forEach { method ->
-                    it.requestMatchers(method, "/api/**").hasAuthority("SCOPE_chatbot.write")
-                }
                 it.anyRequest().authenticated()
             }.oauth2ResourceServer { rs ->
                 rs.jwt { jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter) }

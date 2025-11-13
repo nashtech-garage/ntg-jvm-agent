@@ -26,19 +26,19 @@ class AgentController(
     private val service: AgentService,
 ) {
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ROLE_ADMIN')")
     @Operation(summary = "List all active agents")
     fun getAllActive(): List<AgentResponseDto> = service.getAllActive()
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get agent by ID")
     fun getById(
         @PathVariable id: UUID,
     ): AgentResponseDto = service.getById(id)
 
     @PostMapping
-    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ROLE_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new agent")
     fun create(
@@ -46,7 +46,7 @@ class AgentController(
     ): AgentResponseDto = service.create(request)
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update an existing agent")
     fun update(
         @PathVariable id: UUID,
@@ -54,7 +54,7 @@ class AgentController(
     ): AgentResponseDto = service.update(id, request)
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_agents.write') or hasRole('ROLE_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Soft delete an agent")
     fun delete(

@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.unit.agent
 
 import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
-import com.ntgjvmagent.orchestrator.entity.Agent
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.Optional
 import java.util.UUID
 import kotlin.test.Test
@@ -34,13 +34,13 @@ class AgentServiceTest {
     @Test
     fun `getAllActive should return list of active agents`() {
         val agent = buildAgent()
-        every { repo.findAllActive() } returns listOf(agent)
+        every { repo.findAllByActiveTrue() } returns listOf(agent)
 
         val result = service.getAllActive()
 
         assertEquals(1, result.size)
         assertEquals(agent.name, result[0].name)
-        verify(exactly = 1) { repo.findAllActive() }
+        verify(exactly = 1) { repo.findAllByActiveTrue() }
     }
 
     // --- getById ---
@@ -48,19 +48,19 @@ class AgentServiceTest {
     fun `getById should return agent response`() {
         val id = UUID.randomUUID()
         val agent = buildAgent(id)
-        every { repo.findByIdNotDeleted(id) } returns Optional.of(agent)
+        every { repo.findById(id) } returns Optional.of(agent)
 
         val result = service.getById(id)
 
         assertEquals(agent.id, result.id)
         assertEquals(agent.name, result.name)
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
     }
 
     @Test
     fun `getById should throw EntityNotFoundException when not found`() {
         val id = UUID.randomUUID()
-        every { repo.findByIdNotDeleted(id) } returns Optional.empty()
+        every { repo.findById(id) } returns Optional.empty()
 
         val exception =
             assertThrows<EntityNotFoundException> {
@@ -68,7 +68,7 @@ class AgentServiceTest {
             }
 
         assertTrue(exception.message!!.contains("Agent not found"))
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
     }
 
     // --- create ---
@@ -94,21 +94,21 @@ class AgentServiceTest {
         val existing = buildAgent(id)
         val request = buildRequest(name = "Updated Agent", temperature = 1.0)
 
-        every { repo.findByIdNotDeleted(id) } returns Optional.of(existing)
+        every { repo.findById(id) } returns Optional.of(existing)
         every { repo.save(any()) } answers { firstArg() }
 
         val result = service.update(id, request)
 
         assertEquals("Updated Agent", result.name)
         assertEquals(1.0, result.temperature)
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
         verify { repo.save(existing) }
     }
 
     @Test
     fun `update should throw EntityNotFoundException when agent missing`() {
         val id = UUID.randomUUID()
-        every { repo.findByIdNotDeleted(id) } returns Optional.empty()
+        every { repo.findById(id) } returns Optional.empty()
 
         val exception =
             assertThrows<EntityNotFoundException> {
@@ -116,7 +116,7 @@ class AgentServiceTest {
             }
 
         assertTrue(exception.message!!.contains("Agent not found"))
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
     }
 
     // --- softDelete ---
@@ -125,20 +125,20 @@ class AgentServiceTest {
         val id = UUID.randomUUID()
         val existing = buildAgent(id)
 
-        every { repo.findByIdNotDeleted(id) } returns Optional.of(existing)
+        every { repo.findById(id) } returns Optional.of(existing)
         every { repo.save(any()) } returns existing
 
         service.softDelete(id)
 
         assertNotNull(existing.deletedAt)
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
         verify { repo.save(existing) }
     }
 
     @Test
     fun `softDelete should throw EntityNotFoundException when not found`() {
         val id = UUID.randomUUID()
-        every { repo.findByIdNotDeleted(id) } returns Optional.empty()
+        every { repo.findById(id) } returns Optional.empty()
 
         val exception =
             assertThrows<EntityNotFoundException> {
@@ -146,7 +146,7 @@ class AgentServiceTest {
             }
 
         assertTrue(exception.message!!.contains("Agent not found"))
-        verify { repo.findByIdNotDeleted(id) }
+        verify { repo.findById(id) }
     }
 
     // --- helpers ---
@@ -161,10 +161,10 @@ class AgentServiceTest {
             topP = BigDecimal("1.0"),
             frequencyPenalty = BigDecimal("0.0"),
             presencePenalty = BigDecimal("0.0"),
-            active = true,
         ).apply {
+            this.active = true
             this.id = id
-            this.createdAt = ZonedDateTime.now()
+            this.createdAt = OffsetDateTime.now()
         }
 
     private fun buildRequest(
