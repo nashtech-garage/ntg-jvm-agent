@@ -13,10 +13,9 @@ object Constant {
       (1) The previous summary
       (2) The newest user/assistant message
 
-    Given the recent messages and the previous summary, update the summary in a structured way.
+    Given the recent messages update the summary in a structured way.
 
     Rules:
-    - Do NOT rewrite everything.
     - Keep only information relevant for continuing the conversation.
     - Track multiple topics separately.
     - Keep a list of unresolved questions.
@@ -38,12 +37,8 @@ object Constant {
     USER_PREFERENCES:
       - <list or empty>
 
-
-    Previous summary:
-    \"\"\"{{old_summary}}\"\"\"
-
-    Newest message:
-    \"\"\"{{latest_message}}\"\"\"
+    Recent message:
+    {{latest_message}}
 
     Return the updated summary.
     """

@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.repository
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -24,10 +23,5 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
     )
     fun listMessageByConversationId(
         @Param("conversationId") conversationId: UUID,
-    ): List<ChatMessageResponseVm>
-
-    fun findByConversationIdOrderByCreatedAtAsc(
-        conversationId: UUID,
-        pageable: Pageable,
     ): List<ChatMessageResponseVm>
 }

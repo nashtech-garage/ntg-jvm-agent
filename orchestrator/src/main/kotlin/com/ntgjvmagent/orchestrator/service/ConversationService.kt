@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
-import com.ntgjvmagent.orchestrator.entity.ConversationSummaryEntity
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
@@ -15,7 +14,6 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
-import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -25,8 +23,7 @@ class ConversationService(
     private val chatModelService: ChatModelService,
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
-    private val conversationSummaryService: ConversationSummaryService,
-    private val historyLimit: Int = 10,
+    private val historyLimit: Int = 5,
 ) {
     @Transactional
     fun createConversation(
@@ -72,14 +69,6 @@ class ConversationService(
             savedConversation.id
                 ?: throw BadRequestException("Can't create new conversation")
 
-        val initialSummary =
-            ConversationSummaryEntity(
-                conversation = savedConversation,
-                summaryText = "",
-            )
-
-        conversationSummaryService.saveInitialSummary(initialSummary)
-
         return conversationId
     }
 
@@ -92,21 +81,28 @@ class ConversationService(
         val conversationResponse = buildConversationResponse(conversation)
         val history =
             messageRepo
-                .findByConversationIdOrderByCreatedAtAsc(conversationId, PageRequest.of(0, historyLimit))
+                .listMessageByConversationId(conversationId)
                 .map { ChatMessageMapper.toHistoryFormat(it) }
-        val currentSummary =
-            conversationSummaryService
-                .getSummary(conversationId)
-                .orEmpty()
+
+        val splitIndex = history.size - historyLimit
+        val (olderMessages, recentMessages) =
+            if (splitIndex > 0) {
+                history.partition { history.indexOf(it) < splitIndex }
+            } else {
+                Pair(emptyList(), history)
+            }
+
+        val summary = chatModelService.createDynamicSummary(olderMessages)
+
         val answer =
             chatModelService.call(
                 message = question,
-                history = history,
-                summary = currentSummary,
+                history = recentMessages,
+                summary = summary,
             )
 
         return if (answer != null) {
-            saveAnswerAndUpdateSummary(conversation, question, answer, conversationResponse)
+            saveAnswer(conversation, answer, conversationResponse)
         } else {
             ChatResponseVm(conversationResponse, null)
         }
@@ -136,9 +132,8 @@ class ConversationService(
             conversation.createdAt,
         )
 
-    private fun saveAnswerAndUpdateSummary(
+    private fun saveAnswer(
         conversation: ConversationEntity,
-        question: String,
         answer: String,
         conversationResponse: ConversationResponseVm,
     ): ChatResponseVm {
@@ -150,11 +145,6 @@ class ConversationService(
                     type = Constant.ANSWER_TYPE,
                 ),
             )
-
-        conversationSummaryService.updateSummary(
-            conversation = conversation,
-            latestMessage = "$question\nAssistant: $answer",
-        )
 
         return ChatResponseVm(
             conversationResponse,

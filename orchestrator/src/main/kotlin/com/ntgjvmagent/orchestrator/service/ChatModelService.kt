@@ -34,7 +34,6 @@ class ChatModelService(
                     }
                     appendLine()
                 }
-
                 appendLine("User: $message")
             }
 
@@ -77,5 +76,27 @@ class ChatModelService(
                 .call()
 
         return response.content()
+    }
+
+    fun createDynamicSummary(messagesToSummarize: List<String>): String {
+        if (messagesToSummarize.isEmpty()) return ""
+
+        val joinedMessages = messagesToSummarize.joinToString("\n")
+
+        val promptText =
+            Constant.SUMMARY_UPDATE_PROMPT
+                .replace("{{latest_message}}", joinedMessages)
+
+        val prompt = Prompt(promptText)
+        val chatClient = ChatClient.builder(chatModel).build()
+
+        val response =
+            chatClient
+                .prompt(prompt)
+                .advisors(qaAdvisor)
+                .toolCallbacks(mcpClientToolCallbackProvider)
+                .call()
+
+        return response.content() ?: ""
     }
 }
