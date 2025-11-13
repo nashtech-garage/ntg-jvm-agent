@@ -1,4 +1,4 @@
-import { AUTH_SERVER_URL, setTokenIntoCookie } from '@/app/utils/utils';
+import { AUTH_SERVER_URL, setTokenIntoCookie } from '@/app/utils/server-utils';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
