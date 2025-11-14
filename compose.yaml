@@ -166,15 +166,40 @@ services:
       - "3000:3000"
     environment:
       # 👇 Browser-visible URLs (for frontend)
-      NEXT_PUBLIC_AUTH_SERVER: http://localhost:9000
-      NEXT_PUBLIC_ORCHESTRATOR_SERVER: http://localhost:9001
-      NEXT_PUBLIC_REDIRECT_URI: http://localhost:3000/auth/callback
-      NEXT_PUBLIC_CLIENT_ID: demo-client
-      NEXT_PUBLIC_SCOPE: openid profile chatbot.read chatbot.write
-      CLIENT_ID: demo-client
-      CLIENT_SECRET: demo-secret
+      NEXT_PUBLIC_AUTH_SERVER: ${NEXT_PUBLIC_AUTH_SERVER}
+      NEXT_PUBLIC_ORCHESTRATOR_SERVER: ${NEXT_PUBLIC_ORCHESTRATOR_SERVER}
+      NEXT_PUBLIC_REDIRECT_URI: ${CHAT_UI_REDIRECT_URI}
       AUTH_SERVER_INTERNAL_URL: ${AUTH_SERVER}
       ORCHESTRATOR_INTERNAL_URL: ${ORCHESTRATOR}
+      NEXT_PUBLIC_CLIENT_ID: ${NEXT_PUBLIC_CLIENT_ID}
+      NEXT_PUBLIC_SCOPE: ${NEXT_PUBLIC_SCOPE}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+    depends_on:
+      - auth-server
+      - orchestrator
+    networks:
+      - ntg-network
+
+  admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    image: admin-ui:latest
+    container_name: admin-ui
+    ports:
+      - "3001:3001"
+    environment:
+      # 👇 Browser-visible URLs (for frontend)
+      NEXT_PUBLIC_AUTH_SERVER: ${NEXT_PUBLIC_AUTH_SERVER}
+      NEXT_PUBLIC_ORCHESTRATOR_SERVER: ${NEXT_PUBLIC_ORCHESTRATOR_SERVER}
+      NEXT_PUBLIC_REDIRECT_URI: ${ADMIN_UI_REDIRECT_URI}
+      AUTH_SERVER_INTERNAL_URL: ${AUTH_SERVER}
+      ORCHESTRATOR_INTERNAL_URL: ${ORCHESTRATOR}
+      NEXT_PUBLIC_CLIENT_ID: ${NEXT_PUBLIC_CLIENT_ID}
+      NEXT_PUBLIC_SCOPE: ${NEXT_PUBLIC_SCOPE}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
     depends_on:
       - auth-server
       - orchestrator

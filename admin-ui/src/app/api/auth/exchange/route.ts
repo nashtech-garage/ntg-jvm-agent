@@ -1,3 +1,4 @@
+import { AUTH_SERVER_URL } from '@/app/utils/utils';
 import { decodeToken, setTokenIntoCookie } from '@/app/utils/serverUtils';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (!code) {
       return NextResponse.json({ error: 'Authorization code is required' }, { status: 400 });
     }
-    const tokenUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/token`;
+    const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
 
