@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { AUTH_SERVER_URL } from '@/app/utils/utils';
 import { decodeToken, getAccessToken } from '@/app/utils/serverUtils';
 
