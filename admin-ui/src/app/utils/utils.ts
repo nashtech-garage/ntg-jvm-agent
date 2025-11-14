@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
 export function decodeToken(token: string) {
   try {
@@ -18,8 +17,6 @@ export const ORCHESTRATOR_URL = isServer
   ? process.env.ORCHESTRATOR_INTERNAL_URL
   : process.env.NEXT_PUBLIC_ORCHESTRATOR;
 
-=======
->>>>>>> dd362ba936c61a6bc141cd4636721c88933e1346
 export const getFileExtension = (file: File) => {
   const fileName = file.name;
   const extension = fileName.substring(fileName.lastIndexOf('.'));

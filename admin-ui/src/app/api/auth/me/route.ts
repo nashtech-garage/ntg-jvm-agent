@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-<<<<<<< HEAD
 import { cookies } from 'next/headers';
-import { AUTH_SERVER_URL, decodeToken } from '@/app/utils/utils';
-=======
+import { AUTH_SERVER_URL } from '@/app/utils/utils';
 import { decodeToken, getAccessToken } from '@/app/utils/serverUtils';
->>>>>>> dd362ba936c61a6bc141cd4636721c88933e1346
 
 export async function GET(req: Request) {
   try {

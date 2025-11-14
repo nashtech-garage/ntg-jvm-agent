@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-import { AUTH_SERVER_URL, decodeToken } from '@/app/utils/utils';
-=======
+import { AUTH_SERVER_URL } from '@/app/utils/utils';
 import { decodeToken, setTokenIntoCookie } from '@/app/utils/serverUtils';
->>>>>>> dd362ba936c61a6bc141cd4636721c88933e1346
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
