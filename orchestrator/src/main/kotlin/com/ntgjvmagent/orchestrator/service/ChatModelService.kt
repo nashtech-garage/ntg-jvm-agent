@@ -1,12 +1,16 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.utils.Constant
+import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
+import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.tool.ToolCallbackProvider
+import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
+import org.springframework.util.MimeTypeUtils
 
 @Service
 class ChatModelService(
@@ -14,8 +18,10 @@ class ChatModelService(
     private val qaAdvisor: QuestionAnswerAdvisor,
     private val mcpClientToolCallbackProvider: ToolCallbackProvider,
 ) {
+    private val logger = LoggerFactory.getLogger(ChatModelService::class.java)
+
     fun call(
-        message: String,
+        request: ChatRequestVm,
         history: List<String> = emptyList(),
     ): String? {
         val combinedPrompt =
@@ -23,7 +29,7 @@ class ChatModelService(
                 history.forEach { item ->
                     appendLine(item)
                 }
-                appendLine("User: $message")
+                appendLine("User: ${request.question}")
             }
 
         val chatClient = ChatClient.builder(chatModel).build()
@@ -33,8 +39,23 @@ class ChatModelService(
                 .prompt()
                 .advisors(qaAdvisor)
                 .toolCallbacks(mcpClientToolCallbackProvider)
-                .user(combinedPrompt)
-                .call()
+                .user { u ->
+                    u.text(combinedPrompt)
+                    request.files
+                        ?.filter { !it.isEmpty }
+                        ?.forEach { file ->
+                            runCatching {
+                                val mime =
+                                    MimeTypeUtils.parseMimeType(
+                                        file.contentType ?: Constant.PNG_CONTENT_TYPE,
+                                    )
+                                val resource = InputStreamResource(file.inputStream)
+                                u.media(mime, resource)
+                            }.onFailure { ex ->
+                                logger.warn("Failed to read file ${file.originalFilename}: ${ex.message}")
+                            }
+                        }
+                }.call()
                 .content()
 
         return response

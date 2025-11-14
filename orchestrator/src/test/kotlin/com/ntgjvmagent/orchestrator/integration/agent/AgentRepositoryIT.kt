@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.entity.Agent
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import org.assertj.core.api.Assertions.assertThat

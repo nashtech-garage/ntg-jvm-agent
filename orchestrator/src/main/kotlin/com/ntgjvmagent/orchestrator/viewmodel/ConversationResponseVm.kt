@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.util.UUID
 
 interface ConversationResponseVm {
@@ -8,13 +8,13 @@ interface ConversationResponseVm {
 
     fun getTitle(): String
 
-    fun getCreatedAt(): ZonedDateTime
+    fun getCreatedAt(): OffsetDateTime
 }
 
 data class ConversationResponseVmImpl(
     private val id: UUID,
     private val title: String,
-    private val createdAt: ZonedDateTime,
+    private val createdAt: OffsetDateTime,
 ) : ConversationResponseVm {
     override fun getId() = id
 

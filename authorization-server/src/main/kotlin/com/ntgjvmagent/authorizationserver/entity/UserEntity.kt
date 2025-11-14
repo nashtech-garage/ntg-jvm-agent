@@ -12,6 +12,10 @@ data class UserEntity(
 
     val enabled: Boolean = true,
 
+    val name: String,
+
+    val email: String,
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "authorities",

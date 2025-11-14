@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { AUTH_SERVER_URL, decodeToken } from '@/app/utils/utils';
+=======
+import { decodeToken, setTokenIntoCookie } from '@/app/utils/serverUtils';
+>>>>>>> dd362ba936c61a6bc141cd4636721c88933e1346
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -64,23 +68,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Set secure HTTP-only cookies
-    response.cookies.set('access_token', tokenData.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: tokenData.expires_in || 3600,
-      path: '/',
-    });
-
-    if (tokenData.refresh_token) {
-      response.cookies.set('refresh_token', tokenData.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
-      });
-    }
+    setTokenIntoCookie(tokenData, response);
 
     return response;
   } catch (error) {
