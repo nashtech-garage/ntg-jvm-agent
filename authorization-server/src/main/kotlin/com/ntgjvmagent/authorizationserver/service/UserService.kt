@@ -13,37 +13,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
-fun interface UserService {
-    fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto
-@Service
-class UserService(
-    private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
-) {
-    fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto {
-        val pageable = PageRequest.of(pageNumber, pageSize)
-        val page = userRepository.findAll(pageable)
-        return page.toPageDto()
-    }
-
-
-    fun createUser(request: CreateUserRequest): CreateUserDto {
-        val tempPassword = PasswordGenerator.generateTempPassword()
-        val encodedPassword = passwordEncoder.encode(tempPassword)
-
-        // Allow only specific roles (USER). Ignore any roles not in the allow-list.
-        val allowedRoles = setOf(
-            UserRoleEnum.ROLE_USER.roleName
-        )
-
-        val requestedRoles = request.roles
-        val filteredRoles = requestedRoles.filter { it in allowedRoles }.toSet()
-        val finalRoles = filteredRoles.ifEmpty { setOf(UserRoleEnum.ROLE_USER.roleName) }
-
-        val requestWithAllowedRoles = request.copy(roles = finalRoles)
-        val userEntity = requestWithAllowedRoles.toUserEntity(encodedPassword)
-
-        val savedUser = userRepository.save(userEntity)
-        return savedUser.toCreateUserDto(tempPassword)
-    }
+interface UserService {
+    fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto;
+    fun createUser(request: CreateUserRequest) : CreateUserDto
 }
