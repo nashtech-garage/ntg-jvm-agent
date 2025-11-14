@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 interface UserRepository :
     JpaRepository<UserEntity, String>,
     JpaSpecificationExecutor<UserEntity> {
-
     @Query(
         """
         SELECT u

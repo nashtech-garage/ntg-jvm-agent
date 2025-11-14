@@ -10,13 +10,13 @@ CREATE TABLE users (
     enabled BOOLEAN NOT NULL
 );
 
---CREATE TABLE authorities (
---    username VARCHAR(50) NOT NULL,
---    authority VARCHAR(50) NOT NULL,
---    CONSTRAINT fk_authorities_users FOREIGN KEY(username) REFERENCES users(username)
---);
---
---CREATE UNIQUE INDEX ix_auth_username ON authorities (username, authority);
+CREATE TABLE authorities (
+    username VARCHAR(50) NOT NULL,
+    authority VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_authorities_users FOREIGN KEY(username) REFERENCES users(username)
+);
+
+CREATE UNIQUE INDEX ix_auth_username ON authorities (username, authority);
 
 -- ============================================================
 -- OAUTH2 REGISTERED CLIENTS
@@ -109,8 +109,8 @@ VALUES ('testuser', '{bcrypt}$2a$10$qTfVZZmyoQoom30ApjtoBuX5ebMe1WT4WNBuYQ4pBT43
 INSERT INTO users (username, password, enabled)
 VALUES ('admin', '{bcrypt}$2a$10$qTfVZZmyoQoom30ApjtoBuX5ebMe1WT4WNBuYQ4pBT43SLUld7tvq', true);
 
---INSERT INTO authorities (username, authority) VALUES ('testuser', 'ROLE_USER');
---INSERT INTO authorities (username, authority) VALUES ('admin', 'ROLE_ADMIN');
+INSERT INTO authorities (username, authority) VALUES ('testuser', 'ROLE_USER');
+INSERT INTO authorities (username, authority) VALUES ('admin', 'ROLE_ADMIN');
 
 -- ============================================================
 -- DEMO CLIENT (client_id=demo-client / client_secret=demo-secret)
