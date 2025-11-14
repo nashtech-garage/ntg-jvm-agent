@@ -16,9 +16,12 @@ import org.springframework.security.web.SecurityFilterChain
 class SecurityConfig(
     private val userRepository: UserRepository
 ) {
+    companion object {
+        private const val SECURITY_FILTER_ORDER = 3
+    }
 
     @Bean
-    @Order(2) // Run this after the AS chain
+    @Order(SECURITY_FILTER_ORDER) // Run this after the AS chain
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
             // match everything ELSE, excluding SAS endpoints

@@ -31,6 +31,7 @@
     <kotlin.version>1.9.25</kotlin.version>
     <spring-ai.version>1.0.1</spring-ai.version>
     <springdoc.version>2.8.13</springdoc.version>
+    <spring.ai.vectorstore.pgvector.embedding-dimension>1536</spring.ai.vectorstore.pgvector.embedding-dimension>
   </properties>
   <dependencies>
     <dependency>
@@ -173,6 +174,12 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-vector</artifactId>
+      <version>6.6.33.Final</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -282,7 +289,7 @@
         <artifactId>flyway-maven-plugin</artifactId>
         <version>11.14.0</version>
         <configuration>
-          <url>jdbc:postgresql://localhost:5432/orchestrator</url>
+          <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent</url>
           <user>admin</user>
           <password>admin</password>
           <schemas>
@@ -291,6 +298,9 @@
           <baselineOnMigrate>true</baselineOnMigrate>
           <table>flyway_schema_history_orchestrator</table>
           <cleanDisabled>false</cleanDisabled>
+          <placeholders>
+            <spring.ai.vectorstore.pgvector.embedding-dimension>${spring.ai.vectorstore.pgvector.embedding-dimension}</spring.ai.vectorstore.pgvector.embedding-dimension>
+          </placeholders>
         </configuration>
       </plugin>
       <plugin>

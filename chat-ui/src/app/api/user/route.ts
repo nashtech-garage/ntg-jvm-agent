@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AUTH_SERVER_URL, getAccessToken } from '@/app/utils/utils';
+import { AUTH_SERVER_URL, getAccessToken } from '@/app/utils/server-utils';
 import { Constants } from '@/app/utils/constant';
 
 export async function GET(req: Request) {

@@ -5,6 +5,8 @@ object Constant {
     const val QUESTION_TYPE = 1
     const val ANSWER_TYPE = 2
     const val TOP_K = 5
+    const val PNG_CONTENT_TYPE = "image/png"
+    const val MAXIMUM_UPLOAD_FILE_SIZE = 5 * 1024 * 1024 // 5MB
     const val SUMMARY_UPDATE_PROMPT = """
     You create a new running conversation summary.
 

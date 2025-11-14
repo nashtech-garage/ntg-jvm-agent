@@ -7,24 +7,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
-@AutoConfigureMockMvc
 @DisplayName("AgentController Integration Tests")
 class AgentControllerIT
     @Autowired
     constructor(
-        private val mockMvc: MockMvc,
         private val mapper: ObjectMapper,
     ) : BaseIntegrationTest() {
         @Test
@@ -46,10 +38,7 @@ class AgentControllerIT
             val createResult =
                 mockMvc
                     .perform(
-                        post("/api/agents")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(mapper.writeValueAsString(request))
-                            .with(jwt().authorities(SimpleGrantedAuthority("SCOPE_chatbot.write"))),
+                        postAuth("/api/agents", request, roles = listOf("SCOPE_chatbot.write")),
                     ).andExpect(status().isCreated)
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn()
@@ -60,9 +49,7 @@ class AgentControllerIT
             val fetchResult =
                 mockMvc
                     .perform(
-                        get(
-                            "/api/agents/$createdId",
-                        ).with(jwt().authorities(SimpleGrantedAuthority("SCOPE_chatbot.read"))),
+                        getAuth("/api/agents/$createdId", scopes = listOf("SCOPE_chatbot.read")),
                     ).andExpect(status().isOk)
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andReturn()
@@ -79,7 +66,7 @@ class AgentControllerIT
 
             mockMvc
                 .perform(
-                    get("/api/agents/$randomId").with(jwt().authorities(SimpleGrantedAuthority("SCOPE_chatbot.read"))),
+                    getAuth("/api/agents/$randomId", scopes = listOf("SCOPE_chatbot.read")),
                 ).andExpect(status().isNotFound)
                 .andExpect(jsonPath("$.error").value("Not Found"))
         }

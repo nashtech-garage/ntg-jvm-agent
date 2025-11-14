@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { decodeToken } from '@/app/utils/utils';
+import { AUTH_SERVER_URL } from '@/app/utils/utils';
+import { decodeToken, getAccessToken } from '@/app/utils/serverUtils';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const cookieStore = cookies();
-    const accessToken = (await cookieStore).get('access_token')?.value;
+    const accessToken = await getAccessToken(req);
 
     if (!accessToken) {
       return NextResponse.json({ error: 'No access token found' }, { status: 401 });
     }
 
     // Fetch user info from the OAuth2 provider
-    const userInfoResponse = await fetch(`${process.env.NEXT_PUBLIC_AUTH_SERVER}/userinfo`, {
+    const userInfoResponse = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

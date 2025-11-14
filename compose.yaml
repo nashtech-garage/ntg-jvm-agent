@@ -3,14 +3,14 @@ services:
     image: pgvector/pgvector:pg17
     hostname: ${POSTGRES_HOST}
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${POSTGRES_PORT}:${DOCKER_POSTGRES_PORT}"
     volumes:
       - ./db/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
       - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=orchestrator
+      - POSTGRES_DB=ntg_jvm_agent
     networks:
       - ntg-network
   pgadmin:
@@ -113,7 +113,7 @@ services:
       - "9000:9000"
     environment:
       SERVER_PORT: 9000
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_ISSUER: ${AUTH_SERVER}
@@ -134,10 +134,10 @@ services:
       - "9001:9001"
     environment:
       SERVER_PORT: 9001
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator
+      SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ntg_jvm_agent
       SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_AI_VECTORSTORE_PGVECTOR_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${AUTH_SERVER}
@@ -166,15 +166,40 @@ services:
       - "3000:3000"
     environment:
       # 👇 Browser-visible URLs (for frontend)
-      NEXT_PUBLIC_AUTH_SERVER: http://localhost:9000
-      NEXT_PUBLIC_ORCHESTRATOR_SERVER: http://localhost:9001
-      NEXT_PUBLIC_REDIRECT_URI: http://localhost:3000/auth/callback
-      NEXT_PUBLIC_CLIENT_ID: demo-client
-      NEXT_PUBLIC_SCOPE: openid profile chatbot.read chatbot.write
-      CLIENT_ID: demo-client
-      CLIENT_SECRET: demo-secret
+      NEXT_PUBLIC_AUTH_SERVER: ${NEXT_PUBLIC_AUTH_SERVER}
+      NEXT_PUBLIC_ORCHESTRATOR_SERVER: ${NEXT_PUBLIC_ORCHESTRATOR_SERVER}
+      NEXT_PUBLIC_REDIRECT_URI: ${CHAT_UI_REDIRECT_URI}
       AUTH_SERVER_INTERNAL_URL: ${AUTH_SERVER}
       ORCHESTRATOR_INTERNAL_URL: ${ORCHESTRATOR}
+      NEXT_PUBLIC_CLIENT_ID: ${NEXT_PUBLIC_CLIENT_ID}
+      NEXT_PUBLIC_SCOPE: ${NEXT_PUBLIC_SCOPE}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+    depends_on:
+      - auth-server
+      - orchestrator
+    networks:
+      - ntg-network
+
+  admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    image: admin-ui:latest
+    container_name: admin-ui
+    ports:
+      - "3001:3001"
+    environment:
+      # 👇 Browser-visible URLs (for frontend)
+      NEXT_PUBLIC_AUTH_SERVER: ${NEXT_PUBLIC_AUTH_SERVER}
+      NEXT_PUBLIC_ORCHESTRATOR_SERVER: ${NEXT_PUBLIC_ORCHESTRATOR_SERVER}
+      NEXT_PUBLIC_REDIRECT_URI: ${ADMIN_UI_REDIRECT_URI}
+      AUTH_SERVER_INTERNAL_URL: ${AUTH_SERVER}
+      ORCHESTRATOR_INTERNAL_URL: ${ORCHESTRATOR}
+      NEXT_PUBLIC_CLIENT_ID: ${NEXT_PUBLIC_CLIENT_ID}
+      NEXT_PUBLIC_SCOPE: ${NEXT_PUBLIC_SCOPE}
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
     depends_on:
       - auth-server
       - orchestrator

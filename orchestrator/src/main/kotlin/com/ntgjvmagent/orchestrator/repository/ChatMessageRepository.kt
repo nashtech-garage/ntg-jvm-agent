@@ -11,17 +11,15 @@ import java.util.UUID
 @Repository
 interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
     @Query(
-        """
-        SELECT m.id AS id,
-               m.content AS content,
-               m.createdAt AS createdAt,
-               m.type AS type
+"""
+        SELECT m
         FROM ChatMessageEntity m
+        LEFT JOIN FETCH m.messageMedias
         WHERE m.conversation.id = :conversationId
         ORDER BY m.createdAt ASC
         """,
     )
     fun listMessageByConversationId(
         @Param("conversationId") conversationId: UUID,
-    ): List<ChatMessageResponseVm>
+    ): List<ChatMessageEntity>
 }
