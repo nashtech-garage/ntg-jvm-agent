@@ -23,7 +23,7 @@ class ChatModelService(
     fun call(
         request: ChatRequestVm,
         history: List<String> = emptyList(),
-        summary: String,
+        summary: String = "",
     ): String? {
         val combinedPrompt =
             buildString {
@@ -40,7 +40,6 @@ class ChatModelService(
                     }
                     appendLine()
                 }
-                appendLine("User: ${request.question}")
             }
 
         val chatClient = ChatClient.builder(chatModel).build()

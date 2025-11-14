@@ -83,7 +83,9 @@ class ConversationService(
                 type = Constant.QUESTION_TYPE,
             )
         val questionEntity = this.messageRepo.save(questionMsg)
+
         saveMessageMedia(request, questionEntity)
+
         val conversationResponse: ConversationResponseVm =
             ConversationResponseVmImpl(
                 conversationId,
@@ -97,6 +99,7 @@ class ConversationService(
                 .map { ChatMessageMapper.toHistoryFormat(it) }
 
         val splitIndex = history.size - historyLimit
+
         val (olderMessages, recentMessages) =
             if (splitIndex > 0) {
                 history.partition { history.indexOf(it) < splitIndex }
@@ -113,30 +116,7 @@ class ConversationService(
                 summary = summary,
             )
 
-        // Only save reply if it has actual reply
-        answer?.let {
-            val answerMsg =
-                ChatMessageEntity(
-                    content = answer,
-                    conversation = conversation,
-                    type = Constant.ANSWER_TYPE,
-                )
-            val answerMsgEntity = this.messageRepo.save(answerMsg)
-            return ChatResponseVm(
-                conversationResponse,
-                ChatMessageResponseVm(
-                    answerMsgEntity.id ?: UUID.randomUUID(),
-                    answerMsgEntity.content,
-                    answerMsgEntity.createdAt!!,
-                    type = Constant.ANSWER_TYPE,
-                    medias = emptyList(),
-                ),
-            )
-        }
-        return ChatResponseVm(
-            conversationResponse,
-            null,
-        )
+        return buildChatResponse(answer, conversationResponse, conversation)
     }
 
     @Transactional
@@ -171,4 +151,36 @@ class ConversationService(
             }
         messageMediaRepo.saveAll(mediaEntities)
     }
+
+    private fun buildChatResponse(
+        answer: String?,
+        conversationResponse: ConversationResponseVm,
+        conversation: ConversationEntity,
+    ): ChatResponseVm =
+        // Only save reply if it has actual reply
+        if (answer != null) {
+            val answerEntity =
+                messageRepo.save(
+                    ChatMessageEntity(
+                        content = answer,
+                        conversation = conversation,
+                        type = Constant.ANSWER_TYPE,
+                    ),
+                )
+            ChatResponseVm(
+                conversationResponse,
+                ChatMessageResponseVm(
+                    answerEntity.id ?: UUID.randomUUID(),
+                    answerEntity.content,
+                    answerEntity.createdAt!!,
+                    type = Constant.ANSWER_TYPE,
+                    medias = emptyList(),
+                ),
+            )
+        } else {
+            ChatResponseVm(
+                conversationResponse,
+                null,
+            )
+        }
 }
