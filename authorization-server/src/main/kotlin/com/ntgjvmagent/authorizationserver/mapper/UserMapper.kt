@@ -10,7 +10,7 @@ fun UserEntity.toDto() = UserDto(
     enabled = this.enabled,
     name = this.name,
     email = this.email,
-    roles = this.roles
+    roles = this.userRoles.map { it.role.name }.toSet()
 )
 
 fun Page<UserEntity>.toPageDto() = UserPageDto(

@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.entity.Role
+import com.ntgjvmagent.orchestrator.entity.RoleEntity
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.RoleRepository
 import com.ntgjvmagent.orchestrator.repository.UserRepository
@@ -23,7 +23,7 @@ class RoleService(
             "Role with name '${request.name}' already exists"
         }
 
-        val saved = roleRepository.save(Role(name = request.name, description = request.description))
+        val saved = roleRepository.save(RoleEntity(name = request.name, description = request.description))
         return saved.toResponseVm()
     }
 
@@ -73,7 +73,7 @@ class RoleService(
     }
 
     // Use an explicit function that safely reads the Role id
-    private fun Role.toResponseVm(): RoleResponseVm =
+    private fun RoleEntity.toResponseVm(): RoleResponseVm =
         RoleResponseVm(
             id = this.id,
             name = this.name,

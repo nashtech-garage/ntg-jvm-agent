@@ -36,13 +36,12 @@ class SecurityConfig(
     @Bean
     fun userDetailsService(): UserDetailsService {
         return UserDetailsService { username ->
-            val user = userRepository.findById(username)
+            val user = userRepository.findUserByUserName(username) // to avoid using FetchType.EAGER in entities
                 .orElseThrow { UsernameNotFoundException("User not found: $username") }
-
             User
                 .withUsername(user.username)
                 .password(user.password) // must already be encoded with BCrypt
-                .roles(*user.roles.map { it.replace("ROLE_", "") }.toTypedArray())
+                .roles(*user.userRoles.map { it.role.name.replace("ROLE_", "") }.toTypedArray())
                 .disabled(!user.enabled)
                 .build()
         }
