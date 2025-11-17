@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class UserServiceTest {
@@ -28,8 +29,8 @@ class UserServiceTest {
     @Test
     fun `getUsers return paginated users`() {
         val users = listOf(
-            UserEntity("testuser1", "password1", true, "Test", "testuser@gmail.com"),
-            UserEntity("admin", "adminpass", true, "Admin", "admin@gmail.com")
+            UserEntity(UUID.randomUUID(),"testuser1", "password1", true, "Test", "testuser@gmail.com"),
+            UserEntity(UUID.randomUUID(),"admin", "adminpass", true, "Admin", "admin@gmail.com")
         )
 
         val pageable = PageRequest.of(0, 2)

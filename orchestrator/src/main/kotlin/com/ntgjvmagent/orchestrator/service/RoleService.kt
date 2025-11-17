@@ -6,6 +6,7 @@ import com.ntgjvmagent.orchestrator.repository.RoleRepository
 import com.ntgjvmagent.orchestrator.repository.UserRepository
 import com.ntgjvmagent.orchestrator.viewmodel.RoleRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.RoleResponseVm
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -55,14 +56,13 @@ class RoleService(
 
     @Transactional
     fun assignRolesToUser(
-        username: String,
+        id: UUID,
         roleNames: List<String>,
     ) {
         val user =
             userRepository
-                .findByUsername(username)
-                ?: throw ResourceNotFoundException("User with username $username not found")
-
+                .findByIdOrNull(id)
+                ?: throw ResourceNotFoundException("User with ID $id not found")
         val roles = roleRepository.findByNameIn(roleNames)
         if (roles.isEmpty()) {
             throw ResourceNotFoundException("No roles found for given names: $roleNames")

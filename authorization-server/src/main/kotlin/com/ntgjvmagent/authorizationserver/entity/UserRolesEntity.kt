@@ -23,6 +23,6 @@ class UserRolesEntity(
     val role: RolesEntity,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "username", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     val user: UserEntity,
 )

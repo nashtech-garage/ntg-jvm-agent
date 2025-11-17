@@ -49,7 +49,7 @@ class RoleController(
     fun assignRoles(
         @Valid @RequestBody request: AssignRoleRequest,
     ): ResponseEntity<Void> {
-        roleService.assignRolesToUser(request.username, request.roleNames)
+        roleService.assignRolesToUser(request.id, request.roleNames)
         return ResponseEntity.noContent().build()
     }
 }
