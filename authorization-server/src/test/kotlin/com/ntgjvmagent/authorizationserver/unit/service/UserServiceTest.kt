@@ -29,8 +29,8 @@ class UserServiceTest {
     @Test
     fun `getUsers return paginated users`() {
         val users = listOf(
-            UserEntity(UUID.randomUUID(),"testuser1", "password1", true, "Test", "testuser@gmail.com"),
-            UserEntity(UUID.randomUUID(),"admin", "adminpass", true, "Admin", "admin@gmail.com")
+            UserEntity(UUID.randomUUID(),"testuser1","password1",true,"Test","testuser@gmail.com"),
+            UserEntity(UUID.randomUUID(),"admin","adminpass",true,"Admin","admin@gmail.com")
         )
 
         val pageable = PageRequest.of(0, 2)
