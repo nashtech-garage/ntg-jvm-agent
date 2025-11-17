@@ -2,7 +2,7 @@ package com.ntgjvmagent.authorizationserver.service.impl
 
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
-import com.ntgjvmagent.authorizationserver.dto.request.CreateUserRequest
+import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.enum.UserRoleEnum
 import com.ntgjvmagent.authorizationserver.mapper.toPageDto
 import com.ntgjvmagent.authorizationserver.mapper.toUserEntity

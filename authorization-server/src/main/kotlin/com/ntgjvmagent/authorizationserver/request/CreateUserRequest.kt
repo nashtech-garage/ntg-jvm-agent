@@ -1,4 +1,4 @@
-package com.ntgjvmagent.authorizationserver.dto.request
+package com.ntgjvmagent.authorizationserver.request
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -24,7 +24,9 @@ data class CreateUserRequest(
         // Validate that role is allowed
         val allowedRoles = setOf(UserRoleEnum.ROLE_USER.roleName)
         require(roles.all { it in allowedRoles }) {
-            "Only ${allowedRoles.joinToString()} role is allowed when creating new users. Received: ${roles.joinToString()}"
+            val message = "Only ${allowedRoles.joinToString()} role is allowed " +
+                "when creating new users. Received: ${roles.joinToString()}"
+            message
         }
     }
 }

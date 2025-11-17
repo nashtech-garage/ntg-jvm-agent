@@ -3,7 +3,7 @@ package com.ntgjvmagent.authorizationserver.mapper
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
 import com.ntgjvmagent.authorizationserver.dto.UserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
-import com.ntgjvmagent.authorizationserver.dto.request.CreateUserRequest
+import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import org.springframework.data.domain.Page
 
