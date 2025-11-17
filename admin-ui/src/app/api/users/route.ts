@@ -65,9 +65,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(jsonResult, { status: 201 });
   } catch (err) {
-    return NextResponse.json(
-      { error: `Failed to create user: ${String(err)}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: `Failed to create user: ${String(err)}` }, { status: 500 });
   }
 }

@@ -12,17 +12,16 @@ const createUserSchema = z.object({
     .string()
     .min(5, 'Username must be at least 5 characters')
     .max(50, 'Username must not exceed 30 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and hyphens'),
-  email: z
-    .string()
-    .email('Invalid email address'),
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      'Username can only contain letters, numbers, underscores and hyphens'
+    ),
+  email: z.string().email('Invalid email address'),
   name: z
     .string()
     .min(1, 'Full name is required')
     .max(50, 'Full name must not exceed 100 characters'),
-  roles: z
-    .array(z.string())
-    .min(1, 'At least one role is required'),
+  roles: z.array(z.string()).min(1, 'At least one role is required'),
   sendAccountInfo: z.boolean(),
 });
 
@@ -34,11 +33,7 @@ interface CreateUserModalProps {
   onUserCreated: () => void;
 }
 
-export default function CreateUserModal({
-  isOpen,
-  onClose,
-  onUserCreated,
-}: CreateUserModalProps) {
+export default function CreateUserModal({ isOpen, onClose, onUserCreated }: CreateUserModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -78,9 +73,7 @@ export default function CreateUserModal({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message ||
-            errorData.error ||
-            `Failed to create user (${response.status})`
+          errorData.message || errorData.error || `Failed to create user (${response.status})`
         );
       }
 
@@ -89,9 +82,7 @@ export default function CreateUserModal({
       onClose();
     } catch (error) {
       console.error('Error creating user:', error);
-      setApiError(
-        error instanceof Error ? error.message : 'Failed to create user'
-      );
+      setApiError(error instanceof Error ? error.message : 'Failed to create user');
     } finally {
       setIsSubmitting(false);
     }
@@ -153,9 +144,7 @@ export default function CreateUserModal({
               placeholder="john@example.com"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
-            {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
           </div>
 
           {/* Full Name */}
@@ -170,11 +159,8 @@ export default function CreateUserModal({
               placeholder="John Doe"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
-            {errors.name && (
-              <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
           </div>
-
 
           {/* Role */}
           <div>
@@ -189,9 +175,7 @@ export default function CreateUserModal({
             >
               <option value="ROLE_USER">User</option>
             </select>
-            {errors.roles && (
-              <p className="text-sm text-red-500 mt-1">{errors.roles.message}</p>
-            )}
+            {errors.roles && <p className="text-sm text-red-500 mt-1">{errors.roles.message}</p>}
           </div>
 
           {/* Send Account Info Checkbox */}
@@ -237,4 +221,3 @@ export default function CreateUserModal({
     </div>
   );
 }
-

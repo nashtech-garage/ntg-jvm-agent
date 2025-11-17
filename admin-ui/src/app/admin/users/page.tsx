@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
-import { User,UserPageDto  } from '@/app/models/user';
+import { User, UserPageDto } from '@/app/models/user';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,14 +12,13 @@ export default function UserManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/users?page=${page}&size=10`);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch users");
+        throw new Error('Failed to fetch users');
       }
 
       const data: UserPageDto = await response.json();
@@ -68,7 +67,8 @@ export default function UserManagement() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
