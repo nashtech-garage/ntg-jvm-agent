@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const baseUrl = 'http://localhost:9000/api/users';
+const baseUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/api/users`;
 
 export async function GET(req: Request) {
   const cookieStore = cookies();

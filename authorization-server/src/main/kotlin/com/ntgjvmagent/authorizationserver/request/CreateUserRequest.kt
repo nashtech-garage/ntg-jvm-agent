@@ -11,7 +11,7 @@ data class CreateUserRequest(
     val username: String,
 
     @field:NotBlank(message = "Name must not be blank")
-    @field:Size(min = 2, max = 30, message = "Name must be between 2 and 30 characters")
+    @field:Size(min = 1, max = 30, message = "Name must be between 1 and 30 characters")
     val name: String,
 
     @field:NotBlank(message = "Email must not be blank")

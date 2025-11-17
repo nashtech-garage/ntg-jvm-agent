@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
-import { User, UserPageResponse } from '@/app/models/user';
+import { User,UserPageDto  } from '@/app/models/user';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,25 +12,25 @@ export default function UserManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/users?page=${page}&size=10`);
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users?page=${page}&size=10`);
 
-        const data: UserPageDto = await response.json();
-        setUsers(data.users || []);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
       }
-    };
+
+      const data: UserPageDto = await response.json();
+      setUsers(data.users || []);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();

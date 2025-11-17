@@ -10,8 +10,8 @@ import { X, Loader } from 'lucide-react';
 const createUserSchema = z.object({
   username: z
     .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(50, 'Username must not exceed 50 characters')
+    .min(5, 'Username must be at least 5 characters')
+    .max(50, 'Username must not exceed 30 characters')
     .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and hyphens'),
   email: z
     .string()
@@ -19,13 +19,11 @@ const createUserSchema = z.object({
   name: z
     .string()
     .min(1, 'Full name is required')
-    .max(100, 'Full name must not exceed 100 characters'),
+    .max(50, 'Full name must not exceed 100 characters'),
   roles: z
     .array(z.string())
     .min(1, 'At least one role is required'),
-  sendAccountInfo: z
-    .boolean()
-    .default(true),
+  sendAccountInfo: z.boolean(),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;

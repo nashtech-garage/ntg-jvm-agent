@@ -22,7 +22,7 @@ export interface CreateUserDto {
   enabled: boolean;
 }
 
-export interface UserPageResponse {
+export interface UserPageDto {
   users: User[];
   pageNumber: number;
   pageSize: number;
@@ -30,4 +30,3 @@ export interface UserPageResponse {
   totalPages: number;
   lastPage: boolean;
 }
-
