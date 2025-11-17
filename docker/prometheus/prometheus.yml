@@ -8,5 +8,8 @@ scrape_configs:
 
   - job_name: 'orchestrator'
     metrics_path: '/actuator/prometheus'
+    basic_auth:
+      username: 'prometheus'
+      password: '${PROMETHEUS_PASSWORD}'
     static_configs:
       - targets: [ 'host.docker.internal:9001' ]
