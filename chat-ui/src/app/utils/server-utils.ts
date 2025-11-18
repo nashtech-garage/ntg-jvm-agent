@@ -86,5 +86,5 @@ export function deleteCookies(response: NextResponse): NextResponse {
   response.cookies.delete('access_token');
   response.cookies.delete('refresh_token');
   response.cookies.delete('JSESSIONID');
-  return response
+  return response;
 }

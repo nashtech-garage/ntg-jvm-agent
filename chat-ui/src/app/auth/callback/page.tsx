@@ -31,5 +31,5 @@ export default function CallbackPage() {
       .catch(console.error);
   }, [router]);
 
-  return <div className='flex justify-between items-center'>Finishing sign in...</div>;
+  return <div className="flex justify-between items-center">Finishing sign in...</div>;
 }

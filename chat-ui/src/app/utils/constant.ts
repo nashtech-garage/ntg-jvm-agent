@@ -9,4 +9,4 @@ export const Constants = {
   DELETE_CONVERSATION_SUCCESS_MSG: 'Deleted conversation successfully',
 };
 
-export const authPathname = ["/login", "/auth", "/api/auth"]
+export const authPathname = ['/login', '/auth', '/api/auth'];
