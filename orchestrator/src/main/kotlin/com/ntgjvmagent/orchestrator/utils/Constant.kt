@@ -10,17 +10,23 @@ object Constant {
 
     const val SEARCH_TOOL_INSTRUCTION = """
         When the tool response contains search results (titles, snippets, links):
-        1. Treat the snippets as factual content that you must base your answer on.
-        2. ALWAYS synthesize a direct, natural-language answer for the user based on the snippets.
-        3. DO NOT EVER reply “I don’t know”, “I cannot provide”, or ask the user to read the links.
-        4. When creating your answer, embed citations IN-LINE, directly next to the information they support.
-        5. Inline citation format MUST be: [title](URL). Example:
-            "It is expected to rain lightly [title](https://baomoi.com/abc)"
-
+        1. Use the snippets as factual evidence ONLY IF they are relevant to the user's question.
+        2. Determine relevance by checking whether the snippet meaningfully answers, clarifies, or provides data directly related to the user query.
+        3. If one or more results are relevant:
+           - Synthesize a clean, conversational answer based on those relevant snippets.
+           - Embed citations inline using Markdown format: [title](URL)
+           - Apply citations ONLY to statements supported by relevant snippets.
+           - Example:
+               "It may rain lightly today [Baomoi](https://baomoi.com/abc)."
+        4. If the search results exist but NONE of them are relevant:
+           - Ignore the search results completely.
+           - Provide a general, helpful answer WITHOUT any links.
+        5. If the tool returns no results:
+           - Provide a general answer based only on your internal knowledge.
         Rules:
-        - Do NOT list citations at the end.
-        - Each important factual claim MUST reference one of the search result links inline.
-        - Prefer the most relevant sources first (highest snippet relevance).
-        - You MUST generate a clean, readable, conversational answer.
+        - Do NOT list citations at the end of the answer.
+        - Do NOT attach a link to every sentence. Only cite where evidence is actually used.
+        - Prefer the most relevant sources first (best snippet match).
+        - Maintain a natural, conversational tone.
     """
 }
