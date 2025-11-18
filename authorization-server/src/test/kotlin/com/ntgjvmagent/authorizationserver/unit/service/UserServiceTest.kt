@@ -71,6 +71,7 @@ class UserServiceTest {
             roles = setOf(UserRoleEnum.ROLE_USER.roleName)
         )
 
+        `when`(userRepository.existsById(any())).thenReturn(false)
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
@@ -105,6 +106,7 @@ class UserServiceTest {
             roles = setOf(UserRoleEnum.ROLE_USER.roleName)
         )
 
+        `when`(userRepository.existsById(any())).thenReturn(false)
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
