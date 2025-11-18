@@ -136,6 +136,21 @@ class ConversationService(
         this.conversationRepo.save(conversation)
     }
 
+    @Transactional
+    fun updateConversationTitle(conversationId: UUID, newTitle: String): ConversationResponseVm {
+        val conversation =
+            this.conversationRepo
+                .findById(conversationId)
+                .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+        conversation.title = newTitle.trim()
+        val updatedConversation = this.conversationRepo.save(conversation)
+        return ConversationResponseVmImpl(
+            updatedConversation.id ?: conversationId,
+            updatedConversation.title,
+            updatedConversation.createdAt!!,
+        )
+    }
+
     private fun saveMessageMedia(
         chatReq: ChatRequestVm,
         questionEntity: ChatMessageEntity,
