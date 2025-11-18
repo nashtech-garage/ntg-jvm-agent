@@ -14,7 +14,7 @@ export default function CallbackPage() {
     }
 
     // POST to Authorization server to exchange token
-    fetch('/auth/exchange', {
+    fetch('/api/auth/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, redirect_uri: `${location.origin}/auth/callback` }),
@@ -31,5 +31,5 @@ export default function CallbackPage() {
       .catch(console.error);
   }, [router]);
 
-  return <div>Finishing sign in...</div>;
+  return <div className='flex justify-between items-center'>Finishing sign in...</div>;
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
 import { Constants } from '../utils/constant';
+import { customizeFetch } from '../utils/custom-fetch';
 
 export default function Sidebar() {
   const {
@@ -24,7 +25,7 @@ export default function Sidebar() {
   };
 
   const removeConversation = async (id: string) => {
-    const res = await fetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
+    const res = await customizeFetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
     const jsonResult = await res.json();
     if (!res.ok) {
       toast.error(jsonResult.error);
@@ -57,9 +58,8 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`bg-gray-100 text-black h-full flex flex-col transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
+      className={`bg-gray-100 text-black h-full flex flex-col transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'
+        }`}
     >
       {/* Collapse button */}
       <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-gray-150 ml-3">
@@ -80,9 +80,8 @@ export default function Sidebar() {
       {/* History list */}
       <div
         id="history-list"
-        className={`flex-1 overflow-y-auto mt-4 px-2 transition-all duration-300 ${
-          collapsed ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 space-y-2'
-        }`}
+        className={`flex-1 overflow-y-auto mt-4 px-2 transition-all duration-300 ${collapsed ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 space-y-2'
+          }`}
       >
         {!collapsed &&
           conversations.map((item) => (
@@ -109,9 +108,8 @@ export default function Sidebar() {
       {/* Account info & Logout button */}
       <div className="border-t border-gray-700 gap-2 p-4">
         <div
-          className={`mb-4 transition-all duration-300 ${
-            !collapsed ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
-          }`}
+          className={`mb-4 transition-all duration-300 ${!collapsed ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
+            }`}
         >
           <div className="text-sm flex">
             Welcome:
@@ -137,11 +135,10 @@ export default function Sidebar() {
             />
           </svg>
           <span
-            className={`transition-all duration-300 ${
-              !collapsed
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-2 w-0 overflow-hidden'
-            }`}
+            className={`transition-all duration-300 ${!collapsed
+              ? 'opacity-100 translate-x-0'
+              : 'opacity-0 -translate-x-2 w-0 overflow-hidden'
+              }`}
           >
             Logout
           </span>
