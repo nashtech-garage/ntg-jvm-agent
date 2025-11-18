@@ -33,10 +33,8 @@ class UserServiceImpl(
 
     override fun createUser(request: CreateUserRequest): CreateUserDto {
         // Validate username uniqueness
-        if (userRepository.existsById(request.username)) {
-            throw IllegalArgumentException(
-                "Username '${request.username}' already exists. Please use a different username."
-            )
+        require(userRepository.existsById(request.username)) {
+            "Username '${request.username}' already exists. Please use a different username."
         }
 
         val tempPassword = PasswordGenerator.generateTempPassword()

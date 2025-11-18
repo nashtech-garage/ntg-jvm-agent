@@ -26,7 +26,8 @@ data class CreateUserRequest(
     init {
         // Validate that role is allowed
         require(roles.all { it in UserCreationConstants.ALLOWED_USER_CREATION_ROLES }) {
-            "Only ${UserCreationConstants.ALLOWED_USER_CREATION_ROLES.joinToString()} role is allowed when creating new users. Received: ${roles.joinToString()}"
+            "Only ${UserCreationConstants.ALLOWED_USER_CREATION_ROLES.joinToString()} " +
+                "role is allowed when creating new users. Received: ${roles.joinToString()}"
         }
     }
 }
