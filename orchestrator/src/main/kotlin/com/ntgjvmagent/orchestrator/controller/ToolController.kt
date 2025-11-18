@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
-import com.ntgjvmagent.orchestrator.service.AgentToolService
+import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
+import com.ntgjvmagent.orchestrator.dto.ToolResponseDto
+import com.ntgjvmagent.orchestrator.service.ToolService
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -21,29 +21,29 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/tools")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
-@Tag(name = "Agent Tools", description = "Manage AI Tools assignable to agents")
-class AgentToolController(
-    private val service: AgentToolService,
+@Tag(name = "Tools", description = "Manage AI Tools assignable to agents")
+class ToolController(
+    private val service: ToolService,
 ) {
     @GetMapping
-    fun getAllActive(): List<AgentToolResponseDto> = service.getAllActive()
+    fun getAllActive(): List<ToolResponseDto> = service.getAllActive()
 
     @GetMapping("/{id}")
     fun getById(
         @PathVariable id: UUID,
-    ): AgentToolResponseDto = service.getById(id)
+    ): ToolResponseDto = service.getById(id)
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @Valid @RequestBody req: AgentToolRequestDto,
-    ): AgentToolResponseDto = service.create(req)
+        @Valid @RequestBody req: ToolRequestDto,
+    ): ToolResponseDto = service.create(req)
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: UUID,
-        @Valid @RequestBody req: AgentToolRequestDto,
-    ): AgentToolResponseDto = service.update(id, req)
+        @Valid @RequestBody req: ToolRequestDto,
+    ): ToolResponseDto = service.update(id, req)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

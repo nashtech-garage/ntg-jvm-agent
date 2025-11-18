@@ -1,10 +1,11 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
-import com.ntgjvmagent.orchestrator.entity.agent.mapping.AgentToolMapping
+import com.ntgjvmagent.orchestrator.mapper.AgentToolMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
-import com.ntgjvmagent.orchestrator.repository.AgentToolMappingRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -14,8 +15,8 @@ import java.util.UUID
 @Service
 class AgentToolAssignmentService(
     private val agentRepository: AgentRepository,
-    private val toolRepository: AgentToolRepository,
-    private val mappingRepository: AgentToolMappingRepository,
+    private val toolRepository: ToolRepository,
+    private val agentToolRepository: AgentToolRepository,
 ) {
     @Transactional
     fun assignTool(
@@ -35,11 +36,11 @@ class AgentToolAssignmentService(
         }
 
         require(tool.active) { "Cannot assign inactive tool to agent" }
-        require(!mappingRepository.existsByAgentIdAndToolId(agentId, toolId)) {
+        require(!agentToolRepository.existsByAgentIdAndToolId(agentId, toolId)) {
             "Tool already assigned to this agent"
         }
 
-        mappingRepository.save(AgentToolMapping.of(agent, tool))
+        agentToolRepository.save(AgentTool.of(agent, tool))
     }
 
     @Transactional
@@ -47,9 +48,12 @@ class AgentToolAssignmentService(
         agentId: UUID,
         toolId: UUID,
     ) {
-        mappingRepository.deleteByAgentIdAndToolId(agentId, toolId)
+        agentToolRepository.deleteByAgentIdAndToolId(agentId, toolId)
     }
 
     @Transactional(readOnly = true)
-    fun getTools(agentId: UUID): List<AgentTool> = mappingRepository.findByAgentId(agentId).map { it.tool }
+    fun getTools(agentId: UUID): List<AgentToolResponseDto> =
+        agentToolRepository
+            .findByAgentId(agentId)
+            .map(AgentToolMapper::toResponse)
 }

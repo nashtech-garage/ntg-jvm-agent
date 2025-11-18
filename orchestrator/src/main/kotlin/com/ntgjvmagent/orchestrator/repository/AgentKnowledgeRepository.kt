@@ -7,5 +7,15 @@ import java.util.UUID
 
 @Repository
 interface AgentKnowledgeRepository : JpaRepository<AgentKnowledge, UUID> {
-    fun findAllByActiveTrue(): List<AgentKnowledge>
+    fun findAllByAgentIdAndActiveTrue(agentId: UUID): List<AgentKnowledge>
+
+    fun findByIdAndAgentId(
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): AgentKnowledge?
+
+    fun existsByIdAndAgentId(
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): Boolean
 }

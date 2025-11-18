@@ -8,24 +8,45 @@ import java.util.UUID
 
 @Repository
 interface KnowledgeChunkRepository : JpaRepository<KnowledgeChunk, UUID> {
-    fun findAllByKnowledgeId(knowledgeId: UUID): List<KnowledgeChunk>
+    // Get all chunks for a knowledge source belonging to a specific agent
+    fun findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): List<KnowledgeChunk>
 
-    fun findAllByKnowledgeIdOrderByChunkOrderAsc(knowledgeId: UUID): List<KnowledgeChunk>
+    // Count chunks for a knowledge source of a specific agent
+    fun countByKnowledgeIdAndKnowledgeAgentId(
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): Long
 
-    fun countByKnowledgeId(knowledgeId: UUID): Long
+    // Find a chunk by its ID, knowledge ID, and agent ID
+    fun findByIdAndKnowledgeIdAndKnowledgeAgentId(
+        chunkId: UUID,
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): KnowledgeChunk?
 
-    /**
-     * Custom query to get IDs of all chunks whose knowledge is active
-     */
+    // Get the max chunk order for a knowledge source of a specific agent
+    @Query(
+        """
+        SELECT MAX(c.chunkOrder)
+        FROM KnowledgeChunk c
+        WHERE c.knowledge.id = :knowledgeId AND c.knowledge.agent.id = :agentId
+    """,
+    )
+    fun findMaxChunkOrderByKnowledgeIdAndAgentId(
+        knowledgeId: UUID,
+        agentId: UUID,
+    ): Int?
+
+    // Get IDs of all active knowledge for a specific agent
     @Query(
         """
         SELECT c.knowledge.id
         FROM KnowledgeChunk c
-        WHERE c.knowledge.active = true
+        WHERE c.knowledge.active = true AND c.knowledge.agent.id = :agentId
     """,
     )
-    fun findAllKnowledgeIdsActive(): List<UUID>
-
-    @Query("SELECT MAX(c.chunkOrder) FROM KnowledgeChunk c WHERE c.knowledge.id = :knowledgeId")
-    fun findMaxChunkOrderByKnowledgeId(knowledgeId: UUID): Int?
+    fun findAllKnowledgeIdsActiveByAgent(agentId: UUID): List<UUID>
 }

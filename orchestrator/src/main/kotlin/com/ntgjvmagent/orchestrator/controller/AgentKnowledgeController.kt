@@ -3,7 +3,6 @@ package com.ntgjvmagent.orchestrator.controller
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
-import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -19,35 +18,40 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/knowledge")
+@RequestMapping("/api/agents/{agentId}/knowledge")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
-@Tag(name = "Agent Knowledge", description = "Manage knowledge sources assignable to agents")
 class AgentKnowledgeController(
-    private val service: AgentKnowledgeService,
+    private val agentKnowledgeService: AgentKnowledgeService,
 ) {
     @GetMapping
-    fun getAllActive(): List<AgentKnowledgeResponseDto> = service.getAllActive()
-
-    @GetMapping("/{id}")
-    fun getById(
-        @PathVariable id: UUID,
-    ): AgentKnowledgeResponseDto = service.getById(id)
+    fun list(
+        @PathVariable agentId: UUID,
+    ) = agentKnowledgeService.getByAgent(agentId)
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @Valid @RequestBody req: AgentKnowledgeRequestDto,
-    ): AgentKnowledgeResponseDto = service.create(req)
+        @PathVariable agentId: UUID,
+        @Valid @RequestBody request: AgentKnowledgeRequestDto,
+    ): AgentKnowledgeResponseDto = agentKnowledgeService.create(agentId, request)
 
-    @PutMapping("/{id}")
+    @PutMapping("/{knowledgeId}")
     fun update(
-        @PathVariable id: UUID,
-        @Valid @RequestBody req: AgentKnowledgeRequestDto,
-    ): AgentKnowledgeResponseDto = service.update(id, req)
+        @PathVariable agentId: UUID,
+        @PathVariable knowledgeId: UUID,
+        @Valid @RequestBody request: AgentKnowledgeRequestDto,
+    ): AgentKnowledgeResponseDto = agentKnowledgeService.update(agentId, knowledgeId, request)
 
-    @DeleteMapping("/{id}")
+    @GetMapping("/{knowledgeId}")
+    fun get(
+        @PathVariable agentId: UUID,
+        @PathVariable knowledgeId: UUID,
+    ): AgentKnowledgeResponseDto = agentKnowledgeService.getOneForAgent(agentId, knowledgeId)
+
+    @DeleteMapping("/{knowledgeId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(
-        @PathVariable id: UUID,
-    ) = service.softDelete(id)
+        @PathVariable agentId: UUID,
+        @PathVariable knowledgeId: UUID,
+    ) = agentKnowledgeService.softDelete(agentId, knowledgeId)
 }

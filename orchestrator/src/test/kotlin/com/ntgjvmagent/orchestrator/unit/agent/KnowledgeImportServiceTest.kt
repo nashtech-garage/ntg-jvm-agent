@@ -6,6 +6,7 @@ import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
 import com.ntgjvmagent.orchestrator.config.ChunkerProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
+import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
 import io.mockk.every
@@ -19,21 +20,48 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockMultipartFile
 import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class KnowledgeImportServiceTest {
     private lateinit var chunkService: KnowledgeChunkService
+    private lateinit var knowledgeRepo: AgentKnowledgeRepository
     private lateinit var documentChunker: DocumentChunker
     private lateinit var service: KnowledgeImportService
+
+    private val agentId = UUID.randomUUID()
+    private val knowledgeId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
         chunkService = mockk()
+        knowledgeRepo = mockk()
 
-        // DocumentChunker with small chunk sizes for deterministic multi-chunk output
+        // Always return true for knowledge existence
+        every { knowledgeRepo.existsByIdAndAgentId(any(), any()) } returns true
+
+        // Setup chunk order mock
+        every { chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId) } returns 0
+
+        // Correctly map arguments (NO MORE CLASSCAST ISSUES)
+        every {
+            chunkService.addChunk(
+                agentId = any(),
+                knowledgeId = any(),
+                chunkOrder = any(),
+                content = any(),
+                metadata = any(),
+            )
+        } answers {
+            KnowledgeChunkResponseDto(
+                id = UUID.randomUUID(),
+                content = arg<String>(2),
+                metadata = arg<Map<String, Any>?>(3),
+            )
+        }
+
+        // Chunker with simple deterministic profiles
         val chunkerProperties =
             ChunkerProperties().apply {
                 profiles["default"] =
@@ -41,91 +69,63 @@ class KnowledgeImportServiceTest {
                         chunkSize = 50
                         minChunkSizeChars = 10
                         minChunkLengthToEmbed = 5
-                        maxNumChunks = 100
-                        keepSeparator = true
-                    }
-                profiles["markdown"] =
-                    ChunkerProperties.ChunkerProfile().apply {
-                        chunkSize = 50
-                        minChunkSizeChars = 10
-                        minChunkLengthToEmbed = 5
-                        maxNumChunks = 100
-                        keepSeparator = true
-                    }
-                profiles["loose"] =
-                    ChunkerProperties.ChunkerProfile().apply {
-                        chunkSize = 50
-                        minChunkSizeChars = 10
-                        minChunkLengthToEmbed = 5
-                        maxNumChunks = 100
-                        keepSeparator = true
-                    }
-                profiles["tight"] =
-                    ChunkerProperties.ChunkerProfile().apply {
-                        chunkSize = 30
-                        minChunkSizeChars = 10
-                        minChunkLengthToEmbed = 5
                         maxNumChunks = 200
                         keepSeparator = true
                     }
-                profiles["code"] =
-                    ChunkerProperties.ChunkerProfile().apply {
-                        chunkSize = 50
-                        minChunkSizeChars = 10
-                        minChunkLengthToEmbed = 5
-                        maxNumChunks = 500
-                        keepSeparator = true
-                    }
+                profiles["markdown"] = profiles["default"]!!
+                profiles["loose"] = profiles["default"]!!
+                profiles["tight"] = profiles["default"]!!
+                profiles["code"] = profiles["default"]!!
             }
-        val textExtractor = DocumentTextExtractor()
-        val profileDetector = ChunkerProfileDetector()
-        documentChunker = DocumentChunker(chunkerProperties, textExtractor, profileDetector)
 
-        service = KnowledgeImportService(chunkService, documentChunker)
-
-        // Mock chunkService methods
-        every { chunkService.getNextChunkOrderForKnowledge(any()) } returns 0
-        every { chunkService.addChunk(any(), any(), any(), any()) } answers {
-            KnowledgeChunkResponseDto(
-                id = UUID.randomUUID(),
-                content = secondArg(),
-                metadata = thirdArg(),
+        documentChunker =
+            DocumentChunker(
+                chunkerProperties,
+                DocumentTextExtractor(),
+                ChunkerProfileDetector(),
             )
-        }
+
+        service = KnowledgeImportService(chunkService, knowledgeRepo, documentChunker)
     }
+
+    // -------------------------------------------------------
+    // TESTS
+    // -------------------------------------------------------
 
     @Test
     fun `importDocument should process txt file correctly`() {
-        val content = (1..20).joinToString(" ") { "Sentence $it" } // deterministic multi-chunk text
+        val content = (1..20).joinToString(" ") { "Sentence $it" }
+
         val file =
             MockMultipartFile(
                 "file",
                 "test.txt",
                 "text/plain",
-                content.toByteArray(StandardCharsets.UTF_8),
+                content.toByteArray(),
             )
 
-        val response = service.importDocument(UUID.randomUUID(), file)
+        val response = service.importDocument(agentId, knowledgeId, file)
 
         assertEquals("test.txt", response.originalFilename)
-        assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for txt file")
+        assertTrue(response.numberOfSegment > 1)
     }
 
     @Test
     fun `importDocument should process md file correctly`() {
-        val content = (1..20).joinToString(" ") { "# Heading $it Some markdown text." }
+        val content = (1..20).joinToString(" ") { "# Heading $it some markdown text." }
+
         val file =
             MockMultipartFile(
                 "file",
                 "test.md",
                 "text/markdown",
-                content.toByteArray(StandardCharsets.UTF_8),
+                content.toByteArray(),
             )
 
-        val response = service.importDocument(UUID.randomUUID(), file)
+        val response = service.importDocument(agentId, knowledgeId, file)
 
         assertEquals("test.md", response.originalFilename)
-        assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for md file")
+        assertTrue(response.numberOfSegment > 1)
     }
 
     @Test
@@ -135,13 +135,14 @@ class KnowledgeImportServiceTest {
                 "file",
                 "empty.txt",
                 "text/plain",
-                "".toByteArray(StandardCharsets.UTF_8),
+                ByteArray(0),
             )
 
         val exception =
             assertFailsWith<BadRequestException> {
-                service.importDocument(UUID.randomUUID(), file)
+                service.importDocument(agentId, knowledgeId, file)
             }
+
         assert(exception.message!!.contains("empty or contains no readable text"))
     }
 
@@ -149,18 +150,20 @@ class KnowledgeImportServiceTest {
     fun `importDocument should process pdf file correctly`() {
         val pdfBytes =
             ByteArrayOutputStream().use { out ->
-                val document = PDDocument()
-                val page = PDPage()
-                document.addPage(page)
-                val contentStream = PDPageContentStream(document, page)
-                contentStream.beginText()
-                contentStream.setFont(PDType1Font.HELVETICA, 12f)
-                contentStream.newLineAtOffset(100f, 700f)
-                contentStream.showText("PDF test content for chunking with multiple lines.")
-                contentStream.endText()
-                contentStream.close()
-                document.save(out)
-                document.close()
+                PDDocument().use { doc ->
+                    val page = PDPage()
+                    doc.addPage(page)
+
+                    PDPageContentStream(doc, page).use { cs ->
+                        cs.beginText()
+                        cs.setFont(PDType1Font.HELVETICA, 12f)
+                        cs.newLineAtOffset(100f, 700f)
+                        cs.showText("PDF test content for chunking")
+                        cs.endText()
+                    }
+
+                    doc.save(out)
+                }
                 out.toByteArray()
             }
 
@@ -172,9 +175,9 @@ class KnowledgeImportServiceTest {
                 pdfBytes,
             )
 
-        val response = service.importDocument(UUID.randomUUID(), file)
+        val response = service.importDocument(agentId, knowledgeId, file)
 
         assertEquals("test.pdf", response.originalFilename)
-        assertTrue(response.numberOfSegment >= 1, "Expected at least one chunk for PDF")
+        assertTrue(response.numberOfSegment >= 1)
     }
 }

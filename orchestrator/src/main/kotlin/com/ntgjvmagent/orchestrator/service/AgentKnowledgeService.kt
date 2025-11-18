@@ -2,9 +2,12 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -12,33 +15,60 @@ import java.util.UUID
 @Service
 class AgentKnowledgeService(
     private val repo: AgentKnowledgeRepository,
+    private val agentRepo: AgentRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getAllActive(): List<AgentKnowledgeResponseDto> =
-        repo.findAllByActiveTrue().map(AgentKnowledgeMapper::toResponse)
+    fun getByAgent(agentId: UUID): List<AgentKnowledgeResponseDto> =
+        repo.findAllByAgentIdAndActiveTrue(agentId).map(AgentKnowledgeMapper::toResponse)
 
     @Transactional(readOnly = true)
-    fun getById(id: UUID): AgentKnowledgeResponseDto =
-        repo
-            .findById(id)
-            .map(AgentKnowledgeMapper::toResponse)
-            .orElseThrow { EntityNotFoundException("Knowledge not found: $id") }
+    fun getOneForAgent(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ): AgentKnowledgeResponseDto {
+        val entity =
+            repo.findByIdAndAgentId(knowledgeId, agentId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
+
+        return AgentKnowledgeMapper.toResponse(entity)
+    }
 
     @Transactional
-    fun create(request: AgentKnowledgeRequestDto): AgentKnowledgeResponseDto {
-        val entity = AgentKnowledgeMapper.toEntity(request)
+    fun create(
+        agentId: UUID,
+        request: AgentKnowledgeRequestDto,
+    ): AgentKnowledgeResponseDto {
+        val agent =
+            agentRepo
+                .findByIdOrNull(agentId)
+                ?: throw EntityNotFoundException("Agent not found: $agentId")
+
+        val entity =
+            AgentKnowledge(
+                agent = agent,
+                name = request.name,
+                sourceType = request.sourceType,
+                sourceUri = request.sourceUri,
+                metadata = request.metadata,
+                embeddingModel = request.embeddingModel,
+            )
+
         return AgentKnowledgeMapper.toResponse(repo.save(entity))
     }
 
     @Transactional
     fun update(
-        id: UUID,
+        agentId: UUID,
+        knowledgeId: UUID,
         request: AgentKnowledgeRequestDto,
     ): AgentKnowledgeResponseDto {
         val existing =
             repo
-                .findById(id)
-                .orElseThrow { EntityNotFoundException("Knowledge not found: $id") }
+                .findByIdOrNull(knowledgeId)
+                ?: throw EntityNotFoundException("Knowledge not found: $knowledgeId")
+
+        // Agent cannot be changed → validate agentId
+        require(existing.agent.id == agentId) { "Agent cannot be changed for this knowledge item." }
 
         existing.apply {
             name = request.name
@@ -48,15 +78,22 @@ class AgentKnowledgeService(
             embeddingModel = request.embeddingModel
             active = request.active
         }
+
         return AgentKnowledgeMapper.toResponse(repo.save(existing))
     }
 
     @Transactional
-    fun softDelete(id: UUID) {
+    fun softDelete(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ) {
         val knowledge =
             repo
-                .findById(id)
-                .orElseThrow { EntityNotFoundException("Knowledge not found: $id") }
+                .findByIdOrNull(knowledgeId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
+
+        require(knowledge.agent.id == agentId) { "Knowledge $knowledgeId does not belong to agent $agentId" }
+
         knowledge.markDeleted()
         repo.save(knowledge)
     }
