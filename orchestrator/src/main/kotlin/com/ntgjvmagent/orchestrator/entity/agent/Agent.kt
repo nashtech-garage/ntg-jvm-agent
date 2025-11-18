@@ -56,6 +56,16 @@ data class Agent(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var settings: Map<String, Any>? = null, // JSON for flexible configuration
+    @Column(name = "base_url", length = 150, nullable = false)
+    var baseUrl: String,
+    @Column(name = "api_key", length = 200, nullable = false)
+    var apiKey: String,
+    @Column(name = "chat_completions_path", length = 50, nullable = false)
+    var chatCompletionsPath: String,
+    @Column(name = "embeddings_path", length = 50, nullable = false)
+    var embeddingsPath: String,
+    @Column(name = "embedding_model", length = 50, nullable = false)
+    var embeddingModel: String,
     @Version
     @Column(nullable = false)
     var version: Int = 0,

@@ -13,4 +13,5 @@ data class ChatRequestVm(
     val conversationId: UUID?,
     @field:Size(max = 3, message = "Maximum 3 files allowed")
     val files: List<MultipartFile>?,
+    val agentId: UUID,
 )

@@ -7,4 +7,5 @@ object Constant {
     const val TOP_K = 5
     const val PNG_CONTENT_TYPE = "image/png"
     const val MAXIMUM_UPLOAD_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+    const val DIMENSION = 1536
 }

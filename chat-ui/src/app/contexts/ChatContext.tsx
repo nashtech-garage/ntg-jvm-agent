@@ -13,15 +13,20 @@ import {
 import { Conversation } from '@/app/models/conversation';
 import { ChatMessage } from '@/app/models/chat-message';
 import { toast } from 'sonner';
+import { Agent } from '../models/agent';
 
 interface ChatContextType {
   conversations: Conversation[];
   chatMessages: ChatMessage[];
   activeConversationId: string | null;
   userName: string;
+  agents: Agent[];
+  selectedAgent: Agent | null;
   setConversations: Dispatch<SetStateAction<Conversation[]>>;
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   setActiveConversationId: Dispatch<SetStateAction<string | null>>;
+  setAgents: Dispatch<SetStateAction<Agent[]>>;
+  setSelectedAgent: Dispatch<SetStateAction<Agent | null>>;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -31,6 +36,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('Unknown');
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // Load user info and all conversations on mount
   useEffect(() => {
@@ -60,11 +67,15 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       chatMessages,
       activeConversationId,
       userName,
+      agents,
+      selectedAgent,
       setConversations,
       setChatMessages,
       setActiveConversationId,
+      setAgents,
+      setSelectedAgent,
     }),
-    [conversations, chatMessages, activeConversationId, userName]
+    [conversations, chatMessages, activeConversationId, userName, agents, selectedAgent]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

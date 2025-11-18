@@ -6,8 +6,6 @@ import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.ai.document.Document
-import org.springframework.ai.embedding.EmbeddingModel
-import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,8 +15,8 @@ import java.util.UUID
 class KnowledgeChunkService(
     private val chunkRepo: KnowledgeChunkRepository,
     private val knowledgeRepo: AgentKnowledgeRepository,
-    private val vectorStore: VectorStore,
-    private val embeddingModel: EmbeddingModel,
+    private val vectorStoreService: VectorStoreService,
+    private val dynamicModelFactory: DynamicModelFactory,
 ) {
     @Transactional
     fun addChunk(
@@ -33,7 +31,7 @@ class KnowledgeChunkService(
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
         val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
-        val embedding = embeddingModel.embed(content)
+        val embedding = dynamicModelFactory.getEmbeddingModel(agentId).embed(content)
 
         val chunk =
             KnowledgeChunk(
@@ -45,7 +43,9 @@ class KnowledgeChunkService(
             )
 
         val savedChunk = chunkRepo.save(chunk)
-        vectorStore.add(listOf(buildDocument(savedChunk)))
+        vectorStoreService
+            .getVectorStore(agentId)
+            .add(listOf(buildDocument(savedChunk)))
 
         return KnowledgeChunkResponseDto.from(savedChunk)
     }
@@ -70,9 +70,11 @@ class KnowledgeChunkService(
 
         chunk.content = newContent
         chunk.metadata = newMetadata
-        chunk.embedding = embeddingModel.embed(newContent)
+        chunk.embedding = dynamicModelFactory.getEmbeddingModel(agentId).embed(newContent)
 
-        vectorStore.add(listOf(buildDocument(chunk)))
+        vectorStoreService
+            .getVectorStore(agentId)
+            .add(listOf(buildDocument(chunk)))
         return KnowledgeChunkResponseDto.from(chunkRepo.save(chunk))
     }
 
@@ -112,7 +114,12 @@ class KnowledgeChunkService(
             throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
         }
 
-        val results: List<Document> = vectorStore.similaritySearch(query).toList()
+        val results: List<Document> =
+            vectorStoreService
+                .getVectorStore(
+                    agentId,
+                ).similaritySearch(query)
+                .toList()
 
         if (results.isEmpty()) {
             return emptyList()

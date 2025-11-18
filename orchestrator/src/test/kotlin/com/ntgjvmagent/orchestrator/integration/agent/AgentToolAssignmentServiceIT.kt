@@ -39,7 +39,18 @@ class AgentToolAssignmentServiceIT
             toolRepository.flush()
             agentRepository.flush()
 
-            agent = agentRepository.save(Agent(name = "Agent Smith ${UUID.randomUUID()}", model = "T-800"))
+            agent =
+                agentRepository.save(
+                    Agent(
+                        name = "Agent Smith ${UUID.randomUUID()}",
+                        model = "T-800",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "github_pat_11AN",
+                        chatCompletionsPath = "/v1/chat/completions",
+                        embeddingsPath = "/embeddings",
+                        embeddingModel = "openai/text-embedding-3-small",
+                    ),
+                )
             activeTool = toolRepository.save(Tool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })
             inactiveTool =
                 toolRepository.save(Tool(name = "Inactive Gadget ${UUID.randomUUID()}").apply { active = false })
