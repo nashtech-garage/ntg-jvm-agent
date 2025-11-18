@@ -40,14 +40,14 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
         components={{
           code: CodeComponent,
           a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-yellow-600 hover:underline cursor-pointer"
+            <button
+              onClick={() => href && window.open(href, '_blank')}
+              title={href}
+              className="text-sm text-gray-500 px-1 py-0.5 rounded hover:text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              style={{ lineHeight: 1.2, fontWeight: 400 }}
             >
               {children}
-            </a>
+            </button>
           ),
         }}
       >

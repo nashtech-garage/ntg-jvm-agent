@@ -26,6 +26,9 @@ class ChatModelService(
     ): String? {
         val combinedPrompt =
             buildString {
+                appendLine(
+                    Constant.SEARCH_TOOL_INSTRUCTION.trimIndent(),
+                )
                 history.forEach { item ->
                     appendLine(item)
                 }
