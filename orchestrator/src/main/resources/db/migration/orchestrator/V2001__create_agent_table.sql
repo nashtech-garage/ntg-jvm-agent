@@ -31,21 +31,6 @@ CREATE TABLE IF NOT EXISTS agent (
     updated_at          TIMESTAMPTZ
 );
 
--- Trigger to auto-update updated_at
-CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP(3);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_agent_updated_at ON agent;
-CREATE TRIGGER trg_agent_updated_at
-BEFORE UPDATE ON agent
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_agent_name ON agent(name);
 CREATE INDEX IF NOT EXISTS idx_agent_model ON agent(model);
@@ -71,12 +56,6 @@ CREATE TABLE IF NOT EXISTS tool (
     updated_at   TIMESTAMPTZ
 );
 
-DROP TRIGGER IF EXISTS trg_tool_updated_at ON tool;
-CREATE TRIGGER trg_tool_updated_at
-BEFORE UPDATE ON tool
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
 CREATE INDEX IF NOT EXISTS idx_tool_name ON tool(name);
 CREATE INDEX IF NOT EXISTS idx_tool_type ON tool(type);
 CREATE INDEX IF NOT EXISTS idx_tool_active ON tool(active);
@@ -98,12 +77,6 @@ CREATE TABLE IF NOT EXISTS agent_tool (
     CONSTRAINT uk_agent_tool UNIQUE (agent_id, tool_id)
 );
 
-DROP TRIGGER IF EXISTS trg_agent_tool_updated_at ON agent_tool;
-CREATE TRIGGER trg_agent_tool_updated_at
-BEFORE UPDATE ON agent_tool
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
 CREATE INDEX IF NOT EXISTS idx_agent_tool_agent_id ON agent_tool(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_tool_tool_id ON agent_tool(tool_id);
 
@@ -124,12 +97,6 @@ CREATE TABLE IF NOT EXISTS agent_knowledge (
     updated_at      TIMESTAMPTZ
 );
 
-DROP TRIGGER IF EXISTS trg_agent_knowledge_updated_at ON agent_knowledge;
-CREATE TRIGGER trg_agent_knowledge_updated_at
-BEFORE UPDATE ON agent_knowledge
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_agent_id ON agent_knowledge(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_name ON agent_knowledge(name);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_source_type ON agent_knowledge(source_type);
@@ -137,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_knowledge_deleted_at ON agent_knowledge(del
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_active_not_deleted ON agent_knowledge (active) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge USING gin (metadata);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_per_agent ON agent_knowledge (agent_id, name) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON agent_knowledge (agent_id, source_uri) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON agent_knowledge (agent_id, source_uri) WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
 
 -- =======================
 -- 5. knowledge_chunk (pgvector)
@@ -156,31 +123,8 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)
 );
 
-DROP TRIGGER IF EXISTS trg_knowledge_chunk_updated_at ON knowledge_chunk;
-CREATE TRIGGER trg_knowledge_chunk_updated_at
-BEFORE UPDATE ON knowledge_chunk
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding
   ON knowledge_chunk USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_knowledge_id ON knowledge_chunk (knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_order ON knowledge_chunk (knowledge_id, chunk_order);
 CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata);
-
--- ====================================================================
--- === DOWN Migration (Manual Rollback) ===
--- ====================================================================
--- DROP TRIGGER IF EXISTS trg_agent_knowledge_updated_at ON agent_knowledge;
--- DROP TRIGGER IF EXISTS trg_agent_tool_updated_at ON agent_tool;
--- DROP TRIGGER IF EXISTS trg_tool_updated_at ON tool;
--- DROP TRIGGER IF EXISTS trg_agent_updated_at ON agent;
--- DROP FUNCTION IF EXISTS update_timestamp;
--- DROP TABLE IF EXISTS knowledge_chunk;
--- DROP TABLE IF EXISTS agent_knowledge;
--- DROP TABLE IF EXISTS agent_tool;
--- DROP TABLE IF EXISTS tool;
--- DROP TABLE IF EXISTS agent;
--- DROP EXTENSION IF EXISTS vector;
--- DROP EXTENSION IF EXISTS pgcrypto;
--- ====================================================================

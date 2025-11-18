@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
-import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
@@ -43,15 +42,7 @@ class AgentKnowledgeService(
                 .findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
 
-        val entity =
-            AgentKnowledge(
-                agent = agent,
-                name = request.name,
-                sourceType = request.sourceType,
-                sourceUri = request.sourceUri,
-                metadata = request.metadata,
-                embeddingModel = request.embeddingModel,
-            )
+        val entity = AgentKnowledgeMapper.toEntity(agent, request)
 
         return AgentKnowledgeMapper.toResponse(repo.save(entity))
     }
