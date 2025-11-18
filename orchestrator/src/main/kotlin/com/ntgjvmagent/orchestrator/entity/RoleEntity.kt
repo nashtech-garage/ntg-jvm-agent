@@ -6,12 +6,13 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.ManyToMany
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import java.util.UUID
 
 @Entity
 @Table(name = "roles")
-class Role(
+class RoleEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID? = null,
@@ -20,5 +21,7 @@ class Role(
     @Column(length = 500)
     var description: String? = null,
     @ManyToMany(mappedBy = "userRoles")
-    var users: MutableSet<User> = mutableSetOf(),
+    var users: MutableSet<UserEntity> = mutableSetOf(),
+    @OneToMany(mappedBy = "role", orphanRemoval = true)
+    val userRoles: MutableSet<UserRoleEntity> = mutableSetOf(),
 )

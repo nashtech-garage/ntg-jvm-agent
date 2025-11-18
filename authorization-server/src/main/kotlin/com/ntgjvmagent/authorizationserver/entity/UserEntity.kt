@@ -1,11 +1,15 @@
 package com.ntgjvmagent.authorizationserver.entity
 
 import jakarta.persistence.*
+import java.util.UUID
 
 @Entity
 @Table(name = "users")
 data class UserEntity(
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val id: UUID,
+
     val username: String,
 
     val password: String,
@@ -16,12 +20,7 @@ data class UserEntity(
 
     val email: String,
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-        name = "authorities",
-        joinColumns = [JoinColumn(name = "username")]
-    )
-    @Column(name = "authority")
-    val roles: Set<String> = setOf("ROLE_USER")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    val userRoles: MutableSet<UserRolesEntity> = mutableSetOf(),
 )
 
