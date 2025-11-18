@@ -3,6 +3,7 @@ package com.ntgjvmagent.authorizationserver.controller
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
+import com.ntgjvmagent.authorizationserver.service.UserService
 import com.ntgjvmagent.authorizationserver.service.impl.UserServiceImpl
 import com.ntgjvmagent.authorizationserver.utils.Constant
 import jakarta.validation.Valid
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/users")
 class UserController(
-    private val userService: UserServiceImpl
+    private val userService: UserService
 ) {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")

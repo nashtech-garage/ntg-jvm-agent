@@ -3,7 +3,6 @@ package com.ntgjvmagent.authorizationserver.service.impl
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
-import com.ntgjvmagent.authorizationserver.enum.UserRoleEnum
 import com.ntgjvmagent.authorizationserver.mapper.toPageDto
 import com.ntgjvmagent.authorizationserver.mapper.toUserEntity
 import com.ntgjvmagent.authorizationserver.mapper.toCreateUserDto
@@ -33,22 +32,19 @@ class UserServiceImpl(
 
 
     override fun createUser(request: CreateUserRequest): CreateUserDto {
+        // Validate username uniqueness
+        if (userRepository.existsById(request.username)) {
+            throw IllegalArgumentException(
+                "Username '${request.username}' already exists. Please use a different username."
+            )
+        }
+
         val tempPassword = PasswordGenerator.generateTempPassword()
         val encodedPassword = passwordEncoder.encode(tempPassword)
-
-        // Allow only specific roles (USER). Ignore any roles not in the allow-list.
-        val allowedRoles = setOf(
-            UserRoleEnum.ROLE_USER.roleName
-        )
-
-        val requestedRoles = request.roles
-        val filteredRoles = requestedRoles.filter { it in allowedRoles }.toSet()
-        val finalRoles = filteredRoles.ifEmpty { setOf(UserRoleEnum.ROLE_USER.roleName) }
-
-        val requestWithAllowedRoles = request.copy(roles = finalRoles)
-        val userEntity = requestWithAllowedRoles.toUserEntity(encodedPassword)
-
+        // Role validation and filtering is handled in CreateUserRequest's init block.
+        val userEntity = request.toUserEntity(encodedPassword)
         val savedUser = userRepository.save(userEntity)
+        logger.info("User '{}' created successfully", request.username)
         return savedUser.toCreateUserDto(tempPassword)
     }
 }

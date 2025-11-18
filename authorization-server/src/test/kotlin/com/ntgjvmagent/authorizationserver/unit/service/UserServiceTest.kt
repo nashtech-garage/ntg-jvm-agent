@@ -57,7 +57,8 @@ class UserServiceTest {
         val request = CreateUserRequest(
             username = "newuser",
             name = "New User",
-            email = "newuser@gmail.com"
+            email = "newuser@gmail.com",
+            sendAccountInfo = true
         )
 
         val encodedPassword = "encodedTempPassword123"
@@ -84,13 +85,13 @@ class UserServiceTest {
         verify(passwordEncoder, times(1)).encode(any())
     }
 
-
     @Test
     fun `createUser should use default ROLE_USER when roles are empty`() {
         val request = CreateUserRequest(
             username = "emptyrolesuser",
             name = "Empty Roles User",
             email = "emptyroles@gmail.com",
+            sendAccountInfo = true,
             roles = emptySet<String>()
         )
 
