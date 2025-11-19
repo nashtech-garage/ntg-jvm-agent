@@ -137,7 +137,10 @@ class ConversationService(
     }
 
     @Transactional
-    fun updateConversationTitle(conversationId: UUID, newTitle: String): ConversationResponseVm {
+    fun updateConversationTitle(
+        conversationId: UUID,
+        newTitle: String,
+    ): ConversationResponseVm {
         val conversation =
             this.conversationRepo
                 .findById(conversationId)

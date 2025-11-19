@@ -6,4 +6,3 @@ data class ConversationUpdateRequestVm(
     @field:NotBlank(message = "Title cannot be blank")
     val title: String,
 )
-
