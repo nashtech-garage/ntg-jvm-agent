@@ -6,7 +6,6 @@ import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import org.springframework.data.domain.Page
-import java.util.UUID
 
 fun CreateUserRequest.toUserEntity(encodedPassword: String): UserEntity {
     return UserEntity(
