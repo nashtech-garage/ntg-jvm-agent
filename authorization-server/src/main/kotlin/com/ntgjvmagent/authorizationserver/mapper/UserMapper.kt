@@ -6,6 +6,7 @@ import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import org.springframework.data.domain.Page
+import java.util.UUID
 
 fun CreateUserRequest.toUserEntity(encodedPassword: String) = UserEntity(
     username = this.username,
@@ -13,7 +14,7 @@ fun CreateUserRequest.toUserEntity(encodedPassword: String) = UserEntity(
     enabled = true,
     name = this.name,
     email = this.email,
-    roles = this.roles
+    id = UUID.randomUUID(),
 )
 
 fun UserEntity.toDto() = UserDto(
@@ -28,7 +29,7 @@ fun UserEntity.toCreateUserDto(password: String) = CreateUserDto(
     username = this.username,
     name = this.name,
     email = this.email,
-    roles = this.roles,
+    roles = this.userRoles.map { it.role.name }.toSet(),
     temporaryPassword = password
 )
 

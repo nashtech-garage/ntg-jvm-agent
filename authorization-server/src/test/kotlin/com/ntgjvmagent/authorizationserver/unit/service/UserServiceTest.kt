@@ -1,8 +1,8 @@
 package com.ntgjvmagent.authorizationserver.unit.service
 
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
-import com.ntgjvmagent.authorizationserver.enum.UserRoleEnum
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
+import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.service.impl.UserServiceImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -62,16 +62,17 @@ class UserServiceTest {
         )
 
         val encodedPassword = "encodedTempPassword123"
+        val userId = UUID.randomUUID()
         val userEntity = UserEntity(
+            id = userId,
             username = request.username,
             password = encodedPassword,
             enabled = true,
             name = request.name,
-            email = request.email,
-            roles = setOf(UserRoleEnum.ROLE_USER.roleName)
+            email = request.email
         )
 
-        `when`(userRepository.existsById(any())).thenReturn(false)
+        `when`(userRepository.existsById(request.username)).thenReturn(false)
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
@@ -80,7 +81,6 @@ class UserServiceTest {
         assertEquals("newuser", result.username)
         assertEquals("New User", result.name)
         assertEquals("newuser@gmail.com", result.email)
-        assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         assertTrue(result.temporaryPassword.isNotBlank())
         verify(userRepository, times(1)).save(any())
         verify(passwordEncoder, times(1)).encode(any())
@@ -97,22 +97,22 @@ class UserServiceTest {
         )
 
         val encodedPassword = "encodedTempPassword123"
+        val userId = UUID.randomUUID()
         val userEntity = UserEntity(
+            id = userId,
             username = request.username,
             password = encodedPassword,
             enabled = true,
             name = request.name,
-            email = request.email,
-            roles = setOf(UserRoleEnum.ROLE_USER.roleName)
+            email = request.email
         )
 
-        `when`(userRepository.existsById(any())).thenReturn(false)
+        `when`(userRepository.existsById(request.username)).thenReturn(false)
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
         val result = userService.createUser(request)
 
-        assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         verify(userRepository, times(1)).save(any())
     }
 }
