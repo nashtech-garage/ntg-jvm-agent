@@ -21,13 +21,15 @@ class SystemSettingController(
     private val systemSettingService: SystemSettingService,
 ) {
     @GetMapping
-    fun getSystemSetting(): ResponseEntity<SystemSettingResponseDto> = ResponseEntity.ok(systemSettingService.getSystemSetting())
+    fun getSystemSetting(): ResponseEntity<SystemSettingResponseDto> =
+        ResponseEntity.ok(systemSettingService.getSystemSetting())
 
 
     @PutMapping("/{id}")
-    fun updateRole(
+    fun updateSystemSetting(
         @PathVariable id: UUID,
         @Valid @RequestBody request: SystemSettingRequestDto,
-    ): ResponseEntity<SystemSettingResponseDto> = ResponseEntity.ok(systemSettingService.updateSystemSetting(id, request))
+    ): ResponseEntity<SystemSettingResponseDto> =
+        ResponseEntity.ok(systemSettingService.updateSystemSetting(id, request))
 
 }
