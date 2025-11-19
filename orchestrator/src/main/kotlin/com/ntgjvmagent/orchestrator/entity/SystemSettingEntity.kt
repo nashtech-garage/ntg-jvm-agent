@@ -9,19 +9,19 @@ import jakarta.persistence.Table
 @Table(name = "system_setting")
 data class SystemSettingEntity(
     @Column(name = "site_name")
-    var siteName : String,
+    var siteName: String,
     @Column(name = "maximum_user")
-    var maximumUser :  Int,
+    var maximumUser: Int,
     @Column(name = "session_timeout")
-    var sessionTimeout :  Int,
+    var sessionTimeout: Int,
     @Column(name = "maximum_size_file_upload")
-    var maximumSizeFileUpload :  Int,
+    var maximumSizeFileUpload: Int,
     @Column(name = "allowed_file_types")
-    var allowedFileTypes :  String,
+    var allowedFileTypes: String,
     @Column(name = "maintenance_mode")
-    var maintenanceMode :  Boolean,
+    var maintenanceMode: Boolean,
     @Column(name = "user_registration")
-    var userRegistration :  Boolean,
+    var userRegistration: Boolean,
     @Column(name = "email_verification")
-    var emailVerification :  Boolean,
+    var emailVerification: Boolean,
 ) : BaseEntity()

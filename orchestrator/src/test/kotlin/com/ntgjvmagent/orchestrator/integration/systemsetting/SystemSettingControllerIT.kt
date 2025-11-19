@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.integration.systemsetting
 
-
 import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.SystemSettingRepository
@@ -10,13 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-
 @DisplayName("SystemSettingController Integration Tests")
 class SystemSettingControllerIT
     @Autowired
     constructor(
         private val repository: SystemSettingRepository,
-
         ) : BaseIntegrationTest() {
     @Test
     fun `should get SystemSetting`() {
@@ -39,6 +36,5 @@ class SystemSettingControllerIT
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$[0].siteName").value("TEST"))
             .andExpect(jsonPath("$[0].maximumUser").value(10))
+        }
     }
-
-}
