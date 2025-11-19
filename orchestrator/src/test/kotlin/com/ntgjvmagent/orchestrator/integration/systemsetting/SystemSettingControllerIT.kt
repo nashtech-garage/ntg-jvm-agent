@@ -14,11 +14,11 @@ class SystemSettingControllerIT
         private val repository: SystemSettingRepository,
     ) : BaseIntegrationTest() {
         @Test
-    fun `should get SystemSetting`() {
-        mockMvc
-            .perform(
-                getAuth("/api/system", roles = listOf("ROLE_ADMIN")),
-            ).andExpect(status().isOk)
-            .andReturn()
+        fun `should get SystemSetting`() {
+            mockMvc
+                .perform(
+                    getAuth("/api/system", roles = listOf("ROLE_ADMIN")),
+                ).andExpect(status().isOk)
+                .andReturn()
         }
     }
