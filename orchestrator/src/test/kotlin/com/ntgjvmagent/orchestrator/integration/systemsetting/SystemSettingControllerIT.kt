@@ -20,13 +20,13 @@ class SystemSettingControllerIT
         repository.save(
             SystemSettingEntity(
                 siteName = "TEST",
-                    maximumUser = 10,
-                    sessionTimeout = 10,
-                    maximumSizeFileUpload = 10,
-                    allowedFileTypes = "doc, pdf",
-                    maintenanceMode = true,
-                    userRegistration = true,
-                    emailVerification = true,
+                maximumUser = 10,
+                sessionTimeout = 10,
+                maximumSizeFileUpload = 10,
+                allowedFileTypes = "doc, pdf",
+                maintenanceMode = true,
+                userRegistration = true,
+                emailVerification = true,
             ),
         )
 
@@ -34,7 +34,14 @@ class SystemSettingControllerIT
             .perform(
                 getAuth("/api/system", roles = listOf("ROLE_ADMIN")),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("$[0].siteName").value("TEST"))
-            .andExpect(jsonPath("$[0].maximumUser").value(10))
+            .andExpect(jsonPath("siteName").value("TEST"))
+            .andExpect(jsonPath("maximumUser").value(10))
+            .andExpect(jsonPath("sessionTimeout").value(10))
+            .andExpect(jsonPath("maximumSizeFileUpload").value(10))
+            .andExpect(jsonPath("allowedFileTypes").value("doc, pdf"))
+            .andExpect(jsonPath("maintenanceMode").value(true))
+            .andExpect(jsonPath("userRegistration").value(true))
+            .andExpect(jsonPath("emailVerification").value(true))
+
         }
     }
