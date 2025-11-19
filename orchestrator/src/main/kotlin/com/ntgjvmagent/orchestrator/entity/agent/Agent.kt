@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.entity.agent
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -66,6 +67,8 @@ data class Agent(
     var embeddingsPath: String,
     @Column(name = "embedding_model", length = 50, nullable = false)
     var embeddingModel: String,
+    @Column(nullable = false)
+    var dimension: Int = Constant.OPEN_API_DIMENSION,
     @Version
     @Column(nullable = false)
     var version: Int = 0,
@@ -87,6 +90,7 @@ data class Agent(
         const val MAX_TOP_P = 1.0
         const val MIN_PENALTY = -2.0
         const val MAX_PENALTY = 2.0
+        const val MIN_DIMENSION = 64
     }
 
     @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)

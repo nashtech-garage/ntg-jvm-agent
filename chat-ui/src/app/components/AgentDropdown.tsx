@@ -37,7 +37,10 @@ export default function AgentDropdown() {
         toast.error(`Error fetching agents: ${error}`);
       }
     };
-    fetchAgents();
+
+    if (!agents.length) {
+      fetchAgents();
+    }
     return () => document.removeEventListener('mousedown', handle);
   }, []);
 

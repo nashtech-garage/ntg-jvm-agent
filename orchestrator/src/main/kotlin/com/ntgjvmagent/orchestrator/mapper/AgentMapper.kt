@@ -23,6 +23,7 @@ object AgentMapper {
             chatCompletionsPath = request.chatCompletionsPath,
             embeddingsPath = request.embeddingsPath,
             embeddingModel = request.embeddingModel,
+            dimension = request.dimension,
         ).apply { active = request.active }
 
     fun toResponse(agent: Agent): AgentResponseDto =

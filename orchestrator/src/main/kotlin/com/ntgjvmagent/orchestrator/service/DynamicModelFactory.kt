@@ -50,6 +50,7 @@ class DynamicModelFactory(
                 config.chatCompletionsPath,
                 config.embeddingsPath,
                 config.embeddingModel,
+                config.dimension,
             )
 
         return chatModel to embeddingModel
@@ -85,6 +86,7 @@ class DynamicModelFactory(
         chatCompletionsPath: String,
         embeddingsPath: String,
         embeddingModel: String,
+        dimension: Int,
     ): EmbeddingModel {
         val api = createOpenAiApi(baseUrl, apiKey, chatCompletionsPath, embeddingsPath)
 
@@ -94,6 +96,7 @@ class DynamicModelFactory(
             OpenAiEmbeddingOptions
                 .builder()
                 .model(embeddingModel)
+                .dimensions(dimension)
                 .build(),
         )
     }

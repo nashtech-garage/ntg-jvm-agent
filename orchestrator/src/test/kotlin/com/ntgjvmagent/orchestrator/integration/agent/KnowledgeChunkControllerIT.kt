@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.config.VectorEmbeddingProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
@@ -33,7 +32,6 @@ class KnowledgeChunkControllerIT
         private val chunkRepo: KnowledgeChunkRepository,
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val agentRepo: AgentRepository,
-        private val properties: VectorEmbeddingProperties,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
@@ -91,7 +89,6 @@ class KnowledgeChunkControllerIT
             val persisted = chunkRepo.findAll()
             assertEquals(1, persisted.size)
             assertEquals("Test chunk", persisted[0].content)
-            assertEquals(properties.embeddingDimension, persisted[0].embedding.size)
         }
 
         @Test

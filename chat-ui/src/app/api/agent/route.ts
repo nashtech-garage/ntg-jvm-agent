@@ -9,7 +9,6 @@ export async function GET(req: Request) {
   if (!accessToken) {
     return NextResponse.json(null, { status: 401 });
   }
-  console.log('call agentUrl : ' + JSON.stringify(agentUrl));
   try {
     const res = await fetch(agentUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },

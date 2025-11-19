@@ -192,5 +192,6 @@ class AgentServiceTest {
         chatCompletionsPath = "/v1/chat/completions",
         embeddingsPath = "/embeddings",
         embeddingModel = "openai/text-embedding-3-small",
+        dimension = 1536,
     )
 }

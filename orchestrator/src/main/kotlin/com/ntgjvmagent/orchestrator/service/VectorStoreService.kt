@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.utils.Constant
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -13,12 +12,12 @@ class VectorStoreService(
 ) {
     fun getVectorStore(agentId: UUID): PgVectorStore {
         val embeddingModel = dynamicModelFactory.getEmbeddingModel(agentId)
-
+        val dimension = embeddingModel.dimensions()
         return PgVectorStore
             .builder(jdbcTemplate, embeddingModel)
-            .dimensions(Constant.DIMENSION)
+            .dimensions(dimension)
             .schemaName("public")
-            .vectorTableName("vector_store")
+            .vectorTableName("vector_store_$dimension")
             .build()
     }
 }

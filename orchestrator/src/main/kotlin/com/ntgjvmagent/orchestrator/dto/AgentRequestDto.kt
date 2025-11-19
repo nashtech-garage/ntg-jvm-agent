@@ -68,4 +68,6 @@ data class AgentRequestDto(
     val embeddingsPath: String,
     @field:NotBlank(message = "Embedding model path must not be blank")
     val embeddingModel: String,
+    @field:Min(value = Agent.MIN_DIMENSION.toLong(), message = "Min embedding must be at least {value}")
+    val dimension: Int,
 )
