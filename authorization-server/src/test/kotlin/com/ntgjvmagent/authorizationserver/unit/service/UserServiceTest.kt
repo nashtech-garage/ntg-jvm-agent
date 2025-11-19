@@ -1,7 +1,11 @@
 package com.ntgjvmagent.authorizationserver.unit.service
 
 import com.ntgjvmagent.authorizationserver.entity.UserEntity
+import com.ntgjvmagent.authorizationserver.entity.RolesEntity
+import com.ntgjvmagent.authorizationserver.entity.UserRolesEntity
+import com.ntgjvmagent.authorizationserver.enum.UserRoleEnum
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
+import com.ntgjvmagent.authorizationserver.repository.RolesRepository
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.service.impl.UserServiceImpl
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import java.util.Optional
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
 
@@ -26,6 +31,9 @@ class UserServiceTest {
 
     @Mock
     private lateinit var userRepository: UserRepository
+
+    @Mock
+    private lateinit var rolesRepository: RolesRepository
 
     @Mock
     private lateinit var passwordEncoder: PasswordEncoder
@@ -63,6 +71,8 @@ class UserServiceTest {
 
         val encodedPassword = "encodedTempPassword123"
         val userId = UUID.randomUUID()
+        val roleEntity = RolesEntity(UUID.randomUUID(), UserRoleEnum.ROLE_USER.roleName)
+
         val userEntity = UserEntity(
             id = userId,
             username = request.username,
@@ -72,8 +82,12 @@ class UserServiceTest {
             email = request.email
         )
 
-        `when`(userRepository.existsById(request.username)).thenReturn(false)
+        // Add role to user entity
+        userEntity.userRoles.add(UserRolesEntity(role = roleEntity, user = userEntity))
+
+        `when`(userRepository.findUserByUserName(request.username)).thenReturn(emptyList())
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
+        `when`(rolesRepository.findByName(UserRoleEnum.ROLE_USER.roleName)).thenReturn(Optional.of(roleEntity))
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
         val result = userService.createUser(request)
@@ -81,9 +95,11 @@ class UserServiceTest {
         assertEquals("newuser", result.username)
         assertEquals("New User", result.name)
         assertEquals("newuser@gmail.com", result.email)
+        assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         assertTrue(result.temporaryPassword.isNotBlank())
         verify(userRepository, times(1)).save(any())
         verify(passwordEncoder, times(1)).encode(any())
+        verify(rolesRepository, times(1)).findByName(UserRoleEnum.ROLE_USER.roleName)
     }
 
     @Test
@@ -98,6 +114,8 @@ class UserServiceTest {
 
         val encodedPassword = "encodedTempPassword123"
         val userId = UUID.randomUUID()
+        val roleEntity = RolesEntity(UUID.randomUUID(), UserRoleEnum.ROLE_USER.roleName)
+
         val userEntity = UserEntity(
             id = userId,
             username = request.username,
@@ -107,12 +125,18 @@ class UserServiceTest {
             email = request.email
         )
 
-        `when`(userRepository.existsById(request.username)).thenReturn(false)
+        // Add role to user entity
+        userEntity.userRoles.add(UserRolesEntity(role = roleEntity, user = userEntity))
+
+        `when`(userRepository.findUserByUserName(request.username)).thenReturn(emptyList())
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
+        `when`(rolesRepository.findByName(UserRoleEnum.ROLE_USER.roleName)).thenReturn(Optional.of(roleEntity))
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
         val result = userService.createUser(request)
 
+        assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         verify(userRepository, times(1)).save(any())
+        verify(rolesRepository, times(1)).findByName(UserRoleEnum.ROLE_USER.roleName)
     }
 }
