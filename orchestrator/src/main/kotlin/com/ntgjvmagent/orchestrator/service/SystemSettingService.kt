@@ -17,7 +17,7 @@ class SystemSettingService(
     fun updateSystemSetting(
         id: UUID,
         request: SystemSettingRequestDto,
-        ): SystemSettingResponseDto {
+    ): SystemSettingResponseDto {
         val setting =
             systemSetting
                 .findById(id)

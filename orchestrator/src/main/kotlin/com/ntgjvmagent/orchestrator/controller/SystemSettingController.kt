@@ -24,12 +24,10 @@ class SystemSettingController(
     fun getSystemSetting(): ResponseEntity<SystemSettingResponseDto> =
         ResponseEntity.ok(systemSettingService.getSystemSetting())
 
-
     @PutMapping("/{id}")
     fun updateSystemSetting(
         @PathVariable id: UUID,
         @Valid @RequestBody request: SystemSettingRequestDto,
     ): ResponseEntity<SystemSettingResponseDto> =
         ResponseEntity.ok(systemSettingService.updateSystemSetting(id, request))
-
 }

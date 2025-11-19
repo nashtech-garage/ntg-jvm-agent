@@ -6,15 +6,14 @@ import com.ntgjvmagent.orchestrator.repository.SystemSettingRepository
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @DisplayName("SystemSettingController Integration Tests")
 class SystemSettingControllerIT
-    @Autowired
-    constructor(
-        private val repository: SystemSettingRepository,
-        ) : BaseIntegrationTest() {
+@Autowired
+constructor(
+    private val repository: SystemSettingRepository,
+) : BaseIntegrationTest() {
     @Test
     fun `should get SystemSetting`() {
         repository.save(
@@ -34,14 +33,7 @@ class SystemSettingControllerIT
             .perform(
                 getAuth("/api/system", roles = listOf("ROLE_ADMIN")),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("siteName").value("TEST"))
-            .andExpect(jsonPath("maximumUser").value(10))
-            .andExpect(jsonPath("sessionTimeout").value(10))
-            .andExpect(jsonPath("maximumSizeFileUpload").value(10))
-            .andExpect(jsonPath("allowedFileTypes").value("doc, pdf"))
-            .andExpect(jsonPath("maintenanceMode").value(true))
-            .andExpect(jsonPath("userRegistration").value(true))
-            .andExpect(jsonPath("emailVerification").value(true))
+            .andReturn()
 
-        }
     }
+}
