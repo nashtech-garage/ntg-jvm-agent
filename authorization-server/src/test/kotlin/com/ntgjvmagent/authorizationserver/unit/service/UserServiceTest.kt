@@ -85,7 +85,7 @@ class UserServiceTest {
         // Add role to user entity
         userEntity.userRoles.add(UserRolesEntity(role = roleEntity, user = userEntity))
 
-        `when`(userRepository.findUserByUserName(request.username)).thenReturn(emptyList())
+        `when`(userRepository.findUserByUserName(request.username)).thenReturn(Optional.empty())
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(rolesRepository.findByName(UserRoleEnum.ROLE_USER.roleName)).thenReturn(Optional.of(roleEntity))
         `when`(userRepository.save(any())).thenReturn(userEntity)
@@ -103,13 +103,12 @@ class UserServiceTest {
     }
 
     @Test
-    fun `createUser should use default ROLE_USER when roles are empty`() {
+    fun `createUser should use default ROLE_USER when no role specified`() {
         val request = CreateUserRequest(
-            username = "emptyrolesuser",
-            name = "Empty Roles User",
-            email = "emptyroles@gmail.com",
-            sendAccountInfo = true,
-            roles = emptySet<String>()
+            username = "defaultroleuser",
+            name = "Default Role User",
+            email = "defaultrole@gmail.com",
+            sendAccountInfo = true
         )
 
         val encodedPassword = "encodedTempPassword123"
@@ -128,13 +127,14 @@ class UserServiceTest {
         // Add role to user entity
         userEntity.userRoles.add(UserRolesEntity(role = roleEntity, user = userEntity))
 
-        `when`(userRepository.findUserByUserName(request.username)).thenReturn(emptyList())
+        `when`(userRepository.findUserByUserName(request.username)).thenReturn(Optional.empty())
         `when`(passwordEncoder.encode(any())).thenReturn(encodedPassword)
         `when`(rolesRepository.findByName(UserRoleEnum.ROLE_USER.roleName)).thenReturn(Optional.of(roleEntity))
         `when`(userRepository.save(any())).thenReturn(userEntity)
 
         val result = userService.createUser(request)
 
+        assertEquals("defaultroleuser", result.username)
         assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         verify(userRepository, times(1)).save(any())
         verify(rolesRepository, times(1)).findByName(UserRoleEnum.ROLE_USER.roleName)

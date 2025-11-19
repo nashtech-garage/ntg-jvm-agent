@@ -38,7 +38,7 @@ class UserServiceImpl(
     @Transactional
     override fun createUser(request: CreateUserRequest): CreateUserDto {
         // Validate username uniqueness
-        require(userRepository.findUserByUserName(request.username).isEmpty) {
+        require(!userRepository.findUserByUserName(request.username).isPresent) {
             "Username '${request.username}' already exists. Please use a different username."
         }
 
