@@ -27,14 +27,16 @@ export default function Page() {
   const askQuestion = async (
     question: string,
     conversationId: string | null,
-    files: FileSelectInfo[]
+    files: FileSelectInfo[],
+    onToken: (token: string) => void,
+    onComplete: (finalResult: ChatResponse) => void
   ): Promise<ChatResponse | Error> => {
     const formData = new FormData();
     formData.append('question', question);
     if (conversationId) {
       formData.append('conversationId', conversationId);
     }
-    if (files && files.length) {
+    if (files?.length) {
       for (const file of files) {
         formData.append('files', file.file);
       }
@@ -47,11 +49,74 @@ export default function Page() {
       method: 'POST',
       body: formData,
     });
-    const jsonResult = await res.json();
-    if (!res.ok) {
-      return new Error(jsonResult.error);
+
+    if (!res.body) {
+      throw new Error('No response body');
     }
-    return jsonResult;
+
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      buffer += value;
+
+      const events = buffer.split('\n\n');
+
+      buffer = events.pop() || '';
+
+      for (const event of events) {
+        const lines = event.split('\n');
+        let eventName = '';
+        let data = ' ';
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            eventName = line.replace('event:', '').trim();
+          } else if (line.startsWith('data:')) {
+            data += line.replace('data:', '').trim();
+          }
+        }
+
+        if (eventName === 'message') {
+          onToken(data);
+        }
+
+        if (eventName === 'complete') {
+          const finalJson = JSON.parse(data);
+          onComplete(finalJson);
+          return finalJson;
+        }
+      }
+    }
+
+    return new Error('Stream ended without a completion event');
+  };
+
+  const handleTokenUpdate = (token: string) => {
+    setChatMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === 'streaming' ? { ...msg, content: msg.content + token } : msg
+      )
+    );
+  };
+
+  const handleFinalResponse = (finalResponse: ChatResponse) => {
+    const { conversation, message } = finalResponse;
+
+    // Update active conversation
+    if (!activeConversationId) {
+      setActiveConversationId(conversation.id);
+      setConversations((prev) => [conversation, ...prev]);
+      router.replace(`/c/${conversation.id}`);
+    }
+
+    setChatMessages((prev) => prev.map((msg) => (msg.id === 'streaming' ? message : msg)));
+
+    setIsTyping(false);
   };
 
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
@@ -70,23 +135,27 @@ export default function Page() {
     /* Show question in screen immediately */
     setChatMessages([...chatMessages, question]);
 
+    const tempMessage = {
+      id: 'streaming',
+      content: '',
+      medias: [],
+      createdAt: new Date().toISOString(),
+      type: 2,
+    };
+
+    setChatMessages((prev) => [...prev, tempMessage]);
+
     /* Call to Orchestrator */
-    const result = await askQuestion(q, activeConversationId, files);
-
-    setIsTyping(false);
+    const result = await askQuestion(
+      q,
+      activeConversationId,
+      files,
+      handleTokenUpdate,
+      handleFinalResponse
+    );
     if (result instanceof Error) {
-      toast.error(result.message);
-      return;
+      toast.error((result as any).message);
     }
-
-    const { conversation, message: answer } = result;
-
-    if (!activeConversationId) {
-      setActiveConversationId(conversation.id);
-      setConversations((prev) => [conversation, ...prev]);
-      router.replace(`/c/${conversation.id}`);
-    }
-    setChatMessages((prev) => [...prev, answer]);
   };
 
   return (

@@ -15,8 +15,11 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
+import org.springframework.http.codec.ServerSentEvent
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Service
@@ -31,12 +34,13 @@ class ConversationService(
     fun createConversation(
         chatReq: ChatRequestVm,
         username: String,
+        answer: String,
     ): ChatResponseVm {
         if (chatReq.conversationId != null) {
-            return this.addMessage(chatReq.conversationId, chatReq)
+            return this.addMessage(chatReq.conversationId, chatReq, answer)
         }
         val conversationId = this.createNewConversation(chatReq, username)
-        return this.addMessage(conversationId, chatReq)
+        return this.addMessage(conversationId, chatReq, answer)
     }
 
     fun listConversationByUser(username: String): List<ConversationResponseVm> {
@@ -69,6 +73,7 @@ class ConversationService(
     private fun addMessage(
         conversationId: UUID,
         request: ChatRequestVm,
+        answer: String,
     ): ChatResponseVm {
         val conversation =
             this.conversationRepo
@@ -82,39 +87,13 @@ class ConversationService(
                 type = Constant.QUESTION_TYPE,
             )
         val questionEntity = this.messageRepo.save(questionMsg)
-
         saveMessageMedia(request, questionEntity)
-
         val conversationResponse: ConversationResponseVm =
             ConversationResponseVmImpl(
                 conversationId,
                 conversation.title,
                 conversation.createdAt!!,
             )
-
-        val history =
-            messageRepo
-                .listMessageByConversationId(conversationId)
-                .map { ChatMessageMapper.toHistoryFormat(it) }
-
-        val splitIndex = history.size - historyLimit
-
-        val (olderMessages, recentMessages) =
-            if (splitIndex > 0) {
-                history.partition { history.indexOf(it) < splitIndex }
-            } else {
-                Pair(emptyList(), history)
-            }
-
-        val summary = chatModelService.createDynamicSummary(request.agentId, olderMessages)
-
-        val answer =
-            chatModelService.call(
-                request = request,
-                history = recentMessages,
-                summary = summary,
-            )
-
         return buildChatResponse(answer, conversationResponse, conversation)
     }
 
@@ -207,4 +186,58 @@ class ConversationService(
                 null,
             )
         }
+
+    fun streamConversation(
+        request: ChatRequestVm,
+        username: String,
+    ): Flux<ServerSentEvent<Any>> {
+        val history =
+            request.conversationId?.let {
+                messageRepo
+                    .listMessageByConversationId(it)
+                    .map(ChatMessageMapper::toHistoryFormat)
+            } ?: emptyList()
+
+        val splitIndex = history.size - historyLimit
+
+        val (olderMessages, recentMessages) =
+            if (splitIndex > 0) {
+                history.partition { history.indexOf(it) < splitIndex }
+            } else {
+                Pair(emptyList(), history)
+            }
+
+        val summary = chatModelService.createDynamicSummary(request.agentId, olderMessages)
+
+        val answerBuilder = StringBuilder()
+
+        val tokenFlux =
+            chatModelService
+                .call(request, recentMessages + request.question, summary)
+                .map { chunk ->
+                    answerBuilder.append(chunk)
+                    ServerSentEvent
+                        .builder<Any>(chunk)
+                        .event("message")
+                        .build()
+                }
+
+        val saveFlux =
+            Mono.defer {
+                val saved =
+                    createConversation(
+                        chatReq = request,
+                        username = username,
+                        answer = answerBuilder.toString(),
+                    )
+                Mono.just(
+                    ServerSentEvent
+                        .builder<Any>(saved)
+                        .event("complete")
+                        .build(),
+                )
+            }
+
+        return tokenFlux.concatWith(saveFlux)
+    }
 }
