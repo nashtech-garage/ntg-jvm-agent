@@ -33,6 +33,11 @@ class AgentKnowledgeControllerIT
                     Agent(
                         name = "Test Agent",
                         model = "gpt-4",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "github_pat_11AN",
+                        chatCompletionsPath = "/v1/chat/completions",
+                        embeddingsPath = "/embeddings",
+                        embeddingModel = "openai/text-embedding-3-small",
                     ),
                 )
         }

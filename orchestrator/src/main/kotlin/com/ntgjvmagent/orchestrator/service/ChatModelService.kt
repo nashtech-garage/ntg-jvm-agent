@@ -1,22 +1,27 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
+import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
-import org.springframework.ai.chat.model.ChatModel
-import org.springframework.ai.chat.prompt.Prompt
-import org.springframework.ai.tool.ToolCallbackProvider
+import org.springframework.ai.tool.ToolCallback
+import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
+import java.util.UUID
 
 @Service
 class ChatModelService(
-    private val chatModel: ChatModel,
-    private val qaAdvisor: QuestionAnswerAdvisor,
-    private val mcpClientToolCallbackProvider: ToolCallbackProvider,
+    private val vectorStoreService: VectorStoreService,
+    private val agentKnowledgeRepo: AgentKnowledgeRepository,
+    private val agentToolRepo: AgentToolRepository,
+    private val filteredToolCallbackProvider: FilteredToolCallbackProvider,
+    private val dynamicModelFactory: DynamicModelFactory,
 ) {
     private val logger = LoggerFactory.getLogger(ChatModelService::class.java)
 
@@ -32,13 +37,17 @@ class ChatModelService(
                 appendLine("User: ${request.question}")
             }
 
-        val chatClient = ChatClient.builder(chatModel).build()
+        val model = dynamicModelFactory.getChatModel(request.agentId)
+        val chatClient = ChatClient.builder(model).build()
+        val qaAdvisor = createQaAdvisorForAgent(request.agentId)
 
+        var promptBuilder = chatClient.prompt()
+        if (qaAdvisor != null) {
+            promptBuilder = promptBuilder.advisors(qaAdvisor)
+        }
         val response =
-            chatClient
-                .prompt()
-                .advisors(qaAdvisor)
-                .toolCallbacks(mcpClientToolCallbackProvider)
+            promptBuilder
+                .toolCallbacks(createToolForAgent(request.agentId))
                 .user { u ->
                     u.text(combinedPrompt)
                     request.files
@@ -61,16 +70,42 @@ class ChatModelService(
         return response
     }
 
-    fun createSummarize(question: String): String? {
-        val prompt =
-            Prompt(
-                """
-                ${Constant.SUMMARY_PROMPT}
-                "$question"
-                """.trimIndent(),
-            )
+    fun createSummarize(question: String): String = question
 
-        val response = chatModel.call(prompt)
-        return response.result.output.text
+    fun createQaAdvisorForAgent(agentId: UUID): QuestionAnswerAdvisor? {
+        val knowledgeIds: List<String> =
+            agentKnowledgeRepo
+                .findAllByAgentIdAndActiveTrue(
+                    agentId,
+                ).map { it.id.toString() }
+
+        if (knowledgeIds.isEmpty()) {
+            return null
+        }
+        val idsArray =
+            knowledgeIds.joinToString(
+                prefix = "[",
+                postfix = "]",
+                separator = ",",
+            ) { "\"$it\"" }
+
+        val searchRequest =
+            SearchRequest
+                .builder()
+                .topK(Constant.TOP_K)
+                .filterExpression("knowledge_id IN $idsArray")
+                .build()
+        return QuestionAnswerAdvisor
+            .builder(vectorStoreService.getVectorStore(agentId))
+            .searchRequest(searchRequest)
+            .build()
+    }
+
+    fun createToolForAgent(agentId: UUID): List<ToolCallback?> {
+        val allowedToolNames: List<String> =
+            agentToolRepo
+                .findByAgentId(agentId)
+                .map { it.tool.name }
+        return filteredToolCallbackProvider.getCallbacksByToolNames(allowedToolNames)
     }
 }
