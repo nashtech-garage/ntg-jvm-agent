@@ -1,8 +1,11 @@
 package com.ntgjvmagent.orchestrator.entity.agent
 
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
@@ -75,4 +78,10 @@ data class Agent(
         const val MIN_PENALTY = -2.0
         const val MAX_PENALTY = 2.0
     }
+
+    @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var tools: MutableSet<AgentTool> = mutableSetOf()
+
+    @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var knowledge: MutableSet<AgentKnowledge> = mutableSetOf()
 }

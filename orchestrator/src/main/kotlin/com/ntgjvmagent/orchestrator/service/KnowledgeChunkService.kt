@@ -22,16 +22,17 @@ class KnowledgeChunkService(
 ) {
     @Transactional
     fun addChunk(
+        agentId: UUID,
         knowledgeId: UUID,
         content: String,
         metadata: Map<String, Any>? = null,
         chunkOrder: Int? = null,
     ): KnowledgeChunkResponseDto {
         val knowledge =
-            knowledgeRepo.findByIdOrNull(knowledgeId)
-                ?: throw EntityNotFoundException("Knowledge not found: $knowledgeId")
+            knowledgeRepo.findByIdAndAgentId(knowledgeId, agentId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
-        val order = chunkOrder ?: getNextChunkOrderForKnowledge(knowledgeId)
+        val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
         val embedding = embeddingModel.embed(content)
 
         val chunk =
@@ -42,58 +43,89 @@ class KnowledgeChunkService(
                 metadata = metadata,
                 embedding = embedding,
             )
+
         val savedChunk = chunkRepo.save(chunk)
         vectorStore.add(listOf(buildDocument(savedChunk)))
+
         return KnowledgeChunkResponseDto.from(savedChunk)
     }
 
     @Transactional
     fun updateChunk(
+        agentId: UUID,
+        knowledgeId: UUID,
         chunkId: UUID,
         newContent: String,
         newMetadata: Map<String, Any>? = null,
     ): KnowledgeChunkResponseDto {
         val chunk =
             chunkRepo.findByIdOrNull(chunkId)
-                ?: throw EntityNotFoundException("Chunk not found: $chunkId")
+                ?: throw EntityNotFoundException("Chunk $chunkId not found")
+
+        require(chunk.knowledge.id == knowledgeId) { "Chunk $chunkId does not belong to knowledge $knowledgeId" }
+
+        if (chunk.knowledge.agent.id != agentId) {
+            throw EntityNotFoundException("Chunk $chunkId does not belong to agent $agentId")
+        }
 
         chunk.content = newContent
         chunk.metadata = newMetadata
         chunk.embedding = embeddingModel.embed(newContent)
 
         vectorStore.add(listOf(buildDocument(chunk)))
-        return KnowledgeChunkResponseDto.from(chunk)
+        return KnowledgeChunkResponseDto.from(chunkRepo.save(chunk))
     }
 
     @Transactional(readOnly = true)
-    fun getByKnowledge(knowledgeId: UUID): List<KnowledgeChunkResponseDto> =
-        chunkRepo.findAllByKnowledgeId(knowledgeId).map {
-            KnowledgeChunkResponseDto.from(it)
-        }
+    fun getByKnowledge(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ): List<KnowledgeChunkResponseDto> =
+        chunkRepo
+            .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledgeId, agentId)
+            .map(KnowledgeChunkResponseDto::from)
 
     @Transactional(readOnly = true)
-    fun countByKnowledge(knowledgeId: UUID): Long = chunkRepo.countByKnowledgeId(knowledgeId)
+    fun countByKnowledge(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ): Long = chunkRepo.countByKnowledgeIdAndKnowledgeAgentId(knowledgeId, agentId)
 
     @Transactional(readOnly = true)
-    fun getNextChunkOrderForKnowledge(knowledgeId: UUID): Int {
-        val currentOrder = chunkRepo.findMaxChunkOrderByKnowledgeId(knowledgeId) ?: 0
+    fun getNextChunkOrderForKnowledge(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ): Int {
+        val currentOrder = chunkRepo.findMaxChunkOrderByKnowledgeIdAndAgentId(knowledgeId, agentId) ?: 0
         return currentOrder + 1
     }
 
     @Transactional(readOnly = true)
     fun searchSimilarChunks(
+        agentId: UUID,
+        knowledgeId: UUID,
         query: String,
         topK: Int = 5,
     ): List<KnowledgeChunkResponseDto> {
-        val activeKnowledgeIds = chunkRepo.findAllKnowledgeIdsActive().map { it.toString() }
+        // Ensure knowledge belongs to agent
+        if (!knowledgeRepo.existsByIdAndAgentId(knowledgeId, agentId)) {
+            throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
+        }
+
         val results: List<Document> = vectorStore.similaritySearch(query).toList()
+
+        if (results.isEmpty()) {
+            return emptyList()
+        }
+
+        val activeKnowledgeIds = chunkRepo.findAllKnowledgeIdsActiveByAgent(agentId).map { it.toString() }
 
         return results
             .filter { doc ->
                 val knowledgeId = doc.metadata["knowledge_id"]?.toString()
                 knowledgeId != null && activeKnowledgeIds.contains(knowledgeId)
             }.take(topK)
-            .map { KnowledgeChunkResponseDto.fromDocument(it) }
+            .map(KnowledgeChunkResponseDto::fromDocument)
     }
 
     private fun buildDocument(chunk: KnowledgeChunk): Document {

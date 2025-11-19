@@ -2,10 +2,12 @@ package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.config.VectorEmbeddingProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkRequestDto
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
@@ -30,18 +32,35 @@ class KnowledgeChunkControllerIT
     constructor(
         private val chunkRepo: KnowledgeChunkRepository,
         private val knowledgeRepo: AgentKnowledgeRepository,
+        private val agentRepo: AgentRepository,
         private val properties: VectorEmbeddingProperties,
     ) : BaseIntegrationTest() {
+        private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
 
         @BeforeEach
         fun setup() {
             chunkRepo.deleteAllInBatch()
             knowledgeRepo.deleteAllInBatch()
+            agentRepo.deleteAllInBatch()
+            agentRepo.flush()
+            knowledgeRepo.flush()
+            chunkRepo.flush()
+
+            agent =
+                agentRepo.save(
+                    Agent(
+                        name = "Test Agent",
+                        model = "gpt-4",
+                    ),
+                )
 
             knowledge =
                 knowledgeRepo.save(
-                    AgentKnowledge(name = "K1").apply { active = true },
+                    AgentKnowledge(
+                        agent = agent,
+                        name = "K1",
+                    ).apply { active = true },
                 )
         }
 
@@ -57,7 +76,11 @@ class KnowledgeChunkControllerIT
 
             mockMvc
                 .perform(
-                    postAuth("/api/knowledge/${knowledge.id}/chunks", request, roles = listOf("ROLE_ADMIN")),
+                    postAuth(
+                        "/api/agents/${agent.id}/knowledge/${knowledge.id}/chunks",
+                        request,
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isCreated)
 
             val persisted = chunkRepo.findAll()
@@ -71,6 +94,7 @@ class KnowledgeChunkControllerIT
             val knowledge =
                 knowledgeRepo.save(
                     AgentKnowledge(
+                        agent = agent,
                         name = "Test Knowledge",
                         sourceType = "pdf",
                         sourceUri = "unit-test://file.pdf",
@@ -85,7 +109,11 @@ class KnowledgeChunkControllerIT
             val chunkId =
                 mockMvc
                     .perform(
-                        postAuth("/api/knowledge/$knowledgeId/chunks", createReq, roles = listOf("ROLE_ADMIN")),
+                        postAuth(
+                            "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks",
+                            createReq,
+                            roles = listOf("ROLE_ADMIN"),
+                        ),
                     ).andExpect(status().isCreated)
                     .andExpect(jsonPath("$.content").value("Hello World"))
                     .andExpect(jsonPath("$.metadata.source").value("unit-test"))
@@ -97,20 +125,28 @@ class KnowledgeChunkControllerIT
             val updateReq = createKnowledgeChunkRequest("Updated content")
             mockMvc
                 .perform(
-                    putAuth("/api/knowledge/$knowledgeId/chunks/$chunkId", updateReq, roles = listOf("ROLE_ADMIN")),
+                    putAuth(
+                        "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks/$chunkId",
+                        updateReq,
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.content").value("Updated content"))
 
             // ------------------ LIST CHUNKS ------------------
             mockMvc
-                .perform(getAuth("/api/knowledge/$knowledgeId/chunks", roles = listOf("ROLE_ADMIN")))
+                .perform(getAuth("/api/agents/${agent.id}/knowledge/$knowledgeId/chunks", roles = listOf("ROLE_ADMIN")))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").value(1))
 
             // ------------------ COUNT CHUNKS ------------------
             mockMvc
-                .perform(getAuth("/api/knowledge/$knowledgeId/chunks/count", roles = listOf("ROLE_ADMIN")))
-                .andExpect(status().isOk)
+                .perform(
+                    getAuth(
+                        "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks/count",
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
+                ).andExpect(status().isOk)
                 .andExpect(content().string("1"))
 
             // ------------------ IMPORT TXT FILE ------------------
@@ -130,7 +166,7 @@ class KnowledgeChunkControllerIT
                 mockMvc
                     .perform(
                         multipartAuth(
-                            "/api/knowledge/$knowledgeId/chunks/import",
+                            "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks/import",
                             txtFile,
                             roles = listOf("ROLE_ADMIN"),
                         ),
@@ -154,7 +190,6 @@ class KnowledgeChunkControllerIT
                             cs.beginText()
                             cs.setFont(PDType1Font.HELVETICA, 12f)
                             cs.newLineAtOffset(50f, 700f)
-                            // Repeat text to generate multiple chunks
                             repeat(10) { cs.showText("PDF test content sentence $it. ") }
                             cs.endText()
                         }
@@ -175,7 +210,7 @@ class KnowledgeChunkControllerIT
                 mockMvc
                     .perform(
                         multipartAuth(
-                            "/api/knowledge/$knowledgeId/chunks/import",
+                            "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks/import",
                             pdfFile,
                             roles = listOf("ROLE_ADMIN"),
                         ),
@@ -192,8 +227,10 @@ class KnowledgeChunkControllerIT
             // ------------------ SEARCH CHUNKS ------------------
             mockMvc
                 .perform(
-                    getAuth("/api/knowledge/$knowledgeId/chunks/search", roles = listOf("ROLE_ADMIN"))
-                        .param("query", "PDF test")
+                    getAuth(
+                        "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks/search",
+                        roles = listOf("ROLE_ADMIN"),
+                    ).param("query", "PDF test")
                         .param("topK", "5"),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").isNumber)

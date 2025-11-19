@@ -1,10 +1,11 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.service.AgentToolAssignmentService
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeAll
@@ -21,19 +22,27 @@ class AgentToolAssignmentServiceIT
     @Autowired
     constructor(
         private val agentRepository: AgentRepository,
-        private val toolRepository: AgentToolRepository,
+        private val toolRepository: ToolRepository,
+        private val agentToolRepository: AgentToolRepository,
         private val agentToolAssignmentService: AgentToolAssignmentService,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
-        private lateinit var activeTool: AgentTool
-        private lateinit var inactiveTool: AgentTool
+        private lateinit var activeTool: Tool
+        private lateinit var inactiveTool: Tool
 
         @BeforeAll
         fun initData() {
+            agentToolRepository.deleteAllInBatch()
+            toolRepository.deleteAllInBatch()
+            agentRepository.deleteAllInBatch()
+            agentToolRepository.flush()
+            toolRepository.flush()
+            agentRepository.flush()
+
             agent = agentRepository.save(Agent(name = "Agent Smith ${UUID.randomUUID()}", model = "T-800"))
-            activeTool = toolRepository.save(AgentTool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })
+            activeTool = toolRepository.save(Tool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })
             inactiveTool =
-                toolRepository.save(AgentTool(name = "Inactive Gadget ${UUID.randomUUID()}").apply { active = false })
+                toolRepository.save(Tool(name = "Inactive Gadget ${UUID.randomUUID()}").apply { active = false })
         }
 
         @Test
@@ -42,7 +51,7 @@ class AgentToolAssignmentServiceIT
 
             val tools = agentToolAssignmentService.getTools(agent.id!!)
             assertEquals(1, tools.size)
-            assertEquals(activeTool.id, tools.first().id)
+            assertEquals(activeTool.id, tools.first().toolId)
         }
 
         @Test

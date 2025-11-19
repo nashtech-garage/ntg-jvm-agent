@@ -1,9 +1,11 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
@@ -28,20 +30,36 @@ class KnowledgeImportServiceIT
         private val service: KnowledgeImportService,
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val chunkRepo: KnowledgeChunkRepository,
+        private val agentRepo: AgentRepository,
     ) : BaseIntegrationTest() {
+        private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
 
         @BeforeEach
         fun setUp() {
             chunkRepo.deleteAll()
             knowledgeRepo.deleteAll()
+            agentRepo.deleteAll()
+            agentRepo.flush()
+            knowledgeRepo.flush()
+            chunkRepo.flush()
+
+            agent =
+                agentRepo.save(
+                    Agent(
+                        name = "Test Agent",
+                        model = "gpt-4",
+                    ),
+                )
+
             knowledge =
                 knowledgeRepo.save(
                     AgentKnowledge(
+                        agent = agent,
                         name = "Test Knowledge",
                         sourceType = "manual",
                         sourceUri = "http://example.com",
-                        metadata = mapOf(),
+                        metadata = emptyMap(),
                         embeddingModel = "text-embedding-3-small",
                     ).apply { active = true },
                 )
@@ -62,17 +80,19 @@ class KnowledgeImportServiceIT
                     content.toByteArray(StandardCharsets.UTF_8),
                 )
 
-            val response: KnowledgeImportingResponseVm = service.importDocument(knowledge.id!!, file)
+            val response: KnowledgeImportingResponseVm = service.importDocument(agent.id!!, knowledge.id!!, file)
 
             assertEquals("test.txt", response.originalFilename)
             assertTrue(response.numberOfSegment > 1, "Expected multiple chunks for test.txt")
 
-            // Verify chunks saved in DB
-            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
+            val savedChunks =
+                chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+                    knowledge.id!!,
+                    agent.id!!,
+                )
             assertEquals(response.numberOfSegment, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("It should produce multiple chunks") })
 
-            // Verify chunk_order sequence
             val firstOrder = savedChunks.minOf { it.chunkOrder }
             savedChunks.forEachIndexed { index, chunk ->
                 assertEquals(firstOrder + index, chunk.chunkOrder)
@@ -81,7 +101,6 @@ class KnowledgeImportServiceIT
 
         @Test
         fun `importDocument should save pdf file chunks to DB`() {
-            // Create in-memory PDF
             val pdfBytes =
                 ByteArrayOutputStream().use { out ->
                     val document = PDDocument()
@@ -107,17 +126,19 @@ class KnowledgeImportServiceIT
                     pdfBytes,
                 )
 
-            val response = service.importDocument(knowledge.id!!, file)
+            val response = service.importDocument(agent.id!!, knowledge.id!!, file)
 
             assertEquals("test.pdf", response.originalFilename)
             assertTrue(response.numberOfSegment > 0, "Expected at least one chunk for PDF")
 
-            // Verify chunks saved in DB
-            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
+            val savedChunks =
+                chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+                    knowledge.id!!,
+                    agent.id!!,
+                )
             assertEquals(response.numberOfSegment, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("PDF test content") })
 
-            // Verify chunk_order sequence
             val firstOrder = savedChunks.minOf { it.chunkOrder }
             savedChunks.forEachIndexed { index, chunk ->
                 assertEquals(firstOrder + index, chunk.chunkOrder)
@@ -135,12 +156,16 @@ class KnowledgeImportServiceIT
                     content.toByteArray(StandardCharsets.UTF_8),
                 )
 
-            val response = service.importDocument(knowledge.id!!, file)
+            val response = service.importDocument(agent.id!!, knowledge.id!!, file)
 
             assertEquals("unknown.xyz", response.originalFilename)
             assertTrue(response.numberOfSegment >= 1)
 
-            val savedChunks = chunkRepo.findAllByKnowledgeIdOrderByChunkOrderAsc(knowledge.id!!)
+            val savedChunks =
+                chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+                    knowledge.id!!,
+                    agent.id!!,
+                )
             val firstOrder = savedChunks.minOf { it.chunkOrder }
             savedChunks.forEachIndexed { index, chunk ->
                 assertEquals(firstOrder + index, chunk.chunkOrder)

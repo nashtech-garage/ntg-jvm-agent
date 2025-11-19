@@ -1,10 +1,10 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolRequestDto
-import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
+import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
+import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
-import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
-import com.ntgjvmagent.orchestrator.service.AgentToolService
+import com.ntgjvmagent.orchestrator.repository.ToolRepository
+import com.ntgjvmagent.orchestrator.service.ToolService
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,13 +16,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @Transactional
-class AgentToolServiceIT
+class ToolServiceIT
     @Autowired
     constructor(
-        private val service: AgentToolService,
-        private val repo: AgentToolRepository,
+        private val service: ToolService,
+        private val repo: ToolRepository,
     ) : BaseIntegrationTest() {
-        private lateinit var tool: AgentTool
+        private lateinit var tool: Tool
 
         @BeforeEach
         fun setUp() {
@@ -30,7 +30,7 @@ class AgentToolServiceIT
             repo.flush()
             tool =
                 repo.save(
-                    AgentTool(
+                    Tool(
                         name = "Laser Gun",
                         type = "Weapon",
                         description = "High energy laser weapon",
@@ -66,7 +66,7 @@ class AgentToolServiceIT
         @Test
         fun `create should save new tool`() {
             val request =
-                AgentToolRequestDto(
+                ToolRequestDto(
                     name = "Plasma Rifle",
                     type = "Weapon",
                     description = "Plasma energy rifle",
@@ -81,7 +81,7 @@ class AgentToolServiceIT
         @Test
         fun `update should modify existing tool`() {
             val updateRequest =
-                AgentToolRequestDto(
+                ToolRequestDto(
                     name = "Laser Blaster",
                     type = "Weapon",
                     description = "Upgraded laser weapon",

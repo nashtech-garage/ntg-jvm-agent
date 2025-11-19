@@ -1,9 +1,9 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolRequestDto
-import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
+import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
+import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
-import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeEach
@@ -12,10 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-class AgentToolControllerIT
+class ToolControllerIT
     @Autowired
     constructor(
-        private val repository: AgentToolRepository,
+        private val repository: ToolRepository,
         private val entityManager: EntityManager,
     ) : BaseIntegrationTest() {
         @BeforeEach
@@ -26,7 +26,7 @@ class AgentToolControllerIT
         @Test
         fun `should create a new agent tool`() {
             val request =
-                AgentToolRequestDto(
+                ToolRequestDto(
                     name = "LangChain",
                     description = "A framework for building LLM applications",
                     active = true,
@@ -43,13 +43,13 @@ class AgentToolControllerIT
         @Test
         fun `should get all active tools`() {
             repository.save(
-                AgentTool(
+                Tool(
                     name = "Tool A",
                     description = "Active Tool",
                 ).apply { active = true },
             )
             repository.save(
-                AgentTool(
+                Tool(
                     name = "Tool B",
                     description = "Inactive Tool",
                 ).apply { active = false },
@@ -66,7 +66,7 @@ class AgentToolControllerIT
         fun `should get tool by id`() {
             val entity =
                 repository.save(
-                    AgentTool(
+                    Tool(
                         name = "Tool C",
                         description = "Testing retrieval",
                     ).apply { active = true },
@@ -84,14 +84,14 @@ class AgentToolControllerIT
         fun `should update tool`() {
             val entity =
                 repository.save(
-                    AgentTool(
+                    Tool(
                         name = "Old Tool",
                         description = "Before update",
                     ).apply { active = true },
                 )
 
             val updateRequest =
-                AgentToolRequestDto(
+                ToolRequestDto(
                     name = "Updated Tool",
                     description = "After update",
                     active = true,
@@ -108,7 +108,7 @@ class AgentToolControllerIT
         fun `should soft delete tool and exclude from future queries`() {
             val entity =
                 repository.save(
-                    AgentTool(
+                    Tool(
                         name = "Tool D",
                         description = "To be soft deleted",
                     ).apply { active = true },
@@ -121,7 +121,7 @@ class AgentToolControllerIT
                 ).andExpect(status().isNoContent)
 
             // Verify soft delete applied (deleted_at not null)
-            assertSoftDeleted(entityManager, AgentTool::class.java, entity.id!!)
+            assertSoftDeleted(entityManager, Tool::class.java, entity.id!!)
 
             // Verify excluded from normal getAll()
             mockMvc
