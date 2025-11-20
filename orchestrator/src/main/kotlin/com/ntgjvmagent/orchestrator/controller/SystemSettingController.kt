@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/api/settings")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 class SystemSettingController(
     private val systemSettingService: SystemSettingService,

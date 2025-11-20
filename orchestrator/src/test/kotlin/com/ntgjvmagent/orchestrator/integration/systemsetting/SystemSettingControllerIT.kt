@@ -17,7 +17,7 @@ class SystemSettingControllerIT
         fun `should get SystemSetting`() {
             mockMvc
                 .perform(
-                    getAuth("/api/system", roles = listOf("ROLE_ADMIN")),
+                    getAuth("/api/settings", roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isOk)
                 .andReturn()
         }
