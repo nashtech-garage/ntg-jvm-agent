@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
-import { ChatRequest } from '@/app/models/chat-request';
 import { Constants } from '@/app/utils/constant';
 
 const baseUrl = `${ORCHESTRATOR_URL}/api/conversations`;

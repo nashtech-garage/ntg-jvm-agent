@@ -1,11 +1,12 @@
+import { deleteCookies } from '@/app/utils/server-utils';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
     const response = NextResponse.json({ message: 'Logged out successfully' });
-    response.cookies.delete('access_token');
-    response.cookies.delete('refresh_token');
-    response.cookies.delete('JSESSIONID');
+
+    deleteCookies(response);
+
     return response;
   } catch (error) {
     console.error('Logout error:', error);

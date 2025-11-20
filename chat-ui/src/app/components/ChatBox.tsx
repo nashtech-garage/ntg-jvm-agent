@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Send, Images, CircleX } from 'lucide-react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { FileSelectInfo } from '../models/file-select-info';
+import Image from 'next/image';
 
 export default function ChatBox({
   onAsk,
@@ -94,10 +95,10 @@ export default function ChatBox({
               >
                 <CircleX />
               </button>
-              <img
+              <Image
                 src={item}
-                width="200px"
-                height="20px"
+                width={200}
+                height={20}
                 alt="preview"
                 className="max-h-40 rounded-md"
               />

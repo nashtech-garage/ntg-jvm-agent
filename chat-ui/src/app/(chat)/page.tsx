@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { FileSelectInfo } from '../models/file-select-info';
+import { customizeFetch } from '../utils/custom-fetch';
 
 export default function Page() {
   const {
@@ -36,7 +37,7 @@ export default function Page() {
       }
     }
 
-    const res = await fetch(`/api/chat`, {
+    const res = await customizeFetch(`/api/chat`, {
       method: 'POST',
       body: formData,
     });

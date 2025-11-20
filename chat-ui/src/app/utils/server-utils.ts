@@ -33,6 +33,7 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     });
 
     if (!res.ok) {
+      console.error('Token refresh failed:', res.status, await res.text());
       return null;
     }
 
@@ -79,4 +80,11 @@ export async function getAccessToken(req: Request): Promise<string | undefined> 
   const headerToken = req.headers.get('x-access-token');
   const cookieToken = (await cookies()).get('access_token')?.value;
   return headerToken || cookieToken;
+}
+
+export function deleteCookies(response: NextResponse): NextResponse {
+  response.cookies.delete('access_token');
+  response.cookies.delete('refresh_token');
+  response.cookies.delete('JSESSIONID');
+  return response;
 }

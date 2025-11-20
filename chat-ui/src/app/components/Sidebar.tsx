@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
 import { Constants } from '../utils/constant';
+import { customizeFetch } from '../utils/custom-fetch';
 
 export default function Sidebar() {
   const {
@@ -24,7 +25,7 @@ export default function Sidebar() {
   };
 
   const removeConversation = async (id: string) => {
-    const res = await fetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
+    const res = await customizeFetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
     const jsonResult = await res.json();
     if (!res.ok) {
       toast.error(jsonResult.error);
