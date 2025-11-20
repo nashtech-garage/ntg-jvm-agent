@@ -13,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const { id } = params;
     if (!id) return NextResponse.json({ message: 'Missing id' }, { status: 400 });
     const body = await req.json();
-    let targetUrl = `${baseUrl}/${id}`;
+    const targetUrl = `${baseUrl}/${id}`;
     const res = await fetch(targetUrl, {
       method: "PUT",
       headers: {
