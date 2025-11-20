@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const baseUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/settings`;
 
-export async function PUT(req: Request, context: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: Record<string, string> }) {
   const cookieStore = cookies();
   const accessToken = (await cookieStore).get('access_token')?.value;
   if (!accessToken) {
