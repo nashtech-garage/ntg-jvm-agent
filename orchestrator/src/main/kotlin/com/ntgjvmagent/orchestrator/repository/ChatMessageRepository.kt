@@ -16,7 +16,7 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
         LEFT JOIN FETCH m.messageMedias
         WHERE m.conversation.id = :conversationId
         ORDER BY m.createdAt ASC
-    """,
+        """,
     )
     fun listMessageByConversationId(
         @Param("conversationId") conversationId: UUID,
