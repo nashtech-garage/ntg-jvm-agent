@@ -24,7 +24,7 @@ export default function AdminSettings() {
     userRegistration: true,
     emailVerification: false,
     maximumSizeFileUpload: 0,
-    allowedFileTypes: ''
+    allowedFileTypes: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,10 +52,7 @@ export default function AdminSettings() {
     fetchSystemSettings();
   }, []);
 
-  const handleInputChange = (
-    field: keyof SystemSettings,
-    value: string | number | boolean
-  ) => {
+  const handleInputChange = (field: keyof SystemSettings, value: string | number | boolean) => {
     setSettings((prev) => ({
       ...prev,
       [field]: value,
@@ -81,7 +78,7 @@ export default function AdminSettings() {
       const res = await fetch(`/api/settings/${id}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
-      })
+      });
       const data = await res.json();
       setSettings(data);
       setSaved(true);

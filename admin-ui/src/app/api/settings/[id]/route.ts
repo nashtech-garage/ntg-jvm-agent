@@ -13,10 +13,10 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const targetUrl = `${baseUrl}/${body.id}`;
     const res = await fetch(targetUrl, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(body),
     });
@@ -28,9 +28,6 @@ export async function PUT(req: Request) {
 
     return NextResponse.json(jsonResult);
   } catch (err) {
-    return NextResponse.json(
-      { error: `${String(err)}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: `${String(err)}` }, { status: 500 });
   }
 }
