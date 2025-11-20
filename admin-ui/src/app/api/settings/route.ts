@@ -19,7 +19,6 @@ export async function GET() {
     });
 
     const jsonResult = await res.json();
-
     if (!res.ok) {
       return NextResponse.json({ error: jsonResult.message }, { status: res.status });
     }

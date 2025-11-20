@@ -18,7 +18,7 @@ export async function PUT(req: Request) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`
       },
-      body:  JSON.stringify(body),
+      body: JSON.stringify(body),
     });
 
     const jsonResult = await res.json();

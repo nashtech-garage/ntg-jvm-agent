@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface SystemSettings {
   id: string;
@@ -16,7 +16,7 @@ interface SystemSettings {
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<SystemSettings>({
-    id:'',
+    id: '',
     siteName: '',
     maintenanceMode: false,
     maximumUser: 0,
@@ -24,33 +24,33 @@ export default function AdminSettings() {
     userRegistration: true,
     emailVerification: false,
     maximumSizeFileUpload: 0,
-    allowedFileTypes:''
+    allowedFileTypes: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-      const fetchSystemSettings = async () => {
-        try {
-          setLoading(true);
-          const response = await fetch(`/api/settings`);
-  
-          if (!response.ok) {
-            throw new Error('Failed to fetch system settings');
-          }
-  
-          const data: SystemSettings = await response.json();
-          setSettings(data);
-        } catch (error) {
-          console.error('Failed to fetch users:', error);
-        } finally {
-          setLoading(false);
+    const fetchSystemSettings = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/settings`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch system settings');
         }
-      };
-  
-      fetchSystemSettings();
-    }, []);
+
+        const data: SystemSettings = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSystemSettings();
+  }, []);
 
   const handleInputChange = (
     field: keyof SystemSettings,
@@ -71,7 +71,7 @@ export default function AdminSettings() {
         siteName: settings.siteName,
         maintenanceMode: settings.maintenanceMode,
         maximumUser: settings.maximumUser,
-        sessionTimeout: settings.sessionTimeout, 
+        sessionTimeout: settings.sessionTimeout,
         userRegistration: settings.userRegistration,
         emailVerification: settings.emailVerification,
         maximumSizeFileUpload: settings.maximumSizeFileUpload,
