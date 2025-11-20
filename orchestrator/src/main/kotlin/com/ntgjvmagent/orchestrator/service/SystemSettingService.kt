@@ -14,10 +14,12 @@ class SystemSettingService(
     private val systemSetting: SystemSettingRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getSystemSetting(): SystemSettingResponseDto = systemSetting.findAll()
-        .firstOrNull()
-        ?.toSystemSettingResponseDto()
-        ?: throw ResourceNotFoundException("No system setting found")
+    fun getSystemSetting(): SystemSettingResponseDto =
+        systemSetting
+            .findAll()
+            .firstOrNull()
+            ?.toSystemSettingResponseDto()
+            ?: throw ResourceNotFoundException("No system setting found")
 
     @Transactional
     fun updateSystemSetting(
