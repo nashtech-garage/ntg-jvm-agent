@@ -3,17 +3,15 @@ import { cookies } from 'next/headers';
 
 const baseUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/settings`;
 
-export async function PUT(req: Request, context: { params: Record<string, string> }) {
+export async function PUT(req: Request) {
   const cookieStore = cookies();
   const accessToken = (await cookieStore).get('access_token')?.value;
   if (!accessToken) {
     return NextResponse.json(null, { status: 401 });
   }
   try {
-    const { id } = context.params;
-    if (!id) return NextResponse.json({ message: 'Missing id' }, { status: 400 });
     const body = await req.json();
-    const targetUrl = `${baseUrl}/${id}`;
+    const targetUrl = `${baseUrl}/${body.id}`;
     const res = await fetch(targetUrl, {
       method: "PUT",
       headers: {

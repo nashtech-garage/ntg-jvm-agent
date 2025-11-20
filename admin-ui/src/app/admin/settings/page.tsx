@@ -67,6 +67,7 @@ export default function AdminSettings() {
     setSaving(true);
     try {
       const payload = {
+        id: settings.id,
         siteName: settings.siteName,
         maintenanceMode: settings.maintenanceMode,
         maximumUser: settings.maximumUser,
