@@ -8,23 +8,20 @@ import org.springframework.stereotype.Component
 class FilteredToolCallbackProvider(
     private val delegate: ToolCallbackProvider,
 ) : ToolCallbackProvider {
-    override fun getToolCallbacks(): Array<out ToolCallback?> {
-        val tools = delegate.toolCallbacks
-        print(delegate.toolCallbacks.first().toolDefinition)
-        return tools
-    }
+    override fun getToolCallbacks(): Array<out ToolCallback?> = delegate.toolCallbacks ?: emptyArray()
 
     fun getCallbacksByToolNames(allowedTools: List<String>): List<ToolCallback?> {
         if (allowedTools.isEmpty()) return emptyList()
-        val result =
-            getToolCallbacks().filter { cb ->
+        return getToolCallbacks().filter { cb ->
+            val toolName =
                 cb
                     ?.toolDefinition
                     ?.name()
+                    ?.takeIf { it.isNotBlank() }
                     ?.split("_")
-                    ?.last() in allowedTools
-            }
-
-        return result
+                    ?.lastOrNull()
+                    ?.takeIf { it.isNotBlank() }
+            toolName in allowedTools
+        }
     }
 }

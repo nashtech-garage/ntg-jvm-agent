@@ -54,10 +54,10 @@ class ConversationService(
         chatReq: ChatRequestVm,
         username: String,
     ): UUID {
-        val titleSummarize = this.chatModelService.createSummarize(chatReq.question)
+        val titleSummarize = this.chatModelService.createSummarize(chatReq.agentId, chatReq.question)
         val conversation =
             ConversationEntity(
-                title = titleSummarize,
+                title = titleSummarize ?: chatReq.question,
                 username = username,
             )
         val conversationId: UUID? = this.conversationRepo.save(conversation).id

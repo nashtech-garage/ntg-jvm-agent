@@ -8,6 +8,7 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
+import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.core.io.InputStreamResource
@@ -70,7 +71,22 @@ class ChatModelService(
         return response
     }
 
-    fun createSummarize(question: String): String = question
+    fun createSummarize(
+        agentId: UUID,
+        question: String,
+    ): String? {
+        val prompt =
+            Prompt(
+                """
+                ${Constant.SUMMARY_PROMPT}
+                "$question"
+                """.trimIndent(),
+            )
+
+        val chatModel = dynamicModelFactory.getChatModel(agentId)
+        val response = chatModel.call(prompt)
+        return response.result.output.text
+    }
 
     fun createQaAdvisorForAgent(agentId: UUID): QuestionAnswerAdvisor? {
         val knowledgeIds: List<String> =

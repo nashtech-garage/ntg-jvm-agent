@@ -9,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { FileSelectInfo } from '../models/file-select-info';
 import Header from '../components/Header';
-import { Agent } from '../models/agent';
 import AgentDropdown from '../components/AgentDropdown';
 
 export default function Page() {
@@ -20,7 +19,6 @@ export default function Page() {
     setChatMessages,
     setConversations,
     setActiveConversationId,
-    setSelectedAgent,
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const router = useRouter();
