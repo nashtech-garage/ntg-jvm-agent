@@ -45,8 +45,8 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
               onClick={() => href && window.open(href, '_blank', 'noopener,noreferrer')}
               title={href}
               aria-label={href ? `Open link: ${href}` : 'Open link'}
-              className="text-sm text-gray-500 px-1 py-0.5 rounded hover:text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer"
-              style={{ lineHeight: 1.2, fontWeight: 400 }}
+              className="text-sm text-gray-500 px-1 py-0.5 leading-[1.2] rounded hover:text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              style={{ lineHeight: 1.2 }}
             >
               {children}
             </button>
