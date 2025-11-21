@@ -20,20 +20,23 @@ export default function Sidebar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
+      if (openDropdown) {
+        const currentRef = dropdownRefs.current[openDropdown];
+        if (currentRef && !currentRef.contains(event.target as Node)) {
+          setOpenDropdown(null);
+        }
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [openDropdown]);
 
   const changeConversation = async (id: string) => {
     router.push(`/c/${id}`);
@@ -127,7 +130,6 @@ export default function Sidebar() {
 
       {/* History list */}
       <div
-        ref={dropdownRef}
         id="history-list"
         className={`flex-1 overflow-y-auto mt-4 px-2 transition-all duration-300 ${
           collapsed ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 space-y-2'
@@ -135,7 +137,7 @@ export default function Sidebar() {
       >
         {!collapsed &&
           conversations.map((item) => (
-            <div key={item.id} className="relative">
+            <div key={item.id} ref={(el) => { if (el) dropdownRefs.current[item.id] = el; }} className="relative">
               {/* Rename input */}
               {renamingId === item.id ? (
                 <div className="px-2 py-2 rounded bg-gray-200">
