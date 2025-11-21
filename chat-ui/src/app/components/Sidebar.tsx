@@ -137,7 +137,13 @@ export default function Sidebar() {
       >
         {!collapsed &&
           conversations.map((item) => (
-            <div key={item.id} ref={(el) => { if (el) dropdownRefs.current[item.id] = el; }} className="relative">
+            <div
+              key={item.id}
+              ref={(el) => {
+                if (el) dropdownRefs.current[item.id] = el;
+              }}
+              className="relative"
+            >
               {/* Rename input */}
               {renamingId === item.id ? (
                 <div className="px-2 py-2 rounded bg-gray-200">
