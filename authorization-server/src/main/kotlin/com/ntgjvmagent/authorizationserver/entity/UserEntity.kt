@@ -18,6 +18,7 @@ data class UserEntity(
 
     val name: String,
 
+    @Column(unique = true, nullable = false)
     val email: String,
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
