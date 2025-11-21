@@ -25,6 +25,5 @@ class SystemSettingController(
     @PutMapping
     fun updateSystemSetting(
         @Valid @RequestBody request: SystemSettingRequestDto,
-    ): ResponseEntity<SystemSettingResponseDto> =
-        ResponseEntity.ok(systemSettingService.updateSystemSetting(request))
+    ): ResponseEntity<SystemSettingResponseDto> = ResponseEntity.ok(systemSettingService.updateSystemSetting(request))
 }
