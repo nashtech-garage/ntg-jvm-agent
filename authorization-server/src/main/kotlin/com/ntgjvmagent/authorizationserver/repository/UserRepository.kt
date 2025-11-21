@@ -22,6 +22,8 @@ interface UserRepository :
     fun findUserByUserName(
         @Param("username") username: String
     ): Optional<UserEntity>
+
+    fun findByEmail(email: String): Optional<UserEntity>
 }
 
 
