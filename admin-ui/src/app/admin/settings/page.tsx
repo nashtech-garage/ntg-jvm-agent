@@ -1,37 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface SystemSettings {
+  id: string;
   siteName: string;
   maintenanceMode: boolean;
-  maxUsers: number;
+  maximumUser: number;
   sessionTimeout: number;
-  enableRegistration: boolean;
-  requireEmailVerification: boolean;
-  maxFileUploadSize: number;
-  allowedFileTypes: string[];
+  userRegistration: boolean;
+  emailVerification: boolean;
+  maximumSizeFileUpload: number;
+  allowedFileTypes: string;
 }
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<SystemSettings>({
-    siteName: 'NTG JVM Agent Chat UI',
+    id: '',
+    siteName: '',
     maintenanceMode: false,
-    maxUsers: 1000,
-    sessionTimeout: 3600,
-    enableRegistration: true,
-    requireEmailVerification: true,
-    maxFileUploadSize: 10,
-    allowedFileTypes: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+    maximumUser: 0,
+    sessionTimeout: 0,
+    userRegistration: true,
+    emailVerification: false,
+    maximumSizeFileUpload: 0,
+    allowedFileTypes: '',
   });
-
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleInputChange = (
-    field: keyof SystemSettings,
-    value: string | number | boolean | string[]
-  ) => {
+  useEffect(() => {
+    const fetchSystemSettings = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/settings`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch system settings');
+        }
+
+        const data: SystemSettings = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error('Failed to fetch  system settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSystemSettings();
+  }, []);
+
+  const handleInputChange = (field: keyof SystemSettings, value: string | number | boolean) => {
     setSettings((prev) => ({
       ...prev,
       [field]: value,
@@ -42,8 +63,23 @@ export default function AdminSettings() {
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
-      // Mock save - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const payload = {
+        id: settings.id,
+        siteName: settings.siteName,
+        maintenanceMode: settings.maintenanceMode,
+        maximumUser: settings.maximumUser,
+        sessionTimeout: settings.sessionTimeout,
+        userRegistration: settings.userRegistration,
+        emailVerification: settings.emailVerification,
+        maximumSizeFileUpload: settings.maximumSizeFileUpload,
+        allowedFileTypes: settings.allowedFileTypes,
+      };
+      const res = await fetch(`/api/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setSettings(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
@@ -52,6 +88,14 @@ export default function AdminSettings() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -163,14 +207,14 @@ export default function AdminSettings() {
         </div>
         <div className="p-6 space-y-6">
           <div>
-            <label htmlFor="maxUsers" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="maximumUser" className="block text-sm font-medium text-gray-700 mb-2">
               Maximum Users
             </label>
             <input
               type="number"
-              id="maxUsers"
-              value={settings.maxUsers}
-              onChange={(e) => handleInputChange('maxUsers', parseInt(e.target.value))}
+              id="maximumUser"
+              value={settings.maximumUser}
+              onChange={(e) => handleInputChange('maximumUser', parseInt(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -194,12 +238,12 @@ export default function AdminSettings() {
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="enableRegistration"
-              checked={settings.enableRegistration}
-              onChange={(e) => handleInputChange('enableRegistration', e.target.checked)}
+              id="userRegistration"
+              checked={settings.userRegistration}
+              onChange={(e) => handleInputChange('userRegistration', e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="enableRegistration" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="userRegistration" className="ml-2 block text-sm text-gray-900">
               Enable User Registration
             </label>
           </div>
@@ -207,12 +251,12 @@ export default function AdminSettings() {
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="requireEmailVerification"
-              checked={settings.requireEmailVerification}
-              onChange={(e) => handleInputChange('requireEmailVerification', e.target.checked)}
+              id="emailVerification"
+              checked={settings.emailVerification}
+              onChange={(e) => handleInputChange('emailVerification', e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="requireEmailVerification" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="emailVerification" className="ml-2 block text-sm text-gray-900">
               Require Email Verification
             </label>
           </div>
@@ -227,16 +271,16 @@ export default function AdminSettings() {
         <div className="p-6 space-y-6">
           <div>
             <label
-              htmlFor="maxFileUploadSize"
+              htmlFor="maximumSizeFileUpload"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Maximum File Upload Size (MB)
             </label>
             <input
               type="number"
-              id="maxFileUploadSize"
-              value={settings.maxFileUploadSize}
-              onChange={(e) => handleInputChange('maxFileUploadSize', parseInt(e.target.value))}
+              id="maximumSizeFileUpload"
+              value={settings.maximumSizeFileUpload}
+              onChange={(e) => handleInputChange('maximumSizeFileUpload', parseInt(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -251,13 +295,8 @@ export default function AdminSettings() {
             <input
               type="text"
               id="allowedFileTypes"
-              value={settings.allowedFileTypes.join(', ')}
-              onChange={(e) =>
-                handleInputChange(
-                  'allowedFileTypes',
-                  e.target.value.split(',').map((type) => type.trim())
-                )
-              }
+              value={settings.allowedFileTypes}
+              onChange={(e) => handleInputChange('allowedFileTypes', e.target.value)}
               placeholder="jpg, png, pdf, doc, docx"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
