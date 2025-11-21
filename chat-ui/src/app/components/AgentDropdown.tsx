@@ -9,7 +9,7 @@ import { useChatContext } from '../contexts/ChatContext';
 export default function AgentDropdown() {
   const { agents, setAgents, setSelectedAgent } = useChatContext();
   const [open, setOpen] = useState<boolean>(false);
-  const [selected, setSelected] = useState(agents[0]);
+  const [selected, setSelected] = useState<Agent|null>(agents[0]);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = () => setOpen(!open);
@@ -30,9 +30,11 @@ export default function AgentDropdown() {
       try {
         const res = await fetch('/api/agent');
         const agents = await res.json();
-        setAgents(agents);
-        setSelected(agents[0]);
-        setSelectedAgent(agents[0]);
+        if (agents.length) {
+          setAgents(agents);
+          setSelected(agents[0]);
+          setSelectedAgent(agents[0]);
+        }
       } catch (error) {
         toast.error(`Error fetching agents: ${error}`);
       }

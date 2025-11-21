@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Send, Images, CircleX } from 'lucide-react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { FileSelectInfo } from '../models/file-select-info';
+import { useChatContext } from '../contexts/ChatContext';
 
 export default function ChatBox({
   onAsk,
 }: Readonly<{
   onAsk: (q: string, files: FileSelectInfo[]) => void;
 }>) {
+  const { agents } = useChatContext();
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -133,7 +135,7 @@ export default function ChatBox({
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim()}
+          disabled={!input.trim() || !agents.length}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
         >
           <Send size={18} />
