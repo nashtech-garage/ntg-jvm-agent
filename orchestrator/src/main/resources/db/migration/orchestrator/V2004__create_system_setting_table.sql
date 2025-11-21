@@ -2,11 +2,9 @@
 -- Purpose: Create the system_setting table
 -- Database: PostgreSQL
 -- ====================================================================
--- Enable pgcrypto extension for gen_random_uuid()
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS system_setting (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                  UUID PRIMARY KEY DEFAULT '67078936-185a-43f7-b36c-03b3e7aff4f0',
     site_name           VARCHAR(255) NOT NULL,
     maximum_user        INTEGER NOT NULL,
     session_timeout     INTEGER NOT NULL,
@@ -16,7 +14,8 @@ CREATE TABLE IF NOT EXISTS system_setting (
     user_registration   BOOLEAN NOT NULL,
     email_verification  BOOLEAN NOT NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT system_setting_singleton CHECK (id = '67078936-185a-43f7-b36c-03b3e7aff4f0')
 );
 
 

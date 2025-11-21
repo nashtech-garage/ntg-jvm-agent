@@ -74,14 +74,14 @@ export default function AdminSettings() {
         maximumSizeFileUpload: settings.maximumSizeFileUpload,
         allowedFileTypes: settings.allowedFileTypes,
       };
-      const id = settings.id;
-      const res = await fetch(`/api/settings/${id}`, {
+      const res = await fetch(`/api/settings`, {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
       const data = await res.json();
       setSettings(data);
       setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Failed to save settings:', error);
     } finally {
