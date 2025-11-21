@@ -60,8 +60,10 @@ class ConversationController(
     fun updateConversation(
         @PathVariable conversationId: UUID,
         @Valid @RequestBody request: ConversationUpdateRequestVm,
+        authentication: Authentication,
     ): ResponseEntity<ConversationResponseVm> {
-        val updatedConversation = conversationService.updateConversationTitle(conversationId, request.title)
+        val username = (authentication.principal as Jwt).subject
+        val updatedConversation = conversationService.updateConversationTitle(conversationId, request.title, username)
         return ResponseEntity.ok(updatedConversation)
     }
 }

@@ -140,11 +140,18 @@ class ConversationService(
     fun updateConversationTitle(
         conversationId: UUID,
         newTitle: String,
+        username: String,
     ): ConversationResponseVm {
         val conversation =
             this.conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
+        if (conversation.username != username) {
+            // Do not reveal existence of the conversation to unauthorized users
+            throw ResourceNotFoundException("Conversation not found: $conversationId")
+        }
+
         conversation.title = newTitle.trim()
         val updatedConversation = this.conversationRepo.save(conversation)
         return ConversationResponseVmImpl(
