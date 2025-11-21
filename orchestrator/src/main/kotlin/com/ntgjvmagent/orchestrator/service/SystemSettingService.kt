@@ -21,9 +21,7 @@ class SystemSettingService(
             ?: throw ResourceNotFoundException("No system setting found")
 
     @Transactional
-    fun updateSystemSetting(
-        request: SystemSettingRequestDto,
-    ): SystemSettingResponseDto {
+    fun updateSystemSetting(request: SystemSettingRequestDto): SystemSettingResponseDto {
         val setting =
             systemSetting
                 .findAll()
