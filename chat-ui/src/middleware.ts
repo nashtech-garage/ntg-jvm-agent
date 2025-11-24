@@ -3,7 +3,21 @@ import type { NextRequest } from 'next/server';
 import { setTokenIntoCookie, getRefreshToken, deleteCookies } from './app/utils/server-utils';
 import { authPathname } from './app/utils/constant';
 
+interface MaintenanceModeSetting {
+  maintenanceMode: boolean;
+}
 export async function middleware(req: NextRequest) {
+  const baseUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/settings/isMaintenance`;
+  const response = await fetch(`${baseUrl}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch system settings');
+  }
+  const data: MaintenanceModeSetting = await response.json();
+  if (data.maintenanceMode) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/maintenance';
+    return NextResponse.rewrite(url);
+  }
   const pathName = req.nextUrl.pathname;
 
   const accessToken = req.cookies.get('access_token');

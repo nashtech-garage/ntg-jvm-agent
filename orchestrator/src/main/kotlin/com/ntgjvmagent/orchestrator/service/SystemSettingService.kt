@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.dto.MaintenanceModeResponseDto
 import com.ntgjvmagent.orchestrator.dto.SystemSettingRequestDto
 import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
@@ -20,6 +21,14 @@ class SystemSettingService(
         systemSetting
             .findByIdOrNull(settingId)
             ?.toSystemSettingResponseDto()
+            ?: throw ResourceNotFoundException("No system setting found")
+
+    @Transactional(readOnly = true)
+    fun getSystemSettingMaintenanceMode(): MaintenanceModeResponseDto =
+        systemSetting
+            .findAll()
+            .firstOrNull()
+            ?.toMaintenanceModeResponseDto()
             ?: throw ResourceNotFoundException("No system setting found")
 
     @Transactional
@@ -51,5 +60,9 @@ class SystemSettingService(
             maintenanceMode = this.maintenanceMode,
             userRegistration = this.userRegistration,
             emailVerification = this.emailVerification,
+        )
+    private fun SystemSettingEntity.toMaintenanceModeResponseDto() =
+        MaintenanceModeResponseDto(
+            maintenanceMode = this.maintenanceMode,
         )
 }
