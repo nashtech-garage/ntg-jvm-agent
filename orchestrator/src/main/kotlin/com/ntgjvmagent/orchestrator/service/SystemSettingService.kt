@@ -13,8 +13,7 @@ import java.util.UUID
 @Service
 class SystemSettingService(
     private val systemSetting: SystemSettingRepository,
-    private val settingId: UUID = UUID.fromString("67078936-185a-43f7-b36c-03b3e7aff4f0")
-
+    private val settingId: UUID = UUID.fromString("67078936-185a-43f7-b36c-03b3e7aff4f0"),
 ) {
     @Transactional(readOnly = true)
     fun getSystemSetting(): SystemSettingResponseDto =
