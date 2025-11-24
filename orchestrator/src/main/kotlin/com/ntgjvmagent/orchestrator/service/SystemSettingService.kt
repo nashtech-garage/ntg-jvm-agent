@@ -5,18 +5,21 @@ import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.SystemSettingRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class SystemSettingService(
     private val systemSetting: SystemSettingRepository,
+    private val settingId: UUID = UUID.fromString("67078936-185a-43f7-b36c-03b3e7aff4f0")
+
 ) {
     @Transactional(readOnly = true)
     fun getSystemSetting(): SystemSettingResponseDto =
         systemSetting
-            .findAll()
-            .firstOrNull()
+            .findByIdOrNull(settingId)
             ?.toSystemSettingResponseDto()
             ?: throw ResourceNotFoundException("No system setting found")
 
@@ -24,8 +27,7 @@ class SystemSettingService(
     fun updateSystemSetting(request: SystemSettingRequestDto): SystemSettingResponseDto {
         val setting =
             systemSetting
-                .findAll()
-                .firstOrNull()
+                .findByIdOrNull(settingId)
                 ?: throw ResourceNotFoundException("No system setting found")
 
         setting.siteName = request.siteName
