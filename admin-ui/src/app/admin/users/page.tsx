@@ -1,14 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-interface User {
-  username: string;
-  enabled: boolean;
-  name: string;
-  email: string;
-  roles: string[];
-}
+import EditUserModal from '@/app/components/EditUserModal';
+import { User } from '@/app/models/user';
 
 interface UserPageDto {
   users: User[];
@@ -25,6 +19,8 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -170,7 +166,7 @@ export default function UserManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.username} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -210,7 +206,12 @@ export default function UserManagement() {
                     >
                       {user.enabled ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium"
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setIsModalOpen(true);
+                      }}
+                    >
                       Edit
                     </button>
                     <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
@@ -244,6 +245,22 @@ export default function UserManagement() {
           Next
         </button>
       </div>
+
+      {/* Edit User Modal */}
+      {selectedUser && (
+        <EditUserModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          user={selectedUser}
+          onSubmit={(updatedUser) => {
+            setUsers((prev) =>
+              prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+            );
+            setIsModalOpen(false);
+          }}
+        />
+      )}
+
     </div>
   );
 }

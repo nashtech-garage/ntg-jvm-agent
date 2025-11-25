@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.util.Optional
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import java.util.UUID
 
 interface UserRepository :
-    JpaRepository<UserEntity, String>,
+    JpaRepository<UserEntity, UUID>,
     JpaSpecificationExecutor<UserEntity> {
     @Query(
         """
@@ -22,6 +23,8 @@ interface UserRepository :
     fun findUserByUserName(
         @Param("username") username: String
     ): Optional<UserEntity>
+
+    fun findByEmail(email: String): Optional<UserEntity>
 }
 
 

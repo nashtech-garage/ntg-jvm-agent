@@ -82,7 +82,12 @@
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
 		</dependency>
-
+    <!-- validator -->
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>9.1.0.Final</version>
+    </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -219,8 +224,8 @@
         <version>11.14.0</version>
         <configuration>
           <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent</url>
-          <user>admin</user>
-          <password>admin</password>
+          <user>postgres</user>
+          <password>ahreynohope123</password>
           <schemas>
             <schema>public</schema>
           </schemas>

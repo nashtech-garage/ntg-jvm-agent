@@ -174,6 +174,11 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-rag</artifactId>
+      <version>${spring-ai.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.hibernate.orm</groupId>
@@ -290,8 +295,8 @@
         <version>11.14.0</version>
         <configuration>
           <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent</url>
-          <user>admin</user>
-          <password>admin</password>
+          <user>postgres</user>
+          <password>ahreynohope123</password>
           <schemas>
             <schema>public</schema>
           </schemas>
