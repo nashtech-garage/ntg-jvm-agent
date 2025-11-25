@@ -21,4 +21,4 @@ CREATE TABLE IF NOT EXISTS system_setting (
 
 -- Init data for system_setting table
 INSERT INTO system_setting (site_name, maximum_user, session_timeout, maximum_size_file_upload, allowed_file_types, maintenance_mode, user_registration, email_verification)
-VALUES ('NTG JVM Agent Chat UI', 1000, 3600, 10, 'jpg, jpeg, png, pdf, doc, docx', false, true, true)
+VALUES ('NTG JVM Agent Chat UI', 1000, 3600, 10, 'jpg, jpeg, png, pdf, doc, docx, txt', false, true, true)
