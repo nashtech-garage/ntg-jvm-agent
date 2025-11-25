@@ -9,7 +9,7 @@ import { useChatContext } from '../contexts/ChatContext';
 export default function AgentDropdown() {
   const { agents, setAgents, setSelectedAgent } = useChatContext();
   const [open, setOpen] = useState<boolean>(false);
-  const [selected, setSelected] = useState<Agent|null>(agents[0]);
+  const [selected, setSelected] = useState<Agent | null>(agents[0]);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = () => setOpen(!open);
