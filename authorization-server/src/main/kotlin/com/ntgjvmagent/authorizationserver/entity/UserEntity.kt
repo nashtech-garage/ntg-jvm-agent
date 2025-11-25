@@ -8,7 +8,7 @@ import java.util.UUID
 data class UserEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID,
+    val id: UUID? = null,
 
     val username: String,
 
@@ -21,7 +21,7 @@ data class UserEntity(
     @Column(unique = true, nullable = false)
     val email: String,
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
     val userRoles: MutableSet<UserRolesEntity> = mutableSetOf(),
 )
 

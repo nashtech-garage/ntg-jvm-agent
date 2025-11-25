@@ -1,23 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-interface User {
-  username: string;
-  enabled: boolean;
-  name: string;
-  email: string;
-  roles: string[];
-}
-
-interface UserPageDto {
-  users: User[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  lastPage: boolean;
-}
+import CreateUserModal from '@/app/components/Modal/CreateUserModal';
+import { User, UserPageDto } from '@/app/models/user';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -25,27 +10,28 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users?page=${page}&size=10`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data: UserPageDto = await response.json();
+      setUsers(data.users || []);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/users?page=${page}&size=10`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data: UserPageDto = await response.json();
-        setUsers(data.users || []);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, [page]);
 
@@ -79,7 +65,10 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -244,6 +233,15 @@ export default function UserManagement() {
           Next
         </button>
       </div>
+
+      <CreateUserModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onUserCreated={() => {
+          setPage(0);
+          fetchUsers();
+        }}
+      />
     </div>
   );
 }

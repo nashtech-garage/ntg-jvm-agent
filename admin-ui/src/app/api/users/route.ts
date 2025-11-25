@@ -33,3 +33,38 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: `Failed to fetch users: ${String(err)}` }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  const cookieStore = cookies();
+  const accessToken = (await cookieStore).get('access_token')?.value;
+
+  if (!accessToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const jsonResult = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: jsonResult.message || 'Failed to create user' },
+        { status: res.status }
+      );
+    }
+
+    return NextResponse.json(jsonResult, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: `Failed to create user: ${String(err)}` }, { status: 500 });
+  }
+}
