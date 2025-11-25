@@ -4,10 +4,9 @@ import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.ai.document.Document
-import org.springframework.ai.embedding.EmbeddingModel
-import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,8 +16,8 @@ import java.util.UUID
 class KnowledgeChunkService(
     private val chunkRepo: KnowledgeChunkRepository,
     private val knowledgeRepo: AgentKnowledgeRepository,
-    private val vectorStore: VectorStore,
-    private val embeddingModel: EmbeddingModel,
+    private val vectorStoreService: VectorStoreService,
+    private val dynamicModelService: DynamicModelService,
 ) {
     @Transactional
     fun addChunk(
@@ -33,19 +32,23 @@ class KnowledgeChunkService(
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
         val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
-        val embedding = embeddingModel.embed(content)
+        val embedding = dynamicModelService.getEmbeddingModel(agentId).embed(content)
 
+        embedding.size
         val chunk =
             KnowledgeChunk(
                 knowledge = knowledge,
                 chunkOrder = order,
                 content = content,
                 metadata = metadata,
-                embedding = embedding,
+                embedding768 = if (embedding.size == Constant.GEMINI_DIMENSION) embedding else null,
+                embedding1536 = if (embedding.size == Constant.CHATGPT_DIMENSION) embedding else null,
             )
 
         val savedChunk = chunkRepo.save(chunk)
-        vectorStore.add(listOf(buildDocument(savedChunk)))
+        vectorStoreService
+            .getVectorStore(agentId)
+            .add(listOf(buildDocument(savedChunk)))
 
         return KnowledgeChunkResponseDto.from(savedChunk)
     }
@@ -68,11 +71,20 @@ class KnowledgeChunkService(
             throw EntityNotFoundException("Chunk $chunkId does not belong to agent $agentId")
         }
 
-        chunk.content = newContent
-        chunk.metadata = newMetadata
-        chunk.embedding = embeddingModel.embed(newContent)
+        val embedding = dynamicModelService.getEmbeddingModel(agentId).embed(newContent)
+        chunk.apply {
+            content = newContent
+            metadata = newMetadata
+            when (embedding.size) {
+                Constant.GEMINI_DIMENSION -> embedding768 = embedding
+                Constant.CHATGPT_DIMENSION -> embedding1536 = embedding
+                else -> throw IllegalArgumentException("Unsupported embedding dimension: ${embedding.size}")
+            }
+        }
 
-        vectorStore.add(listOf(buildDocument(chunk)))
+        vectorStoreService
+            .getVectorStore(agentId)
+            .add(listOf(buildDocument(chunk)))
         return KnowledgeChunkResponseDto.from(chunkRepo.save(chunk))
     }
 
@@ -112,7 +124,12 @@ class KnowledgeChunkService(
             throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
         }
 
-        val results: List<Document> = vectorStore.similaritySearch(query).toList()
+        val results: List<Document> =
+            vectorStoreService
+                .getVectorStore(
+                    agentId,
+                ).similaritySearch(query)
+                .toList()
 
         if (results.isEmpty()) {
             return emptyList()

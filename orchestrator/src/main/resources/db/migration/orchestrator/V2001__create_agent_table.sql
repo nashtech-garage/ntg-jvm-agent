@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS agent (
     active              BOOLEAN NOT NULL DEFAULT TRUE,
     provider            VARCHAR(50),
     settings            JSONB,
+    base_url            VARCHAR(150) NOT NULL,
+    api_key             VARCHAR(200) NOT NULL,
+    chat_completions_path VARCHAR(50) NOT NULL,
+    embeddings_path     VARCHAR(50) NOT NULL,
+    embedding_model     VARCHAR(50) NOT NULL,
+    dimension           INTEGER NOT NULL,
     version             INTEGER NOT NULL DEFAULT 0,
     deleted_at          TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -110,12 +116,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON age
 -- 5. knowledge_chunk (pgvector)
 -- =======================
 CREATE TABLE IF NOT EXISTS knowledge_chunk (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    knowledge_id  UUID NOT NULL,
-    chunk_order   INTEGER NOT NULL,
-    content       TEXT NOT NULL,
-    metadata      JSONB,
-    embedding     vector(${spring.ai.vectorstore.pgvector.embedding-dimension}),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    knowledge_id    UUID NOT NULL,
+    chunk_order     INTEGER NOT NULL,
+    content         TEXT NOT NULL,
+    metadata        JSONB,
+    embedding_768   vector(768),
+    embedding_1536  vector(1536),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at    TIMESTAMPTZ,
     CONSTRAINT fk_knowledge_chunk_knowledge_id FOREIGN KEY (knowledge_id)
@@ -123,8 +130,10 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)
 );
 
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding
-  ON knowledge_chunk USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_768
+  ON knowledge_chunk USING ivfflat (embedding_768 vector_l2_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_1536
+  ON knowledge_chunk USING ivfflat (embedding_1536 vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_knowledge_id ON knowledge_chunk (knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_order ON knowledge_chunk (knowledge_id, chunk_order);
 CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata);

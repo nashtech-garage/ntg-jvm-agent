@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
-class AgentToolAssignmentService(
+class AgentToolService(
     private val agentRepository: AgentRepository,
     private val toolRepository: ToolRepository,
     private val agentToolRepository: AgentToolRepository,
