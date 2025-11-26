@@ -31,7 +31,7 @@ class KnowledgeImportService(
 
         val fileType = fileName?.split(".")?.last()
         val setting = systemSettingService.getSystemSetting()
-        if(setting.allowedFileTypes!!.split(",").contains(fileType)){
+        if(!setting.allowedFileTypes!!.replace(" ","").split(",").contains(fileType)){
             throw BadRequestException("File type is not allowed")
         }
 

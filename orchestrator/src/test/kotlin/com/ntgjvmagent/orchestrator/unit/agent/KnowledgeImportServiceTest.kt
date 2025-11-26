@@ -54,7 +54,7 @@ class KnowledgeImportServiceTest {
             maximumUser = 10,
             sessionTimeout = 10,
             maximumSizeFileUpload = 10,
-            allowedFileTypes = "txt, pdf, docx",
+            allowedFileTypes = "txt, pdf, docx, md",
             maintenanceMode = true,
             userRegistration = true,
             emailVerification = true,
