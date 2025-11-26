@@ -1,9 +1,11 @@
 package com.ntgjvmagent.orchestrator.mapper
 
+import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeListResponseDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
+import com.ntgjvmagent.orchestrator.utils.toRelativeString
 
 object AgentKnowledgeMapper {
     fun toEntity(
@@ -15,7 +17,6 @@ object AgentKnowledgeMapper {
         sourceType = request.sourceType,
         sourceUri = request.sourceUri,
         metadata = request.metadata,
-        embeddingModel = request.embeddingModel,
     )
 
     fun toResponse(entity: AgentKnowledge): AgentKnowledgeResponseDto =
@@ -26,9 +27,20 @@ object AgentKnowledgeMapper {
             sourceType = entity.sourceType,
             sourceUri = entity.sourceUri,
             metadata = entity.metadata,
-            embeddingModel = entity.embeddingModel,
             active = entity.active,
             createdAt = entity.createdAt!!,
             updatedAt = entity.updatedAt,
+        )
+
+    fun toListResponse(entity: AgentKnowledge): AgentKnowledgeListResponseDto =
+        AgentKnowledgeListResponseDto(
+            id = entity.id!!,
+            name = entity.name,
+            type = entity.sourceType,
+            availableTo = entity.agent.name,
+            usage = "",
+            lastModifiedBy = entity.updatedBy?.name ?: "Unknown",
+            lastModifiedWhen = entity.updatedAt.toRelativeString()!!,
+            status = "Ready",
         )
 }

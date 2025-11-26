@@ -1,13 +1,13 @@
 package com.ntgjvmagent.orchestrator.dto
 
-import java.time.OffsetDateTime
 import java.util.UUID
 
 data class AgentToolResponseDto(
-    val id: UUID,
-    val agentId: UUID,
     val toolId: UUID,
-    val config: Map<String, Any>? = null,
-    val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime?,
+    val toolName: String,
+    val toolType: String?,
+    val availableTo: String,
+    val lastModifiedBy: String,
+    val lastModifiedWhen: String,
+    val enabled: Boolean,
 )

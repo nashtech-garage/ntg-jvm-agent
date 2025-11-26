@@ -46,12 +46,13 @@ class KnowledgeChunkControllerIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
-                        model = "gpt-4",
+                        provider = "OpenAI",
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
-                        embeddingsPath = "/embeddings",
+                        model = "gpt-4",
                         embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
 
@@ -98,7 +99,6 @@ class KnowledgeChunkControllerIT
                         sourceType = "pdf",
                         sourceUri = "unit-test://file.pdf",
                         metadata = mapOf("createdBy" to "integration-test"),
-                        embeddingModel = "mock-embedding",
                     ),
                 )
             val knowledgeId = knowledge.id!!

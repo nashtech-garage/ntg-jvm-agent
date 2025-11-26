@@ -15,26 +15,28 @@ CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE TABLE IF NOT EXISTS agent (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name                VARCHAR(100) NOT NULL,
-    model               VARCHAR(100) NOT NULL,
     description         TEXT,
-    temperature         NUMERIC(3,2) NOT NULL DEFAULT 0.7 CHECK (temperature >= 0 AND temperature <= 2),
-    max_tokens          INTEGER NOT NULL DEFAULT 2048 CHECK (max_tokens > 0),
-    top_p               NUMERIC(3,2) NOT NULL DEFAULT 1.0 CHECK (top_p >= 0 AND top_p <= 1),
-    frequency_penalty   NUMERIC(3,2) NOT NULL DEFAULT 0.0 CHECK (frequency_penalty BETWEEN -2 AND 2),
-    presence_penalty    NUMERIC(3,2) NOT NULL DEFAULT 0.0 CHECK (presence_penalty BETWEEN -2 AND 2),
     active              BOOLEAN NOT NULL DEFAULT TRUE,
-    provider            VARCHAR(50),
-    settings            JSONB,
+    provider            VARCHAR(50) NOT NULL,
     base_url            VARCHAR(150) NOT NULL,
     api_key             VARCHAR(200) NOT NULL,
     chat_completions_path VARCHAR(50) NOT NULL,
-    embeddings_path     VARCHAR(50) NOT NULL,
+    model               VARCHAR(100) NOT NULL,
     embedding_model     VARCHAR(50) NOT NULL,
     dimension           INTEGER NOT NULL,
+    embeddings_path     VARCHAR(50) NOT NULL,
+    top_p               NUMERIC(3,2) NOT NULL DEFAULT 1.0 CHECK (top_p >= 0 AND top_p <= 1),
+    temperature         NUMERIC(3,2) NOT NULL DEFAULT 0.7 CHECK (temperature >= 0 AND temperature <= 2),
+    max_tokens          INTEGER NOT NULL DEFAULT 2048 CHECK (max_tokens > 0),
+    frequency_penalty   NUMERIC(3,2) NOT NULL DEFAULT 0.0 CHECK (frequency_penalty BETWEEN -2 AND 2),
+    presence_penalty    NUMERIC(3,2) NOT NULL DEFAULT 0.0 CHECK (presence_penalty BETWEEN -2 AND 2),
+    settings            JSONB,
     version             INTEGER NOT NULL DEFAULT 0,
     deleted_at          TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at          TIMESTAMPTZ
+    created_by          UUID REFERENCES users(id),
+    updated_at          TIMESTAMPTZ,
+    updated_by          UUID REFERENCES users(id)
 );
 
 -- Indexes
@@ -59,7 +61,9 @@ CREATE TABLE IF NOT EXISTS tool (
     active       BOOLEAN NOT NULL DEFAULT TRUE,
     deleted_at   TIMESTAMPTZ,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at   TIMESTAMPTZ
+    created_by   UUID REFERENCES users(id),
+    updated_at   TIMESTAMPTZ,
+    updated_by   UUID REFERENCES users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_tool_name ON tool(name);
@@ -78,13 +82,17 @@ CREATE TABLE IF NOT EXISTS agent_tool (
     agent_id   UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
     tool_id    UUID NOT NULL REFERENCES tool(id) ON DELETE CASCADE,
     config     JSONB,
+    active     BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    created_by UUID REFERENCES users(id),
     updated_at TIMESTAMPTZ,
+    updated_by UUID REFERENCES users(id),
     CONSTRAINT uk_agent_tool UNIQUE (agent_id, tool_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_tool_agent_id ON agent_tool(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_tool_tool_id ON agent_tool(tool_id);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_active ON agent_tool(active);
 
 -- =======================
 -- 4. agent_knowledge
@@ -96,11 +104,12 @@ CREATE TABLE IF NOT EXISTS agent_knowledge (
     source_type     VARCHAR(50),
     source_uri      TEXT,
     metadata        JSONB,
-    embedding_model VARCHAR(100),
     active          BOOLEAN NOT NULL DEFAULT TRUE,
     deleted_at      TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at      TIMESTAMPTZ
+    created_by      UUID REFERENCES users(id),
+    updated_at      TIMESTAMPTZ,
+    updated_by      UUID REFERENCES users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_agent_id ON agent_knowledge(agent_id);
@@ -123,8 +132,10 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     metadata        JSONB,
     embedding_768   vector(768),
     embedding_1536  vector(1536),
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at    TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    created_by      UUID REFERENCES users(id),
+    updated_at      TIMESTAMPTZ,
+    updated_by      UUID REFERENCES users(id),
     CONSTRAINT fk_knowledge_chunk_knowledge_id FOREIGN KEY (knowledge_id)
         REFERENCES agent_knowledge(id) ON DELETE CASCADE,
     CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)

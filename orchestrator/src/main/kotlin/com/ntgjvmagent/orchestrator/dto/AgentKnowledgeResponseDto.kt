@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.dto
 
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.UUID
 
 data class AgentKnowledgeResponseDto(
@@ -10,8 +10,7 @@ data class AgentKnowledgeResponseDto(
     val sourceType: String?,
     val sourceUri: String?,
     val metadata: Map<String, Any>?,
-    val embeddingModel: String?,
     val active: Boolean,
-    val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime?,
+    val createdAt: Instant,
+    val updatedAt: Instant?,
 )

@@ -26,6 +26,4 @@ data class AgentKnowledge(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var metadata: Map<String, Any>? = null,
-    @Column(name = "embedding_model", length = 100)
-    var embeddingModel: String? = null,
 ) : SoftDeletableEntity()

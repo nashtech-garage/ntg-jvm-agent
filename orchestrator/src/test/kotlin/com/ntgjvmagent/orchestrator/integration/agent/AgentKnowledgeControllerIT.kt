@@ -32,12 +32,13 @@ class AgentKnowledgeControllerIT
                 agentRepository.save(
                     Agent(
                         name = "Test Agent",
-                        model = "gpt-4",
+                        provider = "OpenAI",
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
-                        embeddingsPath = "/embeddings",
+                        model = "gpt-4",
                         embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
         }
@@ -50,7 +51,6 @@ class AgentKnowledgeControllerIT
                     sourceType = "URL",
                     sourceUri = "https://example.com/ophthalmology",
                     metadata = mapOf("category" to "medical", "language" to "en"),
-                    embeddingModel = "text-embedding-3-small",
                     active = true,
                 )
 
@@ -60,11 +60,10 @@ class AgentKnowledgeControllerIT
                 ).andExpect(status().isCreated)
                 .andExpect(jsonPath("$.name").value("Ophthalmology Dataset"))
                 .andExpect(jsonPath("$.active").value(true))
-                .andExpect(jsonPath("$.embeddingModel").value("text-embedding-3-small"))
         }
 
         @Test
-        fun `should get all active knowledge for agent`() {
+        fun `should get all knowledge for agent`() {
             repository.save(
                 AgentKnowledge(
                     agent = agent,
@@ -87,7 +86,7 @@ class AgentKnowledgeControllerIT
                     getAuth("/api/agents/${agent.id}/knowledge", roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$[0].name").value("Knowledge A"))
-                .andExpect(jsonPath("$[0].active").value(true))
+                .andExpect(jsonPath("$[1].name").value("Knowledge B"))
         }
 
         @Test
@@ -99,7 +98,6 @@ class AgentKnowledgeControllerIT
                         name = "Knowledge X",
                         sourceType = "URL",
                         sourceUri = "https://example.com/x",
-                        embeddingModel = "text-embedding-3-large",
                     ).apply { active = true },
                 )
 
@@ -109,7 +107,6 @@ class AgentKnowledgeControllerIT
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.id").value(entity.id.toString()))
                 .andExpect(jsonPath("$.name").value("Knowledge X"))
-                .andExpect(jsonPath("$.embeddingModel").value("text-embedding-3-large"))
         }
 
         @Test
@@ -121,7 +118,6 @@ class AgentKnowledgeControllerIT
                         name = "Old Knowledge",
                         sourceType = "URL",
                         sourceUri = "https://old.com",
-                        embeddingModel = "old-embed",
                     ).apply { active = true },
                 )
 
@@ -131,7 +127,6 @@ class AgentKnowledgeControllerIT
                     sourceType = "URL",
                     sourceUri = "https://new.com",
                     metadata = mapOf("updated" to true),
-                    embeddingModel = "text-embedding-3-small",
                     active = true,
                 )
 
@@ -141,7 +136,6 @@ class AgentKnowledgeControllerIT
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.name").value("Updated Knowledge"))
                 .andExpect(jsonPath("$.sourceUri").value("https://new.com"))
-                .andExpect(jsonPath("$.embeddingModel").value("text-embedding-3-small"))
         }
 
         @Test
@@ -168,9 +162,9 @@ class AgentKnowledgeControllerIT
             // Verify excluded from GET /api/agents/{agentId}/knowledge
             mockMvc
                 .perform(
-                    getAuth("/api/agents/${agent.id}/knowledge", roles = listOf("ROLE_ADMIN")),
+                    getAuth("/api/agents/${agent.id}/knowledge/${entity.id}", roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isOk)
-                .andExpect(jsonPath("$").isEmpty)
+                .andExpect(jsonPath("$.active").value(false))
         }
 
         @Test

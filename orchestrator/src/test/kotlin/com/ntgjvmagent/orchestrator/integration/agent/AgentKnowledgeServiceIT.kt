@@ -39,12 +39,13 @@ class AgentKnowledgeServiceIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
-                        model = "gpt-4",
+                        provider = "OpenAI",
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
-                        embeddingsPath = "/embeddings",
+                        model = "gpt-4",
                         embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
 
@@ -56,7 +57,6 @@ class AgentKnowledgeServiceIT
                         sourceType = "manual",
                         sourceUri = "http://example.com/stealth",
                         metadata = emptyMap(),
-                        embeddingModel = "text-embedding-3-small",
                     ).apply { active = true },
                 )
         }
@@ -83,7 +83,6 @@ class AgentKnowledgeServiceIT
                     sourceType = "manual",
                     sourceUri = "http://example.com/combat",
                     metadata = emptyMap(),
-                    embeddingModel = "text-embedding-3-small",
                     active = true,
                 )
             val result = service.create(agent.id!!, request)
@@ -99,13 +98,11 @@ class AgentKnowledgeServiceIT
                     sourceType = "manual",
                     sourceUri = "http://example.com/stealth-master",
                     metadata = mapOf("level" to "advanced"),
-                    embeddingModel = "text-embedding-3-large",
                     active = false,
                 )
 
             val result = service.update(agent.id!!, knowledge.id!!, updateRequest)
             assertEquals("Stealth Mastery", result.name)
-            assertEquals("text-embedding-3-large", result.embeddingModel)
             assertEquals(false, result.active)
         }
 

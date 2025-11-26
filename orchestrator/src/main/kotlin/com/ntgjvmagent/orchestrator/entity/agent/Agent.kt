@@ -18,10 +18,24 @@ import java.math.BigDecimal
 data class Agent(
     @Column(nullable = false, length = 100)
     var name: String,
-    @Column(nullable = false, length = 100)
-    var model: String,
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
+    @Column(length = 50)
+    var provider: String, // e.g. "openai", "anthropic", "local"
+    @Column(name = "base_url", length = 150, nullable = false)
+    var baseUrl: String,
+    @Column(name = "api_key", length = 200, nullable = false)
+    var apiKey: String,
+    @Column(name = "chat_completions_path", length = 50, nullable = false)
+    var chatCompletionsPath: String,
+    @Column(name = "embeddings_path", length = 50, nullable = false)
+    var embeddingsPath: String,
+    @Column(name = "embedding_model", length = 50, nullable = false)
+    var embeddingModel: String,
+    @Column(nullable = false)
+    var dimension: Int = Constant.CHATGPT_DIMENSION,
+    @Column(nullable = false, length = 100)
+    var model: String,
     /**
      * Controls randomness of model output.
      * 0.0 = deterministic, 2.0 = very creative.
@@ -52,23 +66,9 @@ data class Agent(
      */
     @Column(name = "presence_penalty", nullable = false, precision = 3, scale = 2)
     var presencePenalty: BigDecimal = DEFAULT_PRESENCE_PENALTY,
-    @Column(length = 50)
-    var provider: String? = null, // e.g. "openai", "anthropic", "local"
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var settings: Map<String, Any>? = null, // JSON for flexible configuration
-    @Column(name = "base_url", length = 150, nullable = false)
-    var baseUrl: String,
-    @Column(name = "api_key", length = 200, nullable = false)
-    var apiKey: String,
-    @Column(name = "chat_completions_path", length = 50, nullable = false)
-    var chatCompletionsPath: String,
-    @Column(name = "embeddings_path", length = 50, nullable = false)
-    var embeddingsPath: String,
-    @Column(name = "embedding_model", length = 50, nullable = false)
-    var embeddingModel: String,
-    @Column(nullable = false)
-    var dimension: Int = Constant.CHATGPT_DIMENSION,
     @Version
     @Column(nullable = false)
     var version: Int = 0,

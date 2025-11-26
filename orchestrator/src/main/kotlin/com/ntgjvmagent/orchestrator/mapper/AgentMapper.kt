@@ -1,8 +1,10 @@
 package com.ntgjvmagent.orchestrator.mapper
 
+import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
 import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.utils.toRelativeString
 import java.math.BigDecimal
 
 object AgentMapper {
@@ -30,16 +32,34 @@ object AgentMapper {
         AgentResponseDto(
             id = agent.id!!,
             name = agent.name,
-            model = agent.model,
             description = agent.description,
-            temperature = agent.temperature.toDouble(),
-            maxTokens = agent.maxTokens,
-            topP = agent.topP.toDouble(),
-            frequencyPenalty = agent.frequencyPenalty.toDouble(),
-            presencePenalty = agent.presencePenalty.toDouble(),
             active = agent.active,
             provider = agent.provider,
+            baseUrl = agent.baseUrl,
+            apiKey = agent.apiKey,
+            chatCompletionsPath = agent.chatCompletionsPath,
+            model = agent.model,
+            embeddingModel = agent.embeddingModel,
+            dimension = agent.dimension,
+            embeddingsPath = agent.embeddingsPath,
+            topP = agent.topP.toDouble(),
+            temperature = agent.temperature.toDouble(),
+            maxTokens = agent.maxTokens,
+            frequencyPenalty = agent.frequencyPenalty.toDouble(),
+            presencePenalty = agent.presencePenalty.toDouble(),
             settings = agent.settings,
+        )
+
+    fun toListResponse(agent: Agent): AgentListResponseDto =
+        AgentListResponseDto(
+            id = agent.id!!,
+            name = agent.name,
+            model = agent.model,
+            lastModifiedBy = agent.updatedBy?.name ?: "Unknown",
+            lastModifiedWhen = agent.updatedAt.toRelativeString()!!,
+            lastPublishedWhen = "",
+            owner = agent.createdBy?.name ?: "Unknown",
+            status = if (agent.active) "Active" else "Inactive",
         )
 
     /**

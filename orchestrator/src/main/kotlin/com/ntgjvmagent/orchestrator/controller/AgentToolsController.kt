@@ -14,22 +14,22 @@ import java.util.UUID
 @RequestMapping("/api/agents/{agentId}/tools")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 class AgentToolsController(
-    private val toolAssignmentService: AgentToolService,
+    private val agentToolService: AgentToolService,
 ) {
     @GetMapping
     fun list(
         @PathVariable agentId: UUID,
-    ) = toolAssignmentService.getTools(agentId)
+    ) = agentToolService.getTools(agentId)
 
     @PostMapping("/{toolId}")
     fun assign(
         @PathVariable agentId: UUID,
         @PathVariable toolId: UUID,
-    ) = toolAssignmentService.assignTool(agentId, toolId)
+    ) = agentToolService.assignTool(agentId, toolId)
 
     @DeleteMapping("/{toolId}")
     fun unassign(
         @PathVariable agentId: UUID,
         @PathVariable toolId: UUID,
-    ) = toolAssignmentService.unassignTool(agentId, toolId)
+    ) = agentToolService.unassignTool(agentId, toolId)
 }

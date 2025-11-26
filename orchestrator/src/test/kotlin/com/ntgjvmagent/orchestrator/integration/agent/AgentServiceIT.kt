@@ -31,22 +31,22 @@ class AgentServiceIT
             active: Boolean = true,
         ) = AgentRequestDto(
             name = name,
-            model = "gpt-4o-mini",
             description = "integration test agent",
-            temperature = 0.7,
-            maxTokens = 2048,
-            topP = 1.0,
-            frequencyPenalty = 0.0,
-            presencePenalty = 0.0,
             active = active,
             provider = "openai",
-            settings = mapOf("max_retries" to 3),
             baseUrl = "https://models.github.ai/inference",
             apiKey = "fake-github-token",
             chatCompletionsPath = "/v1/chat/completions",
-            embeddingsPath = "/embeddings",
+            model = "gpt-4o-mini",
             embeddingModel = "openai/text-embedding-3-small",
             dimension = 1536,
+            embeddingsPath = "/embeddings",
+            topP = 1.0,
+            temperature = 0.7,
+            maxTokens = 2048,
+            frequencyPenalty = 0.0,
+            presencePenalty = 0.0,
+            settings = mapOf("max_retries" to 3),
         )
 
         // ---------------------------
@@ -76,12 +76,13 @@ class AgentServiceIT
                     .save(
                         Agent(
                             name = "AgentGet",
-                            model = "gpt-4o-mini",
+                            provider = "OpenAI",
                             baseUrl = "https://models.github.ai/inference",
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
-                            embeddingsPath = "/embeddings",
+                            model = "gpt-4o-mini",
                             embeddingModel = "openai/text-embedding-3-small",
+                            embeddingsPath = "/embeddings",
                         ),
                     )
             val found = service.getById(saved.id!!)
@@ -110,23 +111,25 @@ class AgentServiceIT
             repo.save(
                 Agent(
                     name = "ActiveA",
-                    model = "gpt-4o-mini",
+                    provider = "OpenAI",
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
-                    embeddingsPath = "/embeddings",
+                    model = "gpt-4o-mini",
                     embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
                 ).apply { this.active = true },
             )
             repo.save(
                 Agent(
                     name = "InactiveB",
-                    model = "gpt-4o-mini",
+                    provider = "OpenAI",
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
-                    embeddingsPath = "/embeddings",
+                    model = "gpt-4o-mini",
                     embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
                 ).apply { this.active = false },
             )
 
@@ -147,12 +150,13 @@ class AgentServiceIT
                     .save(
                         Agent(
                             name = "BeforeUpdate",
-                            model = "gpt-4o-mini",
+                            provider = "OpenAI",
                             baseUrl = "https://models.github.ai/inference",
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
-                            embeddingsPath = "/embeddings",
+                            model = "gpt-4o-mini",
                             embeddingModel = "openai/text-embedding-3-small",
+                            embeddingsPath = "/embeddings",
                         ),
                     )
 
@@ -191,12 +195,13 @@ class AgentServiceIT
                 repo.save(
                     Agent(
                         name = "SoftDelete",
-                        model = "gpt-4o-mini",
+                        provider = "OpenAI",
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
-                        embeddingsPath = "/embeddings",
+                        model = "gpt-4o-mini",
                         embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
 

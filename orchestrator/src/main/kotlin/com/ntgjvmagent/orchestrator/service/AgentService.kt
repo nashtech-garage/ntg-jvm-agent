@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
 import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
@@ -15,6 +16,9 @@ import java.util.UUID
 class AgentService(
     private val repo: AgentRepository,
 ) {
+    @Transactional(readOnly = true)
+    fun getAll(): List<AgentListResponseDto> = repo.findAll().map(AgentMapper::toListResponse)
+
     @Transactional(readOnly = true)
     fun getAllActive(): List<AgentResponseDto> = repo.findAllByActiveTrue().map(AgentMapper::toResponse)
 
