@@ -8,17 +8,9 @@ import com.ntgjvmagent.authorizationserver.exception.UserNotFoundException
 import com.ntgjvmagent.authorizationserver.exception.UsernameAlreadyUsedException
 import com.ntgjvmagent.authorizationserver.mapper.toPageDto
 import com.ntgjvmagent.authorizationserver.mapper.toUpdateResponse
-import com.ntgjvmagent.authorizationserver.dto.UpdateUserRequestDto
-import com.ntgjvmagent.authorizationserver.dto.UpdateUserResponseDto
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
-import com.ntgjvmagent.authorizationserver.dto.UserPageDto
-import com.ntgjvmagent.authorizationserver.exception.EmailAlreadyUsedException
-import com.ntgjvmagent.authorizationserver.exception.UserNotFoundException
-import com.ntgjvmagent.authorizationserver.exception.UsernameAlreadyUsedException
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.entity.UserRolesEntity
-import com.ntgjvmagent.authorizationserver.mapper.toPageDto
-import com.ntgjvmagent.authorizationserver.mapper.toUpdateResponse
 import com.ntgjvmagent.authorizationserver.mapper.toUserEntity
 import com.ntgjvmagent.authorizationserver.mapper.toCreateUserDto
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
@@ -82,41 +74,7 @@ class UserServiceImpl(
         )
 
         return userRepository.save(updated).toUpdateResponse()
-    @Transactional
-    override fun updateUser(id: UUID, request: UpdateUserRequestDto): UpdateUserResponseDto {
-        val user = userRepository.findById(id).orElseThrow {
-            UserNotFoundException("User with id '$id' not found")
-        }
-
-        // Username unique check
-        request.username?.let { newUsername ->
-            if (newUsername != user.username) {
-                val existed = userRepository.findUserByUserName(newUsername)
-                if (existed.isPresent) {
-                    throw UsernameAlreadyUsedException("Username '$newUsername' is already used")
-                }
-            }
-        }
-
-        // Email unique check
-        request.email?.let { newEmail ->
-            if (newEmail != user.email) {
-                val existed = userRepository.findByEmail(newEmail)
-                if (existed.isPresent) {
-                    throw EmailAlreadyUsedException("Email '$newEmail' is already used")
-                }
-            }
-        }
-
-        val updated = user.copy(
-            username = request.username ?: user.username,
-            name = request.name ?: user.name,
-            email = request.email ?: user.email,
-        )
-
-        return userRepository.save(updated).toUpdateResponse()
     }
-
 
     @Transactional
     override fun createUser(request: CreateUserRequest): CreateUserDto {

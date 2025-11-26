@@ -2,16 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import EditUserModal from '@/app/components/EditUserModal';
-import { User } from '@/app/models/user';
-
-interface UserPageDto {
-  users: User[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  lastPage: boolean;
-}
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
 import { User, UserPageDto } from '@/app/models/user';
 
