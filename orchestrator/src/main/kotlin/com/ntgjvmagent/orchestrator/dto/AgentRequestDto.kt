@@ -58,4 +58,16 @@ data class AgentRequestDto(
     val active: Boolean = true,
     val provider: String? = null,
     val settings: Map<String, Any>? = null,
+    @field:NotBlank(message = "Base url must not be blank")
+    val baseUrl: String,
+    @field:NotBlank(message = "Api key must not be blank")
+    val apiKey: String,
+    @field:NotBlank(message = "Chat completions path must not be blank")
+    val chatCompletionsPath: String,
+    @field:NotBlank(message = "Embeddings path must not be blank")
+    val embeddingsPath: String,
+    @field:NotBlank(message = "Embedding model must not be blank")
+    val embeddingModel: String,
+    @field:Min(value = Agent.MIN_DIMENSION.toLong(), message = "Min embedding must be at least {value}")
+    val dimension: Int,
 )

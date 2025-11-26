@@ -29,4 +29,6 @@ object Constant {
         - Prefer the most relevant sources first (best snippet match).
         - Maintain a natural, conversational tone.
     """
+    const val CHATGPT_DIMENSION = 1536
+    const val GEMINI_DIMENSION = 768
 }

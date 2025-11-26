@@ -54,7 +54,7 @@ class ConversationService(
         chatReq: ChatRequestVm,
         username: String,
     ): UUID {
-        val titleSummarize = this.chatModelService.createSummarize(chatReq.question)
+        val titleSummarize = this.chatModelService.createSummarize(chatReq.agentId, chatReq.question)
         val conversation =
             ConversationEntity(
                 title = titleSummarize ?: chatReq.question,
@@ -134,6 +134,31 @@ class ConversationService(
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
         conversation.isActive = false
         this.conversationRepo.save(conversation)
+    }
+
+    @Transactional
+    fun updateConversationTitle(
+        conversationId: UUID,
+        newTitle: String,
+        username: String,
+    ): ConversationResponseVm {
+        val conversation =
+            this.conversationRepo
+                .findById(conversationId)
+                .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
+        if (conversation.username != username) {
+            // Do not reveal existence of the conversation to unauthorized users
+            throw ResourceNotFoundException("Conversation not found: $conversationId")
+        }
+
+        conversation.title = newTitle.trim()
+        val updatedConversation = this.conversationRepo.save(conversation)
+        return ConversationResponseVmImpl(
+            updatedConversation.id ?: conversationId,
+            updatedConversation.title,
+            updatedConversation.createdAt!!,
+        )
     }
 
     private fun saveMessageMedia(

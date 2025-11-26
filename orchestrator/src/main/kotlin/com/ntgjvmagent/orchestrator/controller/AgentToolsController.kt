@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.service.AgentToolAssignmentService
+import com.ntgjvmagent.orchestrator.service.AgentToolService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,7 +14,7 @@ import java.util.UUID
 @RequestMapping("/api/agents/{agentId}/tools")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 class AgentToolsController(
-    private val toolAssignmentService: AgentToolAssignmentService,
+    private val toolAssignmentService: AgentToolService,
 ) {
     @GetMapping
     fun list(

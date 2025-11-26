@@ -2,12 +2,14 @@ package com.ntgjvmagent.orchestrator.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.integration.config.PostgresTestContainer
+import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -33,6 +35,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Container spins up once per class
 @ContextConfiguration(initializers = [PostgresTestContainer.Initializer::class])
+@Import(TestEmbeddingConfig::class)
 @Tag("integration")
 @ActiveProfiles("test")
 abstract class BaseIntegrationTest {
