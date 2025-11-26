@@ -5,10 +5,12 @@ import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
 import com.ntgjvmagent.orchestrator.config.ChunkerProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
+import com.ntgjvmagent.orchestrator.service.SystemSettingService
 import io.mockk.every
 import io.mockk.mockk
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -26,6 +28,7 @@ import kotlin.test.assertFailsWith
 
 class KnowledgeImportServiceTest {
     private lateinit var chunkService: KnowledgeChunkService
+    private lateinit var systemSettingService: SystemSettingService
     private lateinit var knowledgeRepo: AgentKnowledgeRepository
     private lateinit var documentChunker: DocumentChunker
     private lateinit var service: KnowledgeImportService
@@ -36,6 +39,7 @@ class KnowledgeImportServiceTest {
     @BeforeEach
     fun setUp() {
         chunkService = mockk()
+        systemSettingService = mockk()
         knowledgeRepo = mockk()
 
         // Always return true for knowledge existence
@@ -43,6 +47,18 @@ class KnowledgeImportServiceTest {
 
         // Setup chunk order mock
         every { chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId) } returns 0
+
+        every { systemSettingService.getSystemSetting() } returns SystemSettingResponseDto(
+            id = UUID.randomUUID(),
+            siteName = "TEST",
+            maximumUser = 10,
+            sessionTimeout = 10,
+            maximumSizeFileUpload = 10,
+            allowedFileTypes = "txt, pdf, docx",
+            maintenanceMode = true,
+            userRegistration = true,
+            emailVerification = true,
+            )
 
         // Correctly map arguments (NO MORE CLASSCAST ISSUES)
         every {
@@ -85,7 +101,7 @@ class KnowledgeImportServiceTest {
                 ChunkerProfileDetector(),
             )
 
-        service = KnowledgeImportService(chunkService, knowledgeRepo, documentChunker)
+        service = KnowledgeImportService(chunkService, knowledgeRepo, documentChunker, systemSettingService)
     }
 
     // -------------------------------------------------------

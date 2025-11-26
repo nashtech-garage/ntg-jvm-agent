@@ -16,6 +16,7 @@ class KnowledgeImportService(
     private val chunkService: KnowledgeChunkService,
     private val knowledgeRepo: AgentKnowledgeRepository,
     private val documentChunker: DocumentChunker,
+    private val systemSettingService: SystemSettingService,
 ) {
     private val logger = LoggerFactory.getLogger(KnowledgeImportService::class.java)
 
@@ -27,6 +28,17 @@ class KnowledgeImportService(
     ): KnowledgeImportingResponseVm {
         val fileName = file.originalFilename
         logger.info("Importing document for agent {}: {}, file type: {}", agentId, fileName, file.contentType)
+
+        val fileType = fileName?.split(".")?.last()
+        val setting = systemSettingService.getSystemSetting()
+        if(setting.allowedFileTypes!!.split(",").contains(fileType)){
+            throw BadRequestException("File type is not allowed")
+        }
+
+        val maxSize = setting.maximumSizeFileUpload!! * 1024 * 1024
+        if(maxSize < file.size){
+            throw BadRequestException("File size exceeded")
+        }
 
         // Check that knowledge exists for this agent
         if (!knowledgeRepo.existsByIdAndAgentId(knowledgeId, agentId)) {
