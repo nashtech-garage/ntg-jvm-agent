@@ -1,11 +1,12 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.entity.Role
+import com.ntgjvmagent.orchestrator.entity.RoleEntity
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.RoleRepository
 import com.ntgjvmagent.orchestrator.repository.UserRepository
 import com.ntgjvmagent.orchestrator.viewmodel.RoleRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.RoleResponseVm
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -23,7 +24,7 @@ class RoleService(
             "Role with name '${request.name}' already exists"
         }
 
-        val saved = roleRepository.save(Role(name = request.name, description = request.description))
+        val saved = roleRepository.save(RoleEntity(name = request.name, description = request.description))
         return saved.toResponseVm()
     }
 
@@ -55,14 +56,13 @@ class RoleService(
 
     @Transactional
     fun assignRolesToUser(
-        username: String,
+        id: UUID,
         roleNames: List<String>,
     ) {
         val user =
             userRepository
-                .findByUsername(username)
-                ?: throw ResourceNotFoundException("User with username $username not found")
-
+                .findByIdOrNull(id)
+                ?: throw ResourceNotFoundException("User with ID $id not found")
         val roles = roleRepository.findByNameIn(roleNames)
         if (roles.isEmpty()) {
             throw ResourceNotFoundException("No roles found for given names: $roleNames")
@@ -73,7 +73,7 @@ class RoleService(
     }
 
     // Use an explicit function that safely reads the Role id
-    private fun Role.toResponseVm(): RoleResponseVm =
+    private fun RoleEntity.toResponseVm(): RoleResponseVm =
         RoleResponseVm(
             id = this.id,
             name = this.name,

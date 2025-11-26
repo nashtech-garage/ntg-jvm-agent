@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
-import { ChatRequest } from '@/app/models/chat-request';
 import { Constants } from '@/app/utils/constant';
 
 const baseUrl = `${ORCHESTRATOR_URL}/api/conversations`;
@@ -61,6 +60,40 @@ export async function POST(req: Request) {
   } catch (err) {
     return NextResponse.json(
       { error: `${Constants.FAILED_TO_ASK_QUESTION} ${String(err)}` },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: Request) {
+  const accessToken = await getAccessToken(req);
+  if (!accessToken) {
+    return NextResponse.json(null, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const conversationId = searchParams.get('conversationId');
+
+  try {
+    const body = await req.json();
+    const res = await fetch(`${baseUrl}/${conversationId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const jsonResult = await res.json();
+    if (!res.ok) {
+      return NextResponse.json({ error: jsonResult.message }, { status: res.status });
+    }
+
+    return NextResponse.json(jsonResult);
+  } catch (err) {
+    return NextResponse.json(
+      { error: `Failed to update conversation: ${String(err)}` },
       { status: 500 }
     );
   }

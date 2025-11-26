@@ -18,6 +18,12 @@ object AgentMapper {
             presencePenalty = request.presencePenalty.toBigDecimalOrDefault(Agent.DEFAULT_PRESENCE_PENALTY),
             provider = request.provider,
             settings = request.settings,
+            baseUrl = request.baseUrl,
+            apiKey = request.apiKey,
+            chatCompletionsPath = request.chatCompletionsPath,
+            embeddingsPath = request.embeddingsPath,
+            embeddingModel = request.embeddingModel,
+            dimension = request.dimension,
         ).apply { active = request.active }
 
     fun toResponse(agent: Agent): AgentResponseDto =

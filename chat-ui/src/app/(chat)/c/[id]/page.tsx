@@ -5,6 +5,7 @@ import ChatPage from '../../page';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
+import { customizeFetch } from '@/app/utils/custom-fetch';
 
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();
@@ -14,7 +15,7 @@ export default function ConversationPage() {
   useEffect(() => {
     const fetchConversation = async () => {
       try {
-        const res = await fetch(`/api/chat?conversationId=${id}`);
+        const res = await customizeFetch(`/api/chat?conversationId=${id}`);
         const messages = await res.json();
         setChatMessages(messages);
         setActiveConversationId(id);

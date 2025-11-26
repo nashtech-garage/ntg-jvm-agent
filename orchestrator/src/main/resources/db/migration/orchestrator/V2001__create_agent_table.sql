@@ -25,25 +25,17 @@ CREATE TABLE IF NOT EXISTS agent (
     active              BOOLEAN NOT NULL DEFAULT TRUE,
     provider            VARCHAR(50),
     settings            JSONB,
+    base_url            VARCHAR(150) NOT NULL,
+    api_key             VARCHAR(200) NOT NULL,
+    chat_completions_path VARCHAR(50) NOT NULL,
+    embeddings_path     VARCHAR(50) NOT NULL,
+    embedding_model     VARCHAR(50) NOT NULL,
+    dimension           INTEGER NOT NULL,
     version             INTEGER NOT NULL DEFAULT 0,
     deleted_at          TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at          TIMESTAMPTZ
 );
-
--- Trigger to auto-update updated_at
-CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP(3);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_agent_updated_at
-BEFORE UPDATE ON agent
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_agent_name ON agent(name);
@@ -52,13 +44,13 @@ CREATE INDEX IF NOT EXISTS idx_agent_provider ON agent(provider);
 CREATE INDEX IF NOT EXISTS idx_agent_active ON agent(active);
 CREATE INDEX IF NOT EXISTS idx_agent_deleted_at ON agent(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_agent_active_not_deleted ON agent (active) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_agent_settings_jsonb ON agent USING gin (settings jsonb_ops);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_name_not_deleted ON agent (name) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_settings_jsonb ON agent USING gin (settings);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_name_not_deleted ON agent (lower(name)) WHERE deleted_at IS NULL;
 
 -- =======================
--- 2. agent_tool
+-- 2. tool
 -- =======================
-CREATE TABLE IF NOT EXISTS agent_tool (
+CREATE TABLE IF NOT EXISTS tool (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(100) NOT NULL,
     type         VARCHAR(50),
@@ -70,26 +62,39 @@ CREATE TABLE IF NOT EXISTS agent_tool (
     updated_at   TIMESTAMPTZ
 );
 
-CREATE TRIGGER trg_agent_tool_updated_at
-BEFORE UPDATE ON agent_tool
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
-CREATE INDEX IF NOT EXISTS idx_agent_tool_name ON agent_tool(name);
-CREATE INDEX IF NOT EXISTS idx_agent_tool_type ON agent_tool(type);
-CREATE INDEX IF NOT EXISTS idx_agent_tool_active ON agent_tool(active);
-CREATE INDEX IF NOT EXISTS idx_agent_tool_deleted_at ON agent_tool(deleted_at);
-CREATE INDEX IF NOT EXISTS idx_agent_tool_config_jsonb ON agent_tool USING gin (config jsonb_ops);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_tool_name_not_deleted ON agent_tool (name) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tool_name ON tool(name);
+CREATE INDEX IF NOT EXISTS idx_tool_type ON tool(type);
+CREATE INDEX IF NOT EXISTS idx_tool_active ON tool(active);
+CREATE INDEX IF NOT EXISTS idx_tool_deleted_at ON tool(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_tool_active_not_deleted ON tool (active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tool_config_jsonb ON tool USING gin (config);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_tool_name_not_deleted ON tool (lower(name)) WHERE deleted_at IS NULL;
 
 -- =======================
--- 3. agent_knowledge
+-- 3. agent_tool
+-- =======================
+CREATE TABLE IF NOT EXISTS agent_tool (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id   UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
+    tool_id    UUID NOT NULL REFERENCES tool(id) ON DELETE CASCADE,
+    config     JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at TIMESTAMPTZ,
+    CONSTRAINT uk_agent_tool UNIQUE (agent_id, tool_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_tool_agent_id ON agent_tool(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_tool_tool_id ON agent_tool(tool_id);
+
+-- =======================
+-- 4. agent_knowledge
 -- =======================
 CREATE TABLE IF NOT EXISTS agent_knowledge (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id        UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
     name            VARCHAR(100) NOT NULL,
     source_type     VARCHAR(50),
-    source_uri      TEXT UNIQUE,
+    source_uri      TEXT,
     metadata        JSONB,
     embedding_model VARCHAR(100),
     active          BOOLEAN NOT NULL DEFAULT TRUE,
@@ -98,95 +103,37 @@ CREATE TABLE IF NOT EXISTS agent_knowledge (
     updated_at      TIMESTAMPTZ
 );
 
-CREATE TRIGGER trg_agent_knowledge_updated_at
-BEFORE UPDATE ON agent_knowledge
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
+CREATE INDEX IF NOT EXISTS idx_agent_knowledge_agent_id ON agent_knowledge(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_name ON agent_knowledge(name);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_source_type ON agent_knowledge(source_type);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_deleted_at ON agent_knowledge(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_active_not_deleted ON agent_knowledge (active) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge USING gin (metadata jsonb_ops);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_not_deleted ON agent_knowledge (name) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge USING gin (metadata);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_per_agent ON agent_knowledge (agent_id, name) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON agent_knowledge (agent_id, source_uri) WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
 
 -- =======================
--- 4. knowledge_chunk (pgvector)
+-- 5. knowledge_chunk (pgvector)
 -- =======================
 CREATE TABLE IF NOT EXISTS knowledge_chunk (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    knowledge_id  UUID NOT NULL,
-    chunk_order   INTEGER NOT NULL,
-    content       TEXT NOT NULL,
-    metadata      JSONB,
-    embedding     vector(${spring.ai.vectorstore.pgvector.embedding-dimension}),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    knowledge_id    UUID NOT NULL,
+    chunk_order     INTEGER NOT NULL,
+    content         TEXT NOT NULL,
+    metadata        JSONB,
+    embedding_768   vector(768),
+    embedding_1536  vector(1536),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at    TIMESTAMPTZ,
     CONSTRAINT fk_knowledge_chunk_knowledge_id FOREIGN KEY (knowledge_id)
         REFERENCES agent_knowledge(id) ON DELETE CASCADE,
     CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)
 );
 
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding
-  ON knowledge_chunk USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_768
+  ON knowledge_chunk USING ivfflat (embedding_768 vector_l2_ops) WITH (lists = 100);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_1536
+  ON knowledge_chunk USING ivfflat (embedding_1536 vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_knowledge_id ON knowledge_chunk (knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_order ON knowledge_chunk (knowledge_id, chunk_order);
-CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata jsonb_ops);
-
--- =======================
--- 5. agent_tool_mapping
--- =======================
-CREATE TABLE IF NOT EXISTS agent_tool_mapping (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
-    tool_id UUID NOT NULL REFERENCES agent_tool(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at TIMESTAMPTZ,
-    CONSTRAINT uk_agent_tool UNIQUE (agent_id, tool_id)
-);
-
-CREATE TRIGGER trg_agent_tool_mapping_updated_at
-BEFORE UPDATE ON agent_tool_mapping
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
-CREATE INDEX IF NOT EXISTS idx_agent_tool_mapping_agent_id ON agent_tool_mapping(agent_id);
-CREATE INDEX IF NOT EXISTS idx_agent_tool_mapping_tool_id ON agent_tool_mapping(tool_id);
-
--- =======================
--- 6. agent_knowledge_mapping
--- =======================
-CREATE TABLE IF NOT EXISTS agent_knowledge_mapping (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
-    knowledge_id UUID NOT NULL REFERENCES agent_knowledge(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at TIMESTAMPTZ,
-    CONSTRAINT uk_agent_knowledge UNIQUE (agent_id, knowledge_id)
-);
-
-CREATE TRIGGER trg_agent_knowledge_mapping_updated_at
-BEFORE UPDATE ON agent_knowledge_mapping
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
-
-CREATE INDEX IF NOT EXISTS idx_agent_knowledge_mapping_agent_id ON agent_knowledge_mapping(agent_id);
-CREATE INDEX IF NOT EXISTS idx_agent_knowledge_mapping_knowledge_id ON agent_knowledge_mapping(knowledge_id);
-
--- ====================================================================
--- === DOWN Migration (Manual Rollback) ===
--- ====================================================================
--- DROP TRIGGER IF EXISTS trg_agent_knowledge_mapping_updated_at ON agent_knowledge_mapping;
--- DROP TRIGGER IF EXISTS trg_agent_tool_mapping_updated_at ON agent_tool_mapping;
--- DROP TRIGGER IF EXISTS trg_agent_knowledge_updated_at ON agent_knowledge;
--- DROP TRIGGER IF EXISTS trg_agent_tool_updated_at ON agent_tool;
--- DROP TRIGGER IF EXISTS trg_agent_updated_at ON agent;
--- DROP FUNCTION IF EXISTS update_timestamp;
--- DROP TABLE IF EXISTS agent_knowledge_mapping;
--- DROP TABLE IF EXISTS agent_tool_mapping;
--- DROP TABLE IF EXISTS knowledge_chunk;
--- DROP TABLE IF EXISTS agent_knowledge;
--- DROP TABLE IF EXISTS agent_tool;
--- DROP TABLE IF EXISTS agent;
--- DROP EXTENSION IF EXISTS vector;
--- DROP EXTENSION IF EXISTS pgcrypto;
--- ====================================================================
+CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata);

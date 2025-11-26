@@ -8,13 +8,17 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { FileSelectInfo } from '../models/file-select-info';
+import { customizeFetch } from '../utils/custom-fetch';
+import Header from '../components/Header';
+import AgentDropdown from '../components/AgentDropdown';
 
 export default function Page() {
   const {
     chatMessages,
+    activeConversationId,
+    selectedAgent,
     setChatMessages,
     setConversations,
-    activeConversationId,
     setActiveConversationId,
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -35,8 +39,11 @@ export default function Page() {
         formData.append('files', file.file);
       }
     }
+    if (selectedAgent?.id) {
+      formData.append('agentId', selectedAgent.id);
+    }
 
-    const res = await fetch(`/api/chat`, {
+    const res = await customizeFetch(`/api/chat`, {
       method: 'POST',
       body: formData,
     });
@@ -85,6 +92,11 @@ export default function Page() {
   return (
     <div className="flex h-screen">
       <main className="flex-1 flex flex-col">
+        <div>
+          <Header>
+            <AgentDropdown />
+          </Header>
+        </div>
         <div className="flex-1 overflow-y-auto p-4">
           <ChatResult results={chatMessages} isTyping={isTyping} />
         </div>

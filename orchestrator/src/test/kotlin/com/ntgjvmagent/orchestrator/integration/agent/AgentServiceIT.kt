@@ -41,6 +41,12 @@ class AgentServiceIT
             active = active,
             provider = "openai",
             settings = mapOf("max_retries" to 3),
+            baseUrl = "https://models.github.ai/inference",
+            apiKey = "fake-github-token",
+            chatCompletionsPath = "/v1/chat/completions",
+            embeddingsPath = "/embeddings",
+            embeddingModel = "openai/text-embedding-3-small",
+            dimension = 1536,
         )
 
         // ---------------------------
@@ -65,7 +71,19 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should fetch agent by id`() {
-            val saved = repo.save(Agent(name = "AgentGet", model = "gpt-4o-mini"))
+            val saved =
+                repo
+                    .save(
+                        Agent(
+                            name = "AgentGet",
+                            model = "gpt-4o-mini",
+                            baseUrl = "https://models.github.ai/inference",
+                            apiKey = "fake-github-token",
+                            chatCompletionsPath = "/v1/chat/completions",
+                            embeddingsPath = "/embeddings",
+                            embeddingModel = "openai/text-embedding-3-small",
+                        ),
+                    )
             val found = service.getById(saved.id!!)
 
             assertEquals(saved.id, found.id)
@@ -89,8 +107,28 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should return only active agents`() {
-            repo.save(Agent(name = "ActiveA", model = "gpt-4o-mini").apply { this.active = true })
-            repo.save(Agent(name = "InactiveB", model = "gpt-4o-mini").apply { this.active = false })
+            repo.save(
+                Agent(
+                    name = "ActiveA",
+                    model = "gpt-4o-mini",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    embeddingsPath = "/embeddings",
+                    embeddingModel = "openai/text-embedding-3-small",
+                ).apply { this.active = true },
+            )
+            repo.save(
+                Agent(
+                    name = "InactiveB",
+                    model = "gpt-4o-mini",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    embeddingsPath = "/embeddings",
+                    embeddingModel = "openai/text-embedding-3-small",
+                ).apply { this.active = false },
+            )
 
             val activeAgents = service.getAllActive()
 
@@ -104,7 +142,19 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should update agent successfully`() {
-            val saved = repo.save(Agent(name = "BeforeUpdate", model = "gpt-4o-mini"))
+            val saved =
+                repo
+                    .save(
+                        Agent(
+                            name = "BeforeUpdate",
+                            model = "gpt-4o-mini",
+                            baseUrl = "https://models.github.ai/inference",
+                            apiKey = "fake-github-token",
+                            chatCompletionsPath = "/v1/chat/completions",
+                            embeddingsPath = "/embeddings",
+                            embeddingModel = "openai/text-embedding-3-small",
+                        ),
+                    )
 
             val updateReq =
                 buildRequest(
@@ -137,7 +187,18 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should soft delete agent`() {
-            val saved = repo.save(Agent(name = "SoftDelete", model = "gpt-4o-mini"))
+            val saved =
+                repo.save(
+                    Agent(
+                        name = "SoftDelete",
+                        model = "gpt-4o-mini",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "fake-github-token",
+                        chatCompletionsPath = "/v1/chat/completions",
+                        embeddingsPath = "/embeddings",
+                        embeddingModel = "openai/text-embedding-3-small",
+                    ),
+                )
 
             service.softDelete(saved.id!!)
 

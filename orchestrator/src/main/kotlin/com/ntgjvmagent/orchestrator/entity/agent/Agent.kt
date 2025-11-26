@@ -1,8 +1,12 @@
 package com.ntgjvmagent.orchestrator.entity.agent
 
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
+import com.ntgjvmagent.orchestrator.utils.Constant
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
@@ -53,6 +57,18 @@ data class Agent(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var settings: Map<String, Any>? = null, // JSON for flexible configuration
+    @Column(name = "base_url", length = 150, nullable = false)
+    var baseUrl: String,
+    @Column(name = "api_key", length = 200, nullable = false)
+    var apiKey: String,
+    @Column(name = "chat_completions_path", length = 50, nullable = false)
+    var chatCompletionsPath: String,
+    @Column(name = "embeddings_path", length = 50, nullable = false)
+    var embeddingsPath: String,
+    @Column(name = "embedding_model", length = 50, nullable = false)
+    var embeddingModel: String,
+    @Column(nullable = false)
+    var dimension: Int = Constant.CHATGPT_DIMENSION,
     @Version
     @Column(nullable = false)
     var version: Int = 0,
@@ -74,5 +90,12 @@ data class Agent(
         const val MAX_TOP_P = 1.0
         const val MIN_PENALTY = -2.0
         const val MAX_PENALTY = 2.0
+        const val MIN_DIMENSION = 64
     }
+
+    @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var tools: MutableSet<AgentTool> = mutableSetOf()
+
+    @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var knowledge: MutableSet<AgentKnowledge> = mutableSetOf()
 }

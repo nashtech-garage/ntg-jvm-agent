@@ -1,61 +1,59 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
+import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.mapper.AgentToolMapper
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
 class AgentToolService(
-    private val repo: AgentToolRepository,
+    private val agentRepository: AgentRepository,
+    private val toolRepository: ToolRepository,
+    private val agentToolRepository: AgentToolRepository,
 ) {
-    @Transactional(readOnly = true)
-    fun getAllActive(): List<AgentToolResponseDto> = repo.findAllByActiveTrue().map(AgentToolMapper::toResponse)
-
-    @Transactional(readOnly = true)
-    fun getById(id: UUID): AgentToolResponseDto =
-        repo
-            .findById(id)
-            .map(AgentToolMapper::toResponse)
-            .orElseThrow { EntityNotFoundException("Tool not found: $id") }
-
     @Transactional
-    fun create(request: AgentToolRequestDto): AgentToolResponseDto {
-        val entity = AgentToolMapper.toEntity(request)
-        return AgentToolMapper.toResponse(repo.save(entity))
-    }
+    fun assignTool(
+        agentId: UUID,
+        toolId: UUID,
+    ) {
+        val agent = agentRepository.findByIdOrNull(agentId)
+        val tool = toolRepository.findByIdOrNull(toolId)
 
-    @Transactional
-    fun update(
-        id: UUID,
-        request: AgentToolRequestDto,
-    ): AgentToolResponseDto {
-        val existing =
-            repo
-                .findById(id)
-                .orElseThrow { EntityNotFoundException("Tool not found: $id") }
-
-        existing.apply {
-            name = request.name
-            type = request.type
-            description = request.description
-            config = request.config
-            active = request.active
+        if (agent == null || tool == null) {
+            throw EntityNotFoundException(
+                buildString {
+                    if (agent == null) append("Agent not found: $agentId. ")
+                    if (tool == null) append("Tool not found: $toolId.")
+                }.trim(),
+            )
         }
-        return AgentToolMapper.toResponse(repo.save(existing))
+
+        require(tool.active) { "Cannot assign inactive tool to agent" }
+        require(!agentToolRepository.existsByAgentIdAndToolId(agentId, toolId)) {
+            "Tool already assigned to this agent"
+        }
+
+        agentToolRepository.save(AgentTool.of(agent, tool))
     }
 
     @Transactional
-    fun softDelete(id: UUID) {
-        val tool =
-            repo
-                .findById(id)
-                .orElseThrow { EntityNotFoundException("Tool not found: $id") }
-        tool.markDeleted()
-        repo.save(tool)
+    fun unassignTool(
+        agentId: UUID,
+        toolId: UUID,
+    ) {
+        agentToolRepository.deleteByAgentIdAndToolId(agentId, toolId)
     }
+
+    @Transactional(readOnly = true)
+    fun getTools(agentId: UUID): List<AgentToolResponseDto> =
+        agentToolRepository
+            .findByAgentId(agentId)
+            .map(AgentToolMapper::toResponse)
 }

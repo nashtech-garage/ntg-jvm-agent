@@ -1,20 +1,30 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { setTokenIntoCookie, getRefreshToken } from './app/utils/server-utils';
+import { setTokenIntoCookie, getRefreshToken, deleteCookies } from './app/utils/server-utils';
+import { authPathname } from './app/utils/constant';
 
 export async function middleware(req: NextRequest) {
-  const hasAuthToken = req.cookies.get('access_token') || req.cookies.get('refresh_token');
-  const isAuthPage =
-    req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/auth');
+  const pathName = req.nextUrl.pathname;
+
+  const accessToken = req.cookies.get('access_token');
+  const refreshToken = req.cookies.get('refresh_token');
+
+  const hasAuthToken = accessToken || refreshToken;
+
+  const isAuthPage = authPathname.some((name) => pathName.startsWith(name));
 
   // If not login yet and not in login page → redirect to /login
   if (!hasAuthToken && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
+  if (hasAuthToken && isAuthPage) {
+    return NextResponse.redirect(new URL('/', req.url));
+  }
+
   // Handle refreshing token
-  if (!req.cookies.get('access_token') && req.cookies.get('refresh_token')) {
-    const tokenInfo = await getRefreshToken(req.cookies.get('refresh_token')?.value || '');
+  if (!accessToken && refreshToken) {
+    const tokenInfo = await getRefreshToken(refreshToken.value);
 
     if (tokenInfo) {
       const res = NextResponse.next();
@@ -30,7 +40,19 @@ export async function middleware(req: NextRequest) {
       setTokenIntoCookie(tokenInfo, res);
       return res;
     } else {
-      return NextResponse.redirect(new URL('/login', req.url));
+      // refresh token expired, so we have to logout and login again
+      const fromHandler = req.headers.get('From-Handler') === 'true';
+      let res;
+      const url = new URL('/login', req.url);
+      if (fromHandler) {
+        // route handler calls expect a json response
+        res = NextResponse.json({ redirectTo: url.pathname });
+      } else {
+        // normal page can be directly redirected
+        res = NextResponse.redirect(url);
+      }
+      deleteCookies(res);
+      return res;
     }
   }
 
