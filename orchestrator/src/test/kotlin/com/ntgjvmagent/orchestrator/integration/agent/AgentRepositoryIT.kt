@@ -26,6 +26,11 @@ class AgentRepositoryIT
                     model = "gpt-4o-mini",
                     description = "Repository test",
                     temperature = BigDecimal("0.8"),
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    embeddingsPath = "/embeddings",
+                    embeddingModel = "openai/text-embedding-3-small",
                 )
 
             val saved = repo.save(agent)
@@ -39,8 +44,28 @@ class AgentRepositoryIT
         @Test
         @DisplayName("should find all agents")
         fun shouldFindAllAgents() {
-            repo.save(Agent(name = "Agent 1", model = "gpt-4o-mini"))
-            repo.save(Agent(name = "Agent 2", model = "gpt-4o-mini"))
+            repo.save(
+                Agent(
+                    name = "Agent 1",
+                    model = "gpt-4o-mini",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    embeddingsPath = "/embeddings",
+                    embeddingModel = "openai/text-embedding-3-small",
+                ),
+            )
+            repo.save(
+                Agent(
+                    name = "Agent 2",
+                    model = "gpt-4o-mini",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    embeddingsPath = "/embeddings",
+                    embeddingModel = "openai/text-embedding-3-small",
+                ),
+            )
 
             val all = repo.findAll()
             assertThat(all).hasSizeGreaterThanOrEqualTo(2)

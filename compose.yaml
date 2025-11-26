@@ -32,6 +32,10 @@ services:
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus:/prometheus
+    environment:
+      PROMETHEUS_USER: ${PROMETHEUS_USER:-prometheus}
+      PROMETHEUS_PASSWORD: ${PROMETHEUS_PASSWORD:-password}
+      PROMETHEUS_ROLE: ${PROMETHEUS_ROLE:-PROMETHEUS}
     networks:
       - ntg-network
 

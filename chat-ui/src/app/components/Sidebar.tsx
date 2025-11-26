@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Trash, SquarePen } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Trash, SquarePen, MoreVertical } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
@@ -18,10 +18,60 @@ export default function Sidebar() {
     setConversations,
   } = useChatContext();
   const [collapsed, setCollapsed] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown) {
+        const currentRef = dropdownRefs.current[openDropdown];
+        if (currentRef && !currentRef.contains(event.target as Node)) {
+          setOpenDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdown]);
 
   const changeConversation = async (id: string) => {
     router.push(`/c/${id}`);
+  };
+
+  const renameConversation = async (id: string) => {
+    if (!newTitle.trim()) {
+      toast.error('Conversation name cannot be empty');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/chat?conversationId=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle.trim() }),
+      });
+
+      const jsonResult = await res.json();
+      if (!res.ok) {
+        toast.error(jsonResult.error || 'Failed to rename conversation');
+        return;
+      }
+
+      setConversations((prev) =>
+        prev.map((conv) => (conv.id === id ? { ...conv, title: newTitle.trim() } : conv))
+      );
+      setRenamingId(null);
+      setNewTitle('');
+      setOpenDropdown(null);
+      toast.success('Conversation renamed successfully');
+    } catch (error) {
+      toast.error(`Error renaming conversation: ${error}`);
+    }
   };
 
   const removeConversation = async (id: string) => {
@@ -38,6 +88,7 @@ export default function Sidebar() {
       setChatMessages([]);
       router.replace(`/`);
     }
+    setOpenDropdown(null);
     toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
   };
 
@@ -89,20 +140,88 @@ export default function Sidebar() {
           conversations.map((item) => (
             <div
               key={item.id}
-              onClick={() => changeConversation(item.id)}
-              className={`flex justify-between items-center px-2 py-2 rounded cursor-pointer ${
-                activeConversationId === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
-              }`}
+              ref={(el) => {
+                if (el) dropdownRefs.current[item.id] = el;
+              }}
+              className="relative"
             >
-              <span className="truncate text-sm">{item.title}</span>
-              <Trash
-                size={16}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeConversation(item.id);
-                }}
-                className="hover:text-red-400"
-              />
+              {/* Rename input */}
+              {renamingId === item.id ? (
+                <div className="px-2 py-2 rounded bg-gray-200">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onBlur={() => {
+                      if (newTitle.trim()) {
+                        renameConversation(item.id);
+                      } else {
+                        setRenamingId(null);
+                        setNewTitle('');
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        renameConversation(item.id);
+                      } else if (e.key === 'Escape') {
+                        setRenamingId(null);
+                        setNewTitle('');
+                      }
+                    }}
+                    className="w-full bg-white px-2 py-1 rounded text-sm outline-none border border-gray-300"
+                    placeholder="New name..."
+                  />
+                </div>
+              ) : (
+                <div
+                  onClick={() => changeConversation(item.id)}
+                  className={`flex justify-between items-center px-2 py-2 rounded cursor-pointer relative group ${
+                    activeConversationId === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="truncate text-sm">{item.title}</span>
+
+                  {/* Dropdown button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDropdown(openDropdown === item.id ? null : item.id);
+                    }}
+                    className="p-1 hover:bg-gray-300 rounded"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {openDropdown === item.id && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-max">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenamingId(item.id);
+                          setNewTitle(item.title);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-gray-600 cursor-pointer"
+                      >
+                        <SquarePen size={14} />
+                        Rename
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeConversation(item.id);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600 cursor-pointer"
+                      >
+                        <Trash size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
       </div>
