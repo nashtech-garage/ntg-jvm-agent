@@ -8,7 +8,6 @@ import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import java.util.UUID
 
 interface UserService {
-interface UserService {
 
     fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto
 

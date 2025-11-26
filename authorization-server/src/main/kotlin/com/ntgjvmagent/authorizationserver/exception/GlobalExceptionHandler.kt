@@ -7,17 +7,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
-data class ErrorResponse(
-    val status: Int,
-    val message: String,
-    val timestamp: String = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-)
 
 @ControllerAdvice
 class GlobalExceptionHandler {
+
+    private val logger: Logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(UserNotFoundException::class)
     fun handleUserNotFound(ex: UserNotFoundException): ResponseEntity<ErrorResponse> {
@@ -42,7 +37,6 @@ class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST
         )
     }
-    private val logger: Logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(Exception::class)
     fun handleGlobalException(
@@ -50,15 +44,8 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            error = HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
             message = "An unexpected error occurred, please contact to support.",
-    fun handleGeneral(ex: Exception): ResponseEntity<ErrorResponse> {
-        return ResponseEntity(
-            ErrorResponse(
-                status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                error = HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
-                message = ex.message
-            ),
-            HttpStatus.INTERNAL_SERVER_ERROR
         )
 
         logger.error("Unhandled exception: ${ex.message}", ex)

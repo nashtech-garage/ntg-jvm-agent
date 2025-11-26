@@ -71,50 +71,6 @@ class UserServiceTest {
         verify(userRepository, times(1)).findAll(pageable)
     }
 
-    @Test
-    fun `updateUser successfully`() {
-        val request = UpdateUserRequestDto(
-            username = "newuser",
-            name = "New Name",
-            email = "new@example.com"
-        )
-
-        val username = request.username!!
-        val name = request.name!!
-        val email = request.email!!
-
-        `when`(userRepository.findById(existingUser.id)).thenReturn(Optional.of(existingUser))
-        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
-        `when`(userRepository.findByEmail(email)).thenReturn(Optional.empty())
-        `when`(
-            userRepository.save(
-                existingUser.copy(
-                    username = username,
-                    name = name,
-                    email = email
-                )
-            )
-        ).thenAnswer { it.arguments[0] }
-
-        val result = userService.updateUser(existingUser.id, request)
-
-        assertEquals(username, result.username)
-        assertEquals(name, result.name)
-        assertEquals(email, result.email)
-
-        verify(userRepository, times(1)).findById(existingUser.id)
-        verify(userRepository, times(1)).findUserByUserName(username)
-        verify(userRepository, times(1)).findByEmail(email)
-        verify(userRepository, times(1)).save(
-            existingUser.copy(
-                username = username,
-                name = name,
-                email = email
-            )
-        )
-    }
-
-    }
 
     @Test
     fun `createUser should create user with temporary password and ROLE_USER`() {
@@ -194,6 +150,51 @@ class UserServiceTest {
         assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         verify(userRepository, times(1)).save(any())
         verify(rolesRepository, times(1)).findByName(UserRoleEnum.ROLE_USER.roleName)
+    }
+
+    @Test
+    fun `updateUser successfully`() {
+        val request = UpdateUserRequestDto(
+            username = "newuser",
+            name = "New Name",
+            email = "new@example.com"
+        )
+
+        val username = request.username!!
+        val name = request.name!!
+        val email = request.email!!
+
+        `when`(userRepository.findById(existingUser.id!!)).thenReturn(Optional.of(existingUser))
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
+        `when`(userRepository.findByEmail(email)).thenReturn(Optional.empty())
+        `when`(
+            userRepository.save(
+                existingUser.copy(
+                    username = username,
+                    name = name,
+                    email = email
+                )
+            )
+        ).thenAnswer { it.arguments[0] }
+
+        val result = userService.updateUser(existingUser.id!!, request)
+
+        assertEquals(username, result.username)
+        assertEquals(name, result.name)
+        assertEquals(email, result.email)
+
+        verify(userRepository, times(1)).findById(existingUser.id!!)
+        verify(userRepository, times(1)).findUserByUserName(username)
+        verify(userRepository, times(1)).findByEmail(email)
+        verify(userRepository, times(1)).save(
+            existingUser.copy(
+                username = username,
+                name = name,
+                email = email
+            )
+        )
+    }
+
     @Test
     fun `updateUser throws UserNotFoundException if user not found`() {
         val request = UpdateUserRequestDto(username = "any")
@@ -215,14 +216,14 @@ class UserServiceTest {
 
         val otherUser = UserEntity(UUID.randomUUID(), "existinguser", "pass", true, "Name", "email@example.com")
 
-        `when`(userRepository.findById(existingUser.id)).thenReturn(Optional.of(existingUser))
+        `when`(userRepository.findById(existingUser.id!!)).thenReturn(Optional.of(existingUser))
         `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(otherUser))
 
         assertThrows(UsernameAlreadyUsedException::class.java) {
-            userService.updateUser(existingUser.id, request)
+            userService.updateUser(existingUser.id!!, request)
         }
 
-        verify(userRepository, times(1)).findById(existingUser.id)
+        verify(userRepository, times(1)).findById(existingUser.id!!)
         verify(userRepository, times(1)).findUserByUserName(username)
     }
 
@@ -233,14 +234,14 @@ class UserServiceTest {
 
         val otherUser = UserEntity(UUID.randomUUID(), "otheruser", "pass", true, "Name", "existing@example.com")
 
-        `when`(userRepository.findById(existingUser.id)).thenReturn(Optional.of(existingUser))
+        `when`(userRepository.findById(existingUser.id!!)).thenReturn(Optional.of(existingUser))
         `when`(userRepository.findByEmail(email)).thenReturn(Optional.of(otherUser))
 
         assertThrows(EmailAlreadyUsedException::class.java) {
-            userService.updateUser(existingUser.id, request)
+            userService.updateUser(existingUser.id!!, request)
         }
 
-        verify(userRepository, times(1)).findById(existingUser.id)
+        verify(userRepository, times(1)).findById(existingUser.id!!)
         verify(userRepository, times(1)).findByEmail(email)
     }
 }
