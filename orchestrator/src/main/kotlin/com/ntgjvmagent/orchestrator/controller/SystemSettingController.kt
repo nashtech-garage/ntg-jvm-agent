@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/settings")
-
 class SystemSettingController(
     private val systemSettingService: SystemSettingService,
 ) {

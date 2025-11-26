@@ -61,6 +61,7 @@ class SystemSettingService(
             userRegistration = this.userRegistration,
             emailVerification = this.emailVerification,
         )
+
     private fun SystemSettingEntity.toMaintenanceModeResponseDto() =
         MaintenanceModeResponseDto(
             maintenanceMode = this.maintenanceMode,
