@@ -18,5 +18,4 @@ CREATE TABLE IF NOT EXISTS conversation_share (
 
 -- === Indexes for query performance ===
 CREATE INDEX IF NOT EXISTS idx_conversation_share_conversation_id ON conversation_share(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_conversation_share_token ON conversation_share(share_token);
 
