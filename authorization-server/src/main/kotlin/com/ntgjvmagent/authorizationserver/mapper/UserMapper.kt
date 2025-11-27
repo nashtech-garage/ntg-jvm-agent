@@ -51,5 +51,5 @@ fun UserEntity.toUpdateResponse(): UpdateUserResponseDto =
         name = name,
         email = email,
         enabled = enabled,
-        roles = userRoles.map { it.role.name }
+        roles = userRoles.map { it.role.name }.toSet()
     )

@@ -16,6 +16,7 @@ import org.junit.Assert.assertThrows
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers.any
 import org.mockito.InjectMocks
@@ -244,4 +245,26 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(existingUser.id!!)
         verify(userRepository, times(1)).findByEmail(email)
     }
+
+    @Test
+    fun `updateUser does not throw when updating username to the same value`() {
+        val currentUsername = existingUser.username
+        val request = UpdateUserRequestDto(username = currentUsername)
+
+        `when`(userRepository.findById(existingUser.id!!))
+            .thenReturn(Optional.of(existingUser))
+
+        `when`(userRepository.save(any(UserEntity::class.java))).thenAnswer { it.arguments[0] }
+
+        val result = assertDoesNotThrow {
+            userService.updateUser(existingUser.id!!, request)
+        }
+
+        assertEquals(currentUsername, result.username)
+
+        verify(userRepository, never()).findUserByUserName(anyString())
+        verify(userRepository, times(1)).findById(existingUser.id!!)
+        verify(userRepository, times(1)).save(any(UserEntity::class.java))
+    }
+
 }

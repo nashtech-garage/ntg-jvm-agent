@@ -17,16 +17,13 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
     username: user?.username || '',
     name: user?.name || '',
     email: user?.email || '',
-    roles: user?.roles?.join(', ') || '',
   });
 
   useEffect(() => {
-    // Reset form when user changes or modal opens
     setForm({
       username: user?.username || '',
       name: user?.name || '',
       email: user?.email || '',
-      roles: user?.roles?.join(', ') || '',
     });
   }, [user, open]);
 
@@ -45,7 +42,6 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
           username: form.username,
           name: form.name,
           email: form.email,
-          roles: form.roles.split(',').map((r) => r.trim()),
         }),
       });
 

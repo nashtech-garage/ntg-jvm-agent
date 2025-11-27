@@ -32,7 +32,7 @@ export async function PATCH(req: Request, context: unknown) {
     const jsonResult = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json({ error: jsonResult.message }, { status: res.status });
+      return NextResponse.json({ error: jsonResult.message || jsonResult.error || 'Failed to update user' }, { status: res.status });
     }
 
     return NextResponse.json(jsonResult);

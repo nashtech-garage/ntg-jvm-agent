@@ -38,6 +38,18 @@ class GlobalExceptionHandler {
         )
     }
 
+    @ExceptionHandler(UsernameAlreadyUsedException::class)
+    fun handleEmailUsed(ex: UsernameAlreadyUsedException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity(
+            ErrorResponse(
+                status = HttpStatus.BAD_REQUEST.value(),
+                error = HttpStatus.BAD_REQUEST.reasonPhrase,
+                message = ex.message
+            ),
+            HttpStatus.BAD_REQUEST
+        )
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGlobalException(
         ex: Exception
