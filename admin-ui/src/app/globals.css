@@ -1,9 +1,9 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 /*
   ---break---
 */
 @plugin "tailwindcss-animate";
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 /*
   Define dark mode variant.

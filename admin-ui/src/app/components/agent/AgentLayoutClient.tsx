@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import React, { ReactNode } from 'react';
-import useSWR from "swr";
-import { fetcher } from "@/lib/fetcher";
-import AgentTabs from "@/app/components/agent/AgentTabs";
-import TestAgentPanel from "@/app/components/agent/TestAgentPanel";
-import { AgentContext } from "@/app/contexts/AgentContext";
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
+import AgentTabs from '@/app/components/agent/AgentTabs';
+import TestAgentPanel from '@/app/components/agent/TestAgentPanel';
+import { AgentContext } from '@/app/contexts/AgentContext';
 
 interface AgentLayoutClientProps {
   id: string;
@@ -13,7 +13,12 @@ interface AgentLayoutClientProps {
 }
 
 export default function AgentLayoutClient({ id, children }: Readonly<AgentLayoutClientProps>) {
-  const { data: agent, error, mutate, isLoading } = useSWR(
+  const {
+    data: agent,
+    error,
+    mutate,
+    isLoading,
+  } = useSWR(
     `/api/agents/${id}`,
     fetcher,
     { revalidateOnFocus: false } // avoid annoying page focus refreshes
@@ -27,14 +32,11 @@ export default function AgentLayoutClient({ id, children }: Readonly<AgentLayout
   return (
     <AgentContext.Provider value={value}>
       <div className="h-screen grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <div className="lg:col-span-3 sticky top-0 z-10 bg-background border-b">
           <AgentTabs agentId={id} agentName={agent.name} />
         </div>
 
-        <div className="lg:col-span-2 h-[calc(100vh-48px)] pr-4 border-r space-y-6">
-          {children}
-        </div>
+        <div className="lg:col-span-2 h-[calc(100vh-48px)] pr-4 border-r space-y-6">{children}</div>
 
         <div className="lg:col-span-1 h-screen sticky top-0 space-y-6">
           <TestAgentPanel agentId={id} />

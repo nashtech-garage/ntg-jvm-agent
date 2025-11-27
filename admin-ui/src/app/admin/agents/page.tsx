@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import useSWR from "swr";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { fetcher } from "@/lib/fetcher";
-import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import useSWR from 'swr';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { fetcher } from '@/lib/fetcher';
+import { Plus, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -14,12 +14,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { AgentListData } from "@/app/types/agent";
+} from '@/components/ui/table';
+import { AgentListData } from '@/app/types/agent';
 
 export default function AgentTable() {
   const router = useRouter();
-  const { data: agents, error, isLoading } = useSWR("/api/agents", fetcher, {
+  const {
+    data: agents,
+    error,
+    isLoading,
+  } = useSWR('/api/agents', fetcher, {
     dedupingInterval: 3000, // avoid duplicate calls
     revalidateOnFocus: false,
   });
@@ -29,7 +33,6 @@ export default function AgentTable() {
 
   return (
     <div className="space-y-6">
-
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Agents</h1>
@@ -47,18 +50,13 @@ export default function AgentTable() {
             New Agent
           </Button>
 
-          <Button variant="outline">
-            Import Agent
-          </Button>
+          <Button variant="outline">Import Agent</Button>
         </div>
 
         {/* Right Search Field */}
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search agents..."
-            className="pl-8"
-          />
+          <Input placeholder="Search agents..." className="pl-8" />
         </div>
       </div>
 
@@ -78,10 +76,7 @@ export default function AgentTable() {
 
           <TableBody>
             {agents?.map((a: AgentListData) => (
-              <TableRow
-                key={a.id}
-                className="hover:bg-muted/50 transition"
-              >
+              <TableRow key={a.id} className="hover:bg-muted/50 transition">
                 {/* ONLY NAME IS CLICKABLE */}
                 <TableCell>
                   <Link
@@ -94,7 +89,7 @@ export default function AgentTable() {
 
                 <TableCell>{a.model}</TableCell>
                 <TableCell>
-                  <span className="font-semibold">{a.lastModifiedBy}</span>{" "}
+                  <span className="font-semibold">{a.lastModifiedBy}</span>{' '}
                   <span className="text-xs text-muted-foreground">{a.lastModifiedWhen}</span>
                 </TableCell>
                 <TableCell>{a.lastPublishedWhen}</TableCell>
@@ -105,8 +100,6 @@ export default function AgentTable() {
           </TableBody>
         </Table>
       </div>
-
     </div>
   );
-
 }

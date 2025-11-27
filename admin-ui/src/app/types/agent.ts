@@ -1,53 +1,53 @@
 export type AgentDetail = {
-  id: string,
-  name: string,
-  description?: string,
-  active: boolean,
-  provider: string,
-  model: string,
-  apiKey: string,
-  baseUrl: string,
-  chatCompletionsPath: string,
-  embeddingsPath: string,
-  embeddingModel: string,
-  dimension: number,
-  temperature: number,
-  maxTokens: number,
-  topP: number,
-  frequencyPenalty: number,
-  presencePenalty: number,
-  settings?: AgentSettings,
+  id: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  provider: string;
+  model: string;
+  apiKey: string;
+  baseUrl: string;
+  chatCompletionsPath: string;
+  embeddingsPath: string;
+  embeddingModel: string;
+  dimension: number;
+  temperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  settings?: AgentSettings;
 };
 
 export type AgentListData = {
-  id: string,
-  name: string,
-  model: string,
-  lastModifiedBy: string,
-  lastModifiedWhen: string,
-  lastPublishedWhen?: string,
-  owner: string,
-  status: string,
+  id: string;
+  name: string;
+  model: string;
+  lastModifiedBy: string;
+  lastModifiedWhen: string;
+  lastPublishedWhen?: string;
+  owner: string;
+  status: string;
 };
 
 export type AgentFormData = {
-  name: string,
-  description?: string,
-  active: boolean,
-  provider: string,
-  model: string,
-  apiKey: string,
-  baseUrl: string,
-  chatCompletionsPath: string,
-  embeddingsPath: string,
-  embeddingModel: string,
-  dimension: number,
-  temperature: number,
-  maxTokens: number,
-  topP: number,
-  frequencyPenalty: number,
-  presencePenalty: number,
-  settings?: AgentSettings,
+  name: string;
+  description?: string;
+  active: boolean;
+  provider: string;
+  model: string;
+  apiKey: string;
+  baseUrl: string;
+  chatCompletionsPath: string;
+  embeddingsPath: string;
+  embeddingModel: string;
+  dimension: number;
+  temperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  settings?: AgentSettings;
 };
 
 export type AgentSettings = {
@@ -56,25 +56,25 @@ export type AgentSettings = {
 
 export type AgentFormParams = {
   onSubmit: (data: AgentFormData) => void | Promise<void>;
-  initialValues?: AgentDetail,
+  initialValues?: AgentDetail;
 };
 
 export type KnowledgeListData = {
-  id: string,
-  name: string,
-  type: string,
-  availableTo: string,
-  lastModifiedBy: string,
-  lastModifiedWhen: string,
-  status: string,
+  id: string;
+  name: string;
+  type: string;
+  availableTo: string;
+  lastModifiedBy: string;
+  lastModifiedWhen: string;
+  status: string;
 };
 
 export type ToolListData = {
-  toolId: string,
-  toolName: string,
-  toolType: string,
-  availableTo: string,
-  lastModifiedBy: string,
-  lastModifiedWhen: string,
-  enabled: boolean,
+  toolId: string;
+  toolName: string;
+  toolType: string;
+  availableTo: string;
+  lastModifiedBy: string;
+  lastModifiedWhen: string;
+  enabled: boolean;
 };

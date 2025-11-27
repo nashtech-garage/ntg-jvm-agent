@@ -1,16 +1,17 @@
-"use client";
-
-import { useForm, type FieldValues, type ControllerRenderProps, type Path, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef, useState, type ReactNode } from "react";
+'use client';
 
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+  useForm,
+  type FieldValues,
+  type ControllerRenderProps,
+  type Path,
+  type UseFormReturn,
+} from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRef, useState, type ReactNode } from 'react';
+
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 import {
   Form,
@@ -19,32 +20,32 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-import { AgentFormParams } from "@/app/types/agent";
+import { AgentFormParams } from '@/app/types/agent';
 
-import type * as monaco from "monaco-editor";
-import dynamic from "next/dynamic";
-const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
+import type * as monaco from 'monaco-editor';
+import dynamic from 'next/dynamic';
+const Monaco = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 // Zod schema for full Agent
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   active: z.boolean(),
-  provider: z.string().min(1, "Provider is required"),
-  model: z.string().min(1, "Model is required"),
-  apiKey: z.string().min(1, "API Key is required"),
-  baseUrl: z.string().min(1, "Base URL is required"),
-  chatCompletionsPath: z.string().min(1, "Chat Completions Path is required"),
-  embeddingsPath: z.string().min(1, "Embeddings API Path is required"),
-  embeddingModel: z.string().min(1, "Embedding Model is required"),
+  provider: z.string().min(1, 'Provider is required'),
+  model: z.string().min(1, 'Model is required'),
+  apiKey: z.string().min(1, 'API Key is required'),
+  baseUrl: z.string().min(1, 'Base URL is required'),
+  chatCompletionsPath: z.string().min(1, 'Chat Completions Path is required'),
+  embeddingsPath: z.string().min(1, 'Embeddings API Path is required'),
+  embeddingModel: z.string().min(1, 'Embedding Model is required'),
   dimension: z.number().min(1),
   temperature: z.number().min(0).max(2),
   maxTokens: z.number().min(1),
@@ -60,16 +61,16 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialValues || {
-      name: "",
-      description: "",
+      name: '',
+      description: '',
       active: true,
-      provider: "",
-      model: "",
-      apiKey: "",
-      baseUrl: "",
-      chatCompletionsPath: "/v1/chat/completions",
-      embeddingsPath: "/v1/embeddings",
-      embeddingModel: "",
+      provider: '',
+      model: '',
+      apiKey: '',
+      baseUrl: '',
+      chatCompletionsPath: '/v1/chat/completions',
+      embeddingsPath: '/v1/embeddings',
+      embeddingModel: '',
       dimension: 1536,
       temperature: 0.7,
       maxTokens: 2048,
@@ -85,9 +86,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">
-        {isEdit ? "Edit Agent" : "Create Agent"}
-      </h1>
+      <h1 className="text-2xl font-bold">{isEdit ? 'Edit Agent' : 'Create Agent'}</h1>
 
       <Card>
         <CardHeader className="p-3">
@@ -140,8 +139,17 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                     <TextField<AgentFormValues> form={form} name="provider" label="Provider" />
                     <TextField<AgentFormValues> form={form} name="baseUrl" label="Base URL" />
                   </TwoColumn>
-                  <TextField<AgentFormValues> form={form} name="apiKey" label="API Key" type="password" />
-                  <TextField<AgentFormValues> form={form} name="chatCompletionsPath" label="Chat Completions Path" />
+                  <TextField<AgentFormValues>
+                    form={form}
+                    name="apiKey"
+                    label="API Key"
+                    type="password"
+                  />
+                  <TextField<AgentFormValues>
+                    form={form}
+                    name="chatCompletionsPath"
+                    label="Chat Completions Path"
+                  />
                 </TabsContent>
 
                 {/* ------------------- MODEL ------------------- */}
@@ -153,21 +161,53 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                   {/* ------------------- Embedding Configuration ------------------- */}
                   <h3 className="text-lg font-semibold">Embedding Configuration</h3>
                   <TwoColumn>
-                    <TextField<AgentFormValues> form={form} name="embeddingModel" label="Embedding Model" />
-                    <NumberField<AgentFormValues> form={form} name="dimension" label="Vector Dimension" />
+                    <TextField<AgentFormValues>
+                      form={form}
+                      name="embeddingModel"
+                      label="Embedding Model"
+                    />
+                    <NumberField<AgentFormValues>
+                      form={form}
+                      name="dimension"
+                      label="Vector Dimension"
+                    />
                   </TwoColumn>
-                  <TextField<AgentFormValues> form={form} name="embeddingsPath" label="Embeddings API Path" />
+                  <TextField<AgentFormValues>
+                    form={form}
+                    name="embeddingsPath"
+                    label="Embeddings API Path"
+                  />
 
                   {/* ------------------- Generation Parameters ------------------- */}
                   <h3 className="text-lg font-semibold">Generation Parameters</h3>
                   <TwoColumn>
-                    <NumberField<AgentFormValues> form={form} name="topP" label="Top P" step="0.05" />
-                    <NumberField<AgentFormValues> form={form} name="temperature" label="Temperature" step="0.1" />
+                    <NumberField<AgentFormValues>
+                      form={form}
+                      name="topP"
+                      label="Top P"
+                      step="0.05"
+                    />
+                    <NumberField<AgentFormValues>
+                      form={form}
+                      name="temperature"
+                      label="Temperature"
+                      step="0.1"
+                    />
                   </TwoColumn>
                   <TwoColumn>
                     <NumberField<AgentFormValues> form={form} name="maxTokens" label="Max Tokens" />
-                    <NumberField<AgentFormValues> form={form} name="frequencyPenalty" label="Frequency Penalty" step="0.1" />
-                    <NumberField<AgentFormValues> form={form} name="presencePenalty" label="Presence Penalty" step="0.1" />
+                    <NumberField<AgentFormValues>
+                      form={form}
+                      name="frequencyPenalty"
+                      label="Frequency Penalty"
+                      step="0.1"
+                    />
+                    <NumberField<AgentFormValues>
+                      form={form}
+                      name="presencePenalty"
+                      label="Presence Penalty"
+                      step="0.1"
+                    />
                   </TwoColumn>
 
                   {/* ------------------- Advanced Settings ------------------- */}
@@ -176,7 +216,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                     control={form.control}
                     name="settings"
                     render={({ field }) => (
-                      <MonacoField<AgentFormValues, "settings">
+                      <MonacoField<AgentFormValues, 'settings'>
                         field={field}
                         label="Settings (JSON)"
                       />
@@ -186,9 +226,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
               </Tabs>
 
               <div className="pt-4 flex justify-end">
-                <Button type="submit">
-                  {isEdit ? "Update Agent" : "Create Agent"}
-                </Button>
+                <Button type="submit">{isEdit ? 'Update Agent' : 'Create Agent'}</Button>
               </div>
             </form>
           </Form>
@@ -209,14 +247,12 @@ export function MonacoField<T extends FieldValues, N extends Path<T>>({
   field,
   label,
 }: Readonly<MonacoFieldProps<T, N>>) {
-  const [editorValue, setEditorValue] = useState(
-    JSON.stringify(field.value ?? {}, null, 2)
-  );
+  const [editorValue, setEditorValue] = useState(JSON.stringify(field.value ?? {}, null, 2));
   const [jsonError, setJsonError] = useState<string | null>(null);
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const handleEditorChange = (value: string = "{}") => {
+  const handleEditorChange = (value: string = '{}') => {
     setEditorValue(value);
 
     try {
@@ -225,7 +261,7 @@ export function MonacoField<T extends FieldValues, N extends Path<T>>({
       field.onChange(parsed);
       setJsonError(null);
     } catch {
-      setJsonError("Invalid JSON");
+      setJsonError('Invalid JSON');
     }
   };
 
@@ -273,7 +309,7 @@ export function TextField<T extends object>({
   form,
   name,
   label,
-  type = "text",
+  type = 'text',
 }: Readonly<TextFieldProps<T>>) {
   return (
     <FormField
@@ -316,7 +352,7 @@ export function NumberField<T extends object>({
             <Input
               type="number"
               step={step}
-              value={field.value ?? ""}
+              value={field.value ?? ''}
               onChange={(e) => field.onChange(Number(e.target.value))}
             />
           </FormControl>

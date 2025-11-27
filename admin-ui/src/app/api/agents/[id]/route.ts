@@ -1,27 +1,27 @@
-import { cookies } from "next/headers";
+import { cookies } from 'next/headers';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const token = cookieStore.get('access_token')?.value;
 
   if (!token) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
 
   const backendRes = await fetch(
     `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/agents/${id}`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      cache: "no-store",
+      cache: 'no-store',
     }
   );
 
   if (!backendRes.ok) {
-    return new Response("Agent not found", { status: backendRes.status });
+    return new Response('Agent not found', { status: backendRes.status });
   }
 
   const data = await backendRes.json();
@@ -31,10 +31,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const token = cookieStore.get('access_token')?.value;
 
   if (!token) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
 
   // Parse request body from frontend
@@ -43,9 +43,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const backendRes = await fetch(
     `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/agents/${id}`,
     {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
@@ -54,7 +54,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   if (!backendRes.ok) {
     const errorText = await backendRes.text();
-    return new Response(errorText || "Failed to update agent", {
+    return new Response(errorText || 'Failed to update agent', {
       status: backendRes.status,
     });
   }

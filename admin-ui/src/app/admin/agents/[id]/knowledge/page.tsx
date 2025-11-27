@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import useSWR from "swr";
-import { useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from 'react';
+import useSWR from 'swr';
+import { useRouter } from 'next/navigation';
+import { Plus, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -13,18 +13,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { useAgent } from "@/app/contexts/AgentContext";
-import { AgentDetail, KnowledgeListData } from "@/app/types/agent";
+} from '@/components/ui/table';
+import { useAgent } from '@/app/contexts/AgentContext';
+import { AgentDetail, KnowledgeListData } from '@/app/types/agent';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function KnowledgePage() {
   const { agent } = useAgent() as {
     agent: AgentDetail | null;
   };
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
 
   const { data = [], isLoading } = useSWR(
     agent ? `/api/agents/${agent.id}/knowledge` : null,
@@ -37,11 +37,8 @@ export default function KnowledgePage() {
     // If blank → return all items
     if (!q) return true;
 
-    return (
-      item.name?.toLowerCase().includes(q)
-    );
+    return item.name?.toLowerCase().includes(q);
   });
-
 
   return (
     <div className="space-y-6">
@@ -67,9 +64,7 @@ export default function KnowledgePage() {
       </div>
 
       {isLoading && <p>Loading...</p>}
-      {!isLoading && filtered.length === 0 && (
-        <p>No knowledge items found.</p>
-      )}
+      {!isLoading && filtered.length === 0 && <p>No knowledge items found.</p>}
 
       {/* Table */}
       {!isLoading && filtered.length > 0 && (
@@ -91,7 +86,7 @@ export default function KnowledgePage() {
                 <TableCell>{k.type}</TableCell>
                 <TableCell>{k.availableTo}</TableCell>
                 <TableCell>
-                  <span className="font-semibold">{k.lastModifiedBy}</span>{" "}
+                  <span className="font-semibold">{k.lastModifiedBy}</span>{' '}
                   <span className="text-xs text-muted-foreground">{k.lastModifiedWhen}</span>
                 </TableCell>
                 <TableCell>{k.status}</TableCell>

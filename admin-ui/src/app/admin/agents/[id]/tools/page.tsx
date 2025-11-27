@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import useSWR, { mutate } from "swr";
-import { useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { useState } from 'react';
+import useSWR, { mutate } from 'swr';
+import { useRouter } from 'next/navigation';
+import { Plus, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -14,23 +14,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { useAgent } from "@/app/contexts/AgentContext";
-import { AgentDetail, ToolListData } from "@/app/types/agent";
+} from '@/components/ui/table';
+import { useAgent } from '@/app/contexts/AgentContext';
+import { AgentDetail, ToolListData } from '@/app/types/agent';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function ToolsPage() {
   const { agent } = useAgent() as {
     agent: AgentDetail | null;
   };
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
 
-  const { data = [], isLoading } = useSWR(
-    agent ? `/api/agents/${agent.id}/tools` : null,
-    fetcher
-  );
+  const { data = [], isLoading } = useSWR(agent ? `/api/agents/${agent.id}/tools` : null, fetcher);
 
   const filtered = data.filter((tool: ToolListData) => {
     const q = query.toLowerCase();
@@ -38,9 +35,7 @@ export default function ToolsPage() {
     // If blank → return all items
     if (!q) return true;
 
-    return (
-      tool?.toolName?.toLowerCase().includes(q)
-    );
+    return tool?.toolName?.toLowerCase().includes(q);
   });
 
   const handleToggle = async (toolId: string, enabled: boolean) => {
@@ -48,15 +43,15 @@ export default function ToolsPage() {
 
     try {
       await fetch(`/api/agents/${agent.id}/tools/${toolId}/toggle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled }),
       });
 
       // Refresh the table
       mutate(`/api/agents/${agent.id}/tools`);
     } catch (err) {
-      console.error("Failed to toggle:", err);
+      console.error('Failed to toggle:', err);
     }
   };
 
@@ -66,9 +61,7 @@ export default function ToolsPage() {
       <div className="flex items-center justify-between">
         <Button
           disabled={!agent}
-          onClick={() =>
-            agent && router.push(`/agents/${agent.id}/tools/new`)
-          }
+          onClick={() => agent && router.push(`/agents/${agent.id}/tools/new`)}
         >
           <Plus className="h-4 w-4" />
           Add a tool
@@ -86,9 +79,7 @@ export default function ToolsPage() {
       </div>
 
       {isLoading && <p>Loading...</p>}
-      {!isLoading && filtered.length === 0 && (
-        <p>No matching tools found.</p>
-      )}
+      {!isLoading && filtered.length === 0 && <p>No matching tools found.</p>}
 
       {/* Table */}
       {!isLoading && filtered.length > 0 && (
@@ -110,7 +101,7 @@ export default function ToolsPage() {
                 <TableCell>{t.toolType}</TableCell>
                 <TableCell>{t.availableTo}</TableCell>
                 <TableCell>
-                  <span className="font-semibold">{t.lastModifiedBy}</span>{" "}
+                  <span className="font-semibold">{t.lastModifiedBy}</span>{' '}
                   <span className="text-xs text-muted-foreground">{t.lastModifiedWhen}</span>
                 </TableCell>
 
@@ -124,7 +115,6 @@ export default function ToolsPage() {
               </TableRow>
             ))}
           </TableBody>
-
         </Table>
       )}
     </div>

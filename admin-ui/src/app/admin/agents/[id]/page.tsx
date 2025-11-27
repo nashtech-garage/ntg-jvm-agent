@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { Plus, Edit } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useAgent } from "@/app/contexts/AgentContext";
-import { AgentDetail } from "@/app/types/agent";
+import { useRouter } from 'next/navigation';
+import { Plus, Edit } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useAgent } from '@/app/contexts/AgentContext';
+import { AgentDetail } from '@/app/types/agent';
 
 export default function AgentOverviewPage() {
   const { agent } = useAgent() as {
@@ -16,7 +16,6 @@ export default function AgentOverviewPage() {
 
   return (
     <div className="space-y-6 w-full">
-
       {/* Agent Details */}
       <Card className="w-full rounded-sm">
         <CardHeader className="flex flex-row justify-between items-center p-3">
@@ -37,28 +36,31 @@ export default function AgentOverviewPage() {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>
-                {agent?.name?.charAt(0)?.toUpperCase() || "A"}
-              </AvatarFallback>
+              <AvatarFallback>{agent?.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-sm"><strong>Name</strong></span>
+              <span className="text-sm">
+                <strong>Name</strong>
+              </span>
               <span className="font-sm">{agent?.name}</span>
             </div>
           </div>
 
           {/* Description */}
           <div className="flex flex-col">
-            <span className="text-sm"><strong>Description</strong></span>
-            <span className="font-sm">{agent?.description || "-"}</span>
+            <span className="text-sm">
+              <strong>Description</strong>
+            </span>
+            <span className="font-sm">{agent?.description || '-'}</span>
           </div>
 
           {/* Model */}
           <div className="flex flex-col">
-            <span className="text-sm"><strong>{`Agent's model`}</strong></span>
+            <span className="text-sm">
+              <strong>{`Agent's model`}</strong>
+            </span>
             <span className="font-sm">{agent?.model}</span>
           </div>
-
         </CardContent>
       </Card>
 
@@ -88,7 +90,9 @@ export default function AgentOverviewPage() {
         <CardHeader className="flex flex-row justify-between items-center p-3">
           <div>
             <CardTitle>Knowledge</CardTitle>
-            <p className="text-muted-foreground text-sm mt-1">Add data, files and other resources to inform and improve AI-generated responses.</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Add data, files and other resources to inform and improve AI-generated responses.
+            </p>
           </div>
           <Button
             variant="outline"
@@ -101,7 +105,11 @@ export default function AgentOverviewPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-3">
-          <Button variant="outline" disabled={!agent} onClick={() => agent && router.push(`/agents/${agent.id}/knowledge`)}>
+          <Button
+            variant="outline"
+            disabled={!agent}
+            onClick={() => agent && router.push(`/agents/${agent.id}/knowledge`)}
+          >
             Manage Knowledge
           </Button>
         </CardContent>
@@ -112,7 +120,9 @@ export default function AgentOverviewPage() {
         <CardHeader className="flex flex-row justify-between items-center p-3">
           <div>
             <CardTitle>Tools</CardTitle>
-            <p className="text-muted-foreground text-sm mt-1">Add tools to empower the AI to complete specific tasks for improved engagement.</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Add tools to empower the AI to complete specific tasks for improved engagement.
+            </p>
           </div>
           <Button
             variant="outline"
@@ -125,7 +135,11 @@ export default function AgentOverviewPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-3">
-          <Button variant="outline" disabled={!agent} onClick={() => agent && router.push(`/agents/${agent.id}/tools`)}>
+          <Button
+            variant="outline"
+            disabled={!agent}
+            onClick={() => agent && router.push(`/agents/${agent.id}/tools`)}
+          >
             Manage Tools
           </Button>
         </CardContent>

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import AgentForm from "@/app/components/agent/AgentForm";
-import { useAgent } from "@/app/contexts/AgentContext";
-import { AgentDetail, AgentFormData } from "@/app/types/agent";
+import { useRouter } from 'next/navigation';
+import AgentForm from '@/app/components/agent/AgentForm';
+import { useAgent } from '@/app/contexts/AgentContext';
+import { AgentDetail, AgentFormData } from '@/app/types/agent';
 
 export default function AgentEditPage() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function AgentEditPage() {
     if (!agent) return;
 
     const res = await fetch(`/api/agents/${agent.id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(data),
     });
 
@@ -27,7 +27,7 @@ export default function AgentEditPage() {
       return;
     }
 
-    alert("Failed to update agent");
+    alert('Failed to update agent');
   }
 
   if (!agent) return <p>Loading...</p>;

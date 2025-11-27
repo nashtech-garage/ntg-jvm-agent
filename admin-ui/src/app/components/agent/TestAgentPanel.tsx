@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 export default function TestAgentPanel({ agentId }: { agentId: string }) {
-  const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
+  const [input, setInput] = useState('');
+  const [response, setResponse] = useState('');
 
   async function handleTest() {
     if (!input.trim()) return;
 
     const res = await fetch(`/api/agents/${agentId}/test`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input }),
     });
 
     const data = await res.json();
-    setResponse(data.output || "No response");
+    setResponse(data.output || 'No response');
   }
 
   return (
