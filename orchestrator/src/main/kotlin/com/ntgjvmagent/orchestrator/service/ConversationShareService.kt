@@ -155,8 +155,7 @@ class ConversationShareService(
 
     private fun generateShareToken(): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        val token = (1..32).map { allowedChars.random() }.joinToString("")
-        return token
+        return (1..32).map { allowedChars.random() }.joinToString("")
     }
 }
 

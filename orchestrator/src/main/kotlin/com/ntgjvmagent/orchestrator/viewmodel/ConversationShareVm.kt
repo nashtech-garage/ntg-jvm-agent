@@ -1,11 +1,15 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import java.time.OffsetDateTime
 import java.util.UUID
 
 // Request Models
 data class ShareConversationRequest(
+    @field:Min(value = 1, message = "Expiry days must be at least 1")
+    @field:Max(value = 90, message = "Expiry days cannot exceed 90")
     val expiryDays: Int = 7,
 )
 
