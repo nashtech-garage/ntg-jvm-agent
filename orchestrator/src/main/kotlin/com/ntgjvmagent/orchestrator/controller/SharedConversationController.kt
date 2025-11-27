@@ -38,7 +38,7 @@ class SharedConversationController(
     /**
      * Share a conversation with others (requires authentication)
      * @param conversationId ID of the conversation to share
-     * @param request Share request containing email and expiry days
+     * @param request Share request containing expiry days
      * @param authentication Current user authentication
      * @return Share response with share token and URL
      */
