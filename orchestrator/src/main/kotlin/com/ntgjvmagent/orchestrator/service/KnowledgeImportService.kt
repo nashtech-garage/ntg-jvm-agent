@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import jakarta.persistence.EntityNotFoundException
 import org.apache.commons.lang3.StringUtils
@@ -21,7 +22,6 @@ class KnowledgeImportService(
 
     ) {
     private val logger = LoggerFactory.getLogger(KnowledgeImportService::class.java)
-    private val mb: Long = 1024 * 1024
 
     @Transactional
     fun importDocument(
@@ -34,7 +34,7 @@ class KnowledgeImportService(
 
         val fileType = fileName?.split(".")?.last()
         val setting = systemSettingService.getSystemSetting()
-        val maxSize = setting.maximumSizeFileUpload!! * mb
+        val maxSize = setting.maximumSizeFileUpload!! * Constant.MB
         if (!setting.allowedFileTypes!!
                 .replace(StringUtils.SPACE, StringUtils.EMPTY)
                 .split(",")

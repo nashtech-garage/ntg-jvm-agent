@@ -31,4 +31,6 @@ object Constant {
     """
     const val CHATGPT_DIMENSION = 1536
     const val GEMINI_DIMENSION = 768
+    const val KB = 1024
+    const val MB = KB * 1024
 }
