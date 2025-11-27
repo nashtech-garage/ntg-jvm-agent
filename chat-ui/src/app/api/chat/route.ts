@@ -54,12 +54,12 @@ export async function POST(req: Request) {
     return new Response(res.body, {
       status: res.status,
       headers: {
-        "Content-Type": res.headers.get("Content-Type") || "text/plain",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "Content-Encoding": "identity"
-      }
-    })
+        'Content-Type': res.headers.get('Content-Type') || 'text/plain',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'Content-Encoding': 'identity',
+      },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: `${Constants.FAILED_TO_ASK_QUESTION} ${String(err)}` },

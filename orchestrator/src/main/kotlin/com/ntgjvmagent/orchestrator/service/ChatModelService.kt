@@ -50,6 +50,8 @@ class ChatModelService(
                         appendLine()
                     }
 
+                    appendLine("User question: ${request.question}")
+
                     if (history.isNotEmpty()) {
                         appendLine("Chat history:")
                         history.forEach { item ->
@@ -62,7 +64,7 @@ class ChatModelService(
 
         val model = dynamicModelService.getChatModel(request.agentId)
         val chatClient = ChatClient.builder(model).build()
-        val ragAdvisor = createRagAdvisorForAgent(request.agentId)
+        val ragAdvisor = createRAGAdvisorForAgent(request.agentId)
 
         var promptBuilder = chatClient.prompt()
         if (ragAdvisor != null) {
@@ -108,7 +110,7 @@ class ChatModelService(
         return response.result.output.text
     }
 
-    fun createRagAdvisorForAgent(agentId: UUID): RetrievalAugmentationAdvisor? {
+    fun createRAGAdvisorForAgent(agentId: UUID): RetrievalAugmentationAdvisor? {
         val knowledgeIds: List<String> =
             agentKnowledgeRepo
                 .findAllByAgentIdAndActiveTrue(

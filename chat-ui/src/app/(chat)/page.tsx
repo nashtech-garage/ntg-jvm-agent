@@ -51,7 +51,17 @@ export default function Page() {
     });
 
     if (!res.body) {
-      throw new Error('No response body');
+      let errorMessage = `Request failed with status ${res.status}`;
+      try {
+        const errorText = await res.text();
+        if (errorText) {
+          errorMessage += `: ${errorText}`;
+        }
+      } catch (err) {
+        console.debug('Failed to parse error response body', err);
+      }
+      toast.error(errorMessage);
+      return new Error(errorMessage);
     }
 
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -93,14 +103,12 @@ export default function Page() {
       }
     }
 
-    return new Error('Stream ended without a completion event');
+    throw new Error('Stream ended without a completion event');
   };
 
   const handleTokenUpdate = (token: string) => {
     setChatMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === 'streaming' ? { ...msg, content: msg.content + token } : msg
-      )
+      prev.map((msg) => (msg.id === 'streaming' ? { ...msg, content: msg.content + token } : msg))
     );
   };
 
@@ -154,7 +162,7 @@ export default function Page() {
       handleFinalResponse
     );
     if (result instanceof Error) {
-      toast.error((result as any).message);
+      toast.error(result.message);
     }
   };
 

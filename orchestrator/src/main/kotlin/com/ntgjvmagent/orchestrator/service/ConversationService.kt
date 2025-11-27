@@ -213,7 +213,7 @@ class ConversationService(
 
         val tokenFlux =
             chatModelService
-                .call(request, recentMessages + request.question, summary)
+                .call(request, recentMessages, summary)
                 .map { chunk ->
                     answerBuilder.append(chunk)
                     ServerSentEvent
@@ -238,6 +238,17 @@ class ConversationService(
                 )
             }
 
-        return tokenFlux.concatWith(saveFlux)
+        return tokenFlux
+            .concatWith(saveFlux)
+            .onErrorResume { ex ->
+                Flux
+                    .just(
+                        ServerSentEvent
+                            .builder<Any>()
+                            .event("error")
+                            .data("An unexpected error occurred: ${ex.message}")
+                            .build(),
+                    ).concatWith(Flux.empty())
+            }
     }
 }

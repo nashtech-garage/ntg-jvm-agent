@@ -22,10 +22,16 @@ export default function AgentDropdown() {
 
   useEffect(() => {
     const handle = (ev: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) setOpen(false);
+      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) {
+        setOpen(false);
+      }
     };
-    document.addEventListener('mousedown', handle);
 
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  useEffect(() => {
     const fetchAgents = async () => {
       try {
         const res = await fetch('/api/agent');
@@ -43,8 +49,7 @@ export default function AgentDropdown() {
     if (!agents.length) {
       fetchAgents();
     }
-    return () => document.removeEventListener('mousedown', handle);
-  }, []);
+  }, [agents.length, setAgents, setSelected, setSelectedAgent]);
 
   return (
     <div ref={boxRef} className="relative inline-block">
