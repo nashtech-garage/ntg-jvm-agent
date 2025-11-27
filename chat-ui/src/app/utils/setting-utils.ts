@@ -8,13 +8,10 @@ export async function getSetting(): Promise<MaintenanceModeSetting | null> {
     if (!response.ok) {
       throw new Error('Failed to fetch system settings');
     }
-    if (!response.ok) {
-      throw new Error('Failed to fetch system settings');
-    }
     const data: MaintenanceModeSetting = await response.json();
     return data;
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    console.error('Failed to fetch system settings:', error);
     return null;
   }
 }
