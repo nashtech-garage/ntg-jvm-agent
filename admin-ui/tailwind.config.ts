@@ -5,9 +5,9 @@ const config: Config = {
     "./app/**/*.{ts,tsx,js,jsx}",
     "./components/**/*.{ts,tsx,js,jsx}",
     "./pages/**/*.{ts,tsx,js,jsx}",
-    "./node_modules/@shadcn/ui/dist/**/*.js"
+    "./node_modules/@shadcn/ui/dist/**/*.js",
   ],
-  darkMode: ["class"],
+  darkMode: ["class", ".dark"],
 };
 
 export default config;
