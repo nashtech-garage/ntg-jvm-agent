@@ -99,7 +99,7 @@ class JwtAuthConverterConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it.requestMatchers("/public/**").permitAll()
-                it.requestMatchers("/api/share/shared-conversations/**").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/api/share/shared-conversations/{shareToken}").permitAll()
                 it.anyRequest().authenticated()
             }.oauth2ResourceServer { rs ->
                 rs.jwt { jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter) }
