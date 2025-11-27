@@ -5,6 +5,7 @@ import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import jakarta.persistence.EntityNotFoundException
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,8 +18,10 @@ class KnowledgeImportService(
     private val knowledgeRepo: AgentKnowledgeRepository,
     private val documentChunker: DocumentChunker,
     private val systemSettingService: SystemSettingService,
-) {
+
+    ) {
     private val logger = LoggerFactory.getLogger(KnowledgeImportService::class.java)
+    private val mb: Long = 1024 * 1024
 
     @Transactional
     fun importDocument(
@@ -31,13 +34,14 @@ class KnowledgeImportService(
 
         val fileType = fileName?.split(".")?.last()
         val setting = systemSettingService.getSystemSetting()
-        if(!setting.allowedFileTypes!!.replace(" ","").split(",").contains(fileType)){
-            throw BadRequestException("File type is not allowed")
-        }
-
-        val maxSize = setting.maximumSizeFileUpload!! * 1024 * 1024
-        if(maxSize < file.size){
-            throw BadRequestException("File size exceeded")
+        val maxSize = setting.maximumSizeFileUpload!! * mb
+        if (!setting.allowedFileTypes!!
+                .replace(StringUtils.SPACE, StringUtils.EMPTY)
+                .split(",")
+                .contains(fileType)
+            || maxSize < file.size
+        ) {
+            throw BadRequestException("File type is not allowed or File size exceeded")
         }
 
         // Check that knowledge exists for this agent
