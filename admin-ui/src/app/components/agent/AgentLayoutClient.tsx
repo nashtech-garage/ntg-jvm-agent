@@ -1,13 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import AgentTabs from "@/app/components/agent/AgentTabs";
 import TestAgentPanel from "@/app/components/agent/TestAgentPanel";
 import { AgentContext } from "@/app/contexts/AgentContext";
 
-export default function AgentLayoutClient({ id, children }) {
+interface AgentLayoutClientProps {
+  id: string;
+  children: ReactNode;
+}
+
+export default function AgentLayoutClient({ id, children }: Readonly<AgentLayoutClientProps>) {
   const { data: agent, error, mutate, isLoading } = useSWR(
     `/api/agents/${id}`,
     fetcher,

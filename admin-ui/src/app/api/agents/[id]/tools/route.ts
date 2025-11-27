@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -32,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return Response.json(data);
 }
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const cookieStore = await cookies();

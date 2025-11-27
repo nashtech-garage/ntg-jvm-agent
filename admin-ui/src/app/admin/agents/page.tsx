@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AgentListData } from "@/app/types/agent";
 
 export default function AgentTable() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function AgentTable() {
           </TableHeader>
 
           <TableBody>
-            {agents?.map((a: any) => (
+            {agents?.map((a: AgentListData) => (
               <TableRow
                 key={a.id}
                 className="hover:bg-muted/50 transition"

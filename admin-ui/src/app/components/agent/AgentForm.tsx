@@ -1,9 +1,9 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type FieldValues, type ControllerRenderProps, type Path, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import {
   Card,
@@ -27,6 +27,9 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+import { AgentFormParams } from "@/app/types/agent";
+
+import type * as monaco from "monaco-editor";
 import dynamic from "next/dynamic";
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -50,10 +53,11 @@ const formSchema = z.object({
   presencePenalty: z.number().min(-2).max(2),
   settings: z.any().optional(),
 });
+export type AgentFormValues = z.infer<typeof formSchema>;
 
 // ---------------------- Main Form Component ----------------------
-export default function AgentForm({ onSubmit, initialValues }: any) {
-  const form = useForm<z.infer<typeof formSchema>>({
+export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFormParams>) {
+  const form = useForm<AgentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialValues || {
       name: "",
@@ -102,7 +106,7 @@ export default function AgentForm({ onSubmit, initialValues }: any) {
 
                 {/* ------------------- GENERAL ------------------- */}
                 <TabsContent value="general" className="space-y-4 pt-4">
-                  <TextField form={form} name="name" label="Name" />
+                  <TextField<AgentFormValues> form={form} name="name" label="Name" />
                   <FormField
                     control={form.control}
                     name="description"
@@ -133,37 +137,37 @@ export default function AgentForm({ onSubmit, initialValues }: any) {
                 {/* ------------------- PROVIDER ------------------- */}
                 <TabsContent value="provider" className="space-y-4 pt-4">
                   <TwoColumn>
-                    <TextField form={form} name="provider" label="Provider" />
-                    <TextField form={form} name="baseUrl" label="Base URL" />
+                    <TextField<AgentFormValues> form={form} name="provider" label="Provider" />
+                    <TextField<AgentFormValues> form={form} name="baseUrl" label="Base URL" />
                   </TwoColumn>
-                  <TextField form={form} name="apiKey" label="API Key" type="password" />
-                  <TextField form={form} name="chatCompletionsPath" label="Chat Completions Path" />
+                  <TextField<AgentFormValues> form={form} name="apiKey" label="API Key" type="password" />
+                  <TextField<AgentFormValues> form={form} name="chatCompletionsPath" label="Chat Completions Path" />
                 </TabsContent>
 
                 {/* ------------------- MODEL ------------------- */}
                 <TabsContent value="model" className="space-y-6 pt-4">
                   {/* ------------------- Provider Models ------------------- */}
                   <h3 className="text-lg font-semibold">Provider Models</h3>
-                  <TextField form={form} name="model" label="Model" />
+                  <TextField<AgentFormValues> form={form} name="model" label="Model" />
 
                   {/* ------------------- Embedding Configuration ------------------- */}
                   <h3 className="text-lg font-semibold">Embedding Configuration</h3>
                   <TwoColumn>
-                    <TextField form={form} name="embeddingModel" label="Embedding Model" />
-                    <NumberField form={form} name="dimension" label="Vector Dimension" />
+                    <TextField<AgentFormValues> form={form} name="embeddingModel" label="Embedding Model" />
+                    <NumberField<AgentFormValues> form={form} name="dimension" label="Vector Dimension" />
                   </TwoColumn>
-                  <TextField form={form} name="embeddingsPath" label="Embeddings API Path" />
+                  <TextField<AgentFormValues> form={form} name="embeddingsPath" label="Embeddings API Path" />
 
                   {/* ------------------- Generation Parameters ------------------- */}
                   <h3 className="text-lg font-semibold">Generation Parameters</h3>
                   <TwoColumn>
-                    <NumberField form={form} name="topP" label="Top P" step="0.05" />
-                    <NumberField form={form} name="temperature" label="Temperature" step="0.1" />
+                    <NumberField<AgentFormValues> form={form} name="topP" label="Top P" step="0.05" />
+                    <NumberField<AgentFormValues> form={form} name="temperature" label="Temperature" step="0.1" />
                   </TwoColumn>
                   <TwoColumn>
-                    <NumberField form={form} name="maxTokens" label="Max Tokens" />
-                    <NumberField form={form} name="frequencyPenalty" label="Frequency Penalty" step="0.1" />
-                    <NumberField form={form} name="presencePenalty" label="Presence Penalty" step="0.1" />
+                    <NumberField<AgentFormValues> form={form} name="maxTokens" label="Max Tokens" />
+                    <NumberField<AgentFormValues> form={form} name="frequencyPenalty" label="Frequency Penalty" step="0.1" />
+                    <NumberField<AgentFormValues> form={form} name="presencePenalty" label="Presence Penalty" step="0.1" />
                   </TwoColumn>
 
                   {/* ------------------- Advanced Settings ------------------- */}
@@ -171,7 +175,12 @@ export default function AgentForm({ onSubmit, initialValues }: any) {
                   <FormField
                     control={form.control}
                     name="settings"
-                    render={({ field }) => <MonacoField field={field} label="Settings (JSON)" />}
+                    render={({ field }) => (
+                      <MonacoField<AgentFormValues, "settings">
+                        field={field}
+                        label="Settings (JSON)"
+                      />
+                    )}
                   />
                 </TabsContent>
               </Tabs>
@@ -191,35 +200,47 @@ export default function AgentForm({ onSubmit, initialValues }: any) {
 
 // ---------------------- MonacoField Component ----------------------
 
-function MonacoField({
+interface MonacoFieldProps<T extends FieldValues, N extends Path<T>> {
+  field: ControllerRenderProps<T, N>;
+  label?: string;
+}
+
+export function MonacoField<T extends FieldValues, N extends Path<T>>({
   field,
   label,
-}: Readonly<{
-  field: any;
-  label: string;
-}>) {
+}: Readonly<MonacoFieldProps<T, N>>) {
   const [editorValue, setEditorValue] = useState(
     JSON.stringify(field.value ?? {}, null, 2)
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
 
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  const handleEditorChange = (value: string = "{}") => {
+    setEditorValue(value);
+
+    try {
+      // Update form value immediately
+      const parsed = JSON.parse(value);
+      field.onChange(parsed);
+      setJsonError(null);
+    } catch {
+      setJsonError("Invalid JSON");
+    }
+  };
+
   return (
     <FormItem>
-      <FormLabel>{label}</FormLabel>
+      {label && <FormLabel>{label}</FormLabel>}
       <FormControl>
         <div className="rounded-md border">
           <Monaco
             height="250px"
             defaultLanguage="json"
             value={editorValue}
-            onChange={(v) => setEditorValue(v || "{}")}
-            onBlur={() => {
-              try {
-                field.onChange(JSON.parse(editorValue));
-                setJsonError(null);
-              } catch {
-                setJsonError("Invalid JSON");
-              }
+            onChange={handleEditorChange}
+            onMount={(editor) => {
+              editorRef.current = editor;
             }}
             options={{ minimap: { enabled: false }, fontSize: 14 }}
           />
@@ -233,15 +254,31 @@ function MonacoField({
 
 // ---------------------- Reusable Components ----------------------
 
-function TwoColumn({ children }) {
+interface TwoColumnProps {
+  children: ReactNode;
+}
+
+export function TwoColumn({ children }: Readonly<TwoColumnProps>) {
   return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>;
 }
 
-function TextField({ form, name, label, type = "text" }) {
+interface TextFieldProps<T extends object> {
+  form: UseFormReturn<T>;
+  name: Path<T>; // <-- use Path<T> instead of keyof T
+  label: string;
+  type?: string;
+}
+
+export function TextField<T extends object>({
+  form,
+  name,
+  label,
+  type = "text",
+}: Readonly<TextFieldProps<T>>) {
   return (
     <FormField
       control={form.control}
-      name={name}
+      name={name} // now fully type-safe
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
@@ -255,7 +292,19 @@ function TextField({ form, name, label, type = "text" }) {
   );
 }
 
-function NumberField({ form, name, label, step = "1" }) {
+interface NumberFieldProps<T extends object> {
+  form: UseFormReturn<T>;
+  name: Path<T>; // <-- Use Path<T> instead
+  label: string;
+  step?: string | number;
+}
+
+export function NumberField<T extends object>({
+  form,
+  name,
+  label,
+  step = 1,
+}: Readonly<NumberFieldProps<T>>) {
   return (
     <FormField
       control={form.control}

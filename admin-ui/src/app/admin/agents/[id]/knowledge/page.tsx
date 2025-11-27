@@ -15,20 +15,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAgent } from "@/app/contexts/AgentContext";
+import { AgentDetail, KnowledgeListData } from "@/app/types/agent";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function KnowledgePage() {
-  const { agent } = useAgent();
+  const { agent } = useAgent() as {
+    agent: AgentDetail | null;
+  };
   const router = useRouter();
   const [query, setQuery] = useState("");
 
   const { data = [], isLoading } = useSWR(
-    `/api/agents/${agent.id}/knowledge`,
+    agent ? `/api/agents/${agent.id}/knowledge` : null,
     fetcher
   );
 
-  const filtered = data.filter((item: any) => {
+  const filtered = data.filter((item: KnowledgeListData) => {
     const q = query.trim().toLowerCase();
 
     // If blank → return all items
@@ -45,7 +48,8 @@ export default function KnowledgePage() {
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <Button
-          onClick={() => router.push(`/agents/${agent.id}/knowledge/new`)}
+          disabled={!agent}
+          onClick={() => agent && router.push(`/agents/${agent.id}/knowledge/new`)}
         >
           <Plus className="h-4 w-4" />
           Add Knowledge
@@ -81,7 +85,7 @@ export default function KnowledgePage() {
           </TableHeader>
 
           <TableBody>
-            {filtered.map((k: any) => (
+            {filtered.map((k: KnowledgeListData) => (
               <TableRow key={k.id}>
                 <TableCell>{k.name}</TableCell>
                 <TableCell>{k.type}</TableCell>

@@ -6,9 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAgent } from "@/app/contexts/AgentContext";
+import { AgentDetail } from "@/app/types/agent";
 
 export default function AgentOverviewPage() {
-  const { agent } = useAgent();
+  const { agent } = useAgent() as {
+    agent: AgentDetail | null;
+  };
   const router = useRouter();
 
   return (
@@ -21,7 +24,8 @@ export default function AgentOverviewPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/admin/agents/${agent.id}/edit`)}
+            disabled={!agent}
+            onClick={() => agent && router.push(`/admin/agents/${agent.id}/edit`)}
           >
             <Edit className="h-4 w-4" />
             Edit
@@ -34,25 +38,25 @@ export default function AgentOverviewPage() {
             <Avatar className="h-10 w-10">
               <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
               <AvatarFallback>
-                {agent.name?.charAt(0)?.toUpperCase() || "A"}
+                {agent?.name?.charAt(0)?.toUpperCase() || "A"}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm"><strong>Name</strong></span>
-              <span className="font-sm">{agent.name}</span>
+              <span className="font-sm">{agent?.name}</span>
             </div>
           </div>
 
           {/* Description */}
           <div className="flex flex-col">
             <span className="text-sm"><strong>Description</strong></span>
-            <span className="font-sm">{agent.description || "-"}</span>
+            <span className="font-sm">{agent?.description || "-"}</span>
           </div>
 
           {/* Model */}
           <div className="flex flex-col">
-            <span className="text-sm"><strong>Agent's model</strong></span>
-            <span className="font-sm">{agent.model}</span>
+            <span className="text-sm"><strong>{`Agent's model`}</strong></span>
+            <span className="font-sm">{agent?.model}</span>
           </div>
 
         </CardContent>
@@ -67,7 +71,8 @@ export default function AgentOverviewPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/agents/${agent.id}/edit`)}
+            disabled={!agent}
+            onClick={() => agent && router.push(`/agents/${agent.id}/edit`)}
           >
             <Edit className="h-4 w-4" />
             Edit
@@ -88,14 +93,15 @@ export default function AgentOverviewPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/agents/${agent.id}/knowledge/new`)}
+            disabled={!agent}
+            onClick={() => agent && router.push(`/agents/${agent.id}/knowledge/new`)}
           >
             <Plus className="h-4 w-4" />
             Add Knowledge
           </Button>
         </CardHeader>
         <CardContent className="p-3">
-          <Button variant="outline" onClick={() => router.push(`/agents/${agent.id}/knowledge`)}>
+          <Button variant="outline" disabled={!agent} onClick={() => agent && router.push(`/agents/${agent.id}/knowledge`)}>
             Manage Knowledge
           </Button>
         </CardContent>
@@ -111,14 +117,15 @@ export default function AgentOverviewPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/agents/${agent.id}/tools/new`)}
+            disabled={!agent}
+            onClick={() => agent && router.push(`/agents/${agent.id}/tools/new`)}
           >
             <Plus className="h-4 w-4" />
             Add Tool
           </Button>
         </CardHeader>
         <CardContent className="p-3">
-          <Button variant="outline" onClick={() => router.push(`/agents/${agent.id}/tools`)}>
+          <Button variant="outline" disabled={!agent} onClick={() => agent && router.push(`/agents/${agent.id}/tools`)}>
             Manage Tools
           </Button>
         </CardContent>
