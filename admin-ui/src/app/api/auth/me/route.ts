@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { AUTH_SERVER_URL } from '@/app/utils/utils';
-import { decodeToken, getAccessToken } from '@/app/utils/serverUtils';
+import { AUTH_SERVER_URL } from '@/utils/utils';
+import { decodeToken, getAccessToken } from '@/utils/serverUtils';
 
 export async function GET(req: Request) {
   try {

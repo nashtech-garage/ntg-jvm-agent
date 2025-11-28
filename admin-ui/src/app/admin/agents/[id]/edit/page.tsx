@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import AgentForm from '@/app/components/agent/AgentForm';
-import { useAgent } from '@/app/contexts/AgentContext';
-import { AgentDetail, AgentFormData } from '@/app/types/agent';
+import AgentForm from '@/components/agent/AgentForm';
+import { useAgent } from '@/contexts/AgentContext';
+import { AgentDetail, AgentFormData } from '@/types/agent';
 
 export default function AgentEditPage() {
   const router = useRouter();

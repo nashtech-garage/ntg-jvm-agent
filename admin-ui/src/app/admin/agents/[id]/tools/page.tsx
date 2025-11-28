@@ -4,9 +4,9 @@ import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/navigation';
 import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Switch } from '@/components/ui/Switch';
 import {
   Table,
   TableBody,
@@ -14,9 +14,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useAgent } from '@/app/contexts/AgentContext';
-import { AgentDetail, ToolListData } from '@/app/types/agent';
+} from '@/components/ui/Table';
+import { useAgent } from '@/contexts/AgentContext';
+import { AgentDetail, ToolListData } from '@/types/agent';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

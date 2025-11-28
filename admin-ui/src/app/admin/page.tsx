@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { UserInfo } from '@/app/models/token';
-import AddKnowledge from '../components/AddKnowledge';
+import { UserInfo } from '@/models/token';
+import AddKnowledge from '@/components/AddKnowledge';
 
 interface DashboardStats {
   totalUsers: number;

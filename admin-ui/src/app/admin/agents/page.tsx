@@ -3,10 +3,10 @@
 import useSWR from 'swr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { fetcher } from '@/lib/fetcher';
+import { fetcher } from '@/utils/fetcher';
 import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import {
   Table,
   TableBody,
@@ -14,8 +14,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { AgentListData } from '@/app/types/agent';
+} from '@/components/ui/Table';
+import { AgentListData } from '@/types/agent';
 
 export default function AgentTable() {
   const router = useRouter();

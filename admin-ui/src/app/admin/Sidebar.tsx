@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { UserInfo } from '@/app/models/token';
+import { UserInfo } from '@/models/token';
 
 interface SidebarProps {
   user: UserInfo;
