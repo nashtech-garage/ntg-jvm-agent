@@ -70,20 +70,6 @@ class SharedConversationController(
     }
 
     /**
-     * List all shares created by the current user (requires authentication)
-     * @param authentication Current user authentication
-     * @return List of shares created by current user
-     */
-    @GetMapping("/my-shares")
-    fun listMyShares(
-        authentication: Authentication,
-    ): ResponseEntity<List<ConversationShareResponseVm>> {
-        val username = (authentication.principal as Jwt).subject
-        val shares = conversationShareService.listShares(username)
-        return ResponseEntity.ok(shares)
-    }
-
-    /**
      * Revoke a shared conversation link (requires authentication)
      * @param shareToken Token of the share to revoke
      * @param authentication Current user authentication

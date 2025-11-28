@@ -131,11 +131,6 @@ class ConversationShareService(
         )
     }
 
-    fun listShares(username: String): List<ConversationShareResponseVm> {
-        val shares = conversationShareRepo.findActiveSharesByUsername(username)
-        return shares.map { toResponseVm(it) }
-    }
-
     fun listSharesByConversation(
         conversationId: UUID,
         username: String,
