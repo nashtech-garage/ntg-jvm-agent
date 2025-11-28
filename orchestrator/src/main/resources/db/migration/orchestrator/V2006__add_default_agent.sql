@@ -27,7 +27,7 @@ values
         0.00,
         0.00,
         true,
-        null,
+        'Open AI',
         null,
         'https://models.github.ai/inference',
         'Dummy Github API key',
