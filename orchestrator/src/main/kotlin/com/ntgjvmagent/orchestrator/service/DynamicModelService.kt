@@ -33,6 +33,10 @@ class DynamicModelService(
 
     fun getEmbeddingModel(agentId: UUID): EmbeddingModel = cache.getOrPut(agentId) { createModels(agentId) }.second
 
+    fun invalidateCacheForAgent(agentId: UUID) {
+        cache[agentId] = createModels(agentId)
+    }
+
     private fun createModels(agentId: UUID): Pair<ChatModel, EmbeddingModel> {
         val config = agentRepo.findById(agentId).orElseThrow()
         val chatModel =
