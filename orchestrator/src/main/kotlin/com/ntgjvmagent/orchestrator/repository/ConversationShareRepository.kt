@@ -16,11 +16,5 @@ interface ConversationShareRepository : JpaRepository<ConversationShareEntity, U
 
     @Query("SELECT cs FROM ConversationShareEntity cs WHERE cs.conversation.id = ?1 AND cs.isExpired = false")
     fun findActiveSharesByConversationId(conversationId: UUID): List<ConversationShareEntity>
-
-    @Query("SELECT cs FROM ConversationShareEntity cs WHERE cs.sharedByUsername = ?1 AND cs.isExpired = false")
-    fun findActiveSharesByUsername(username: String): List<ConversationShareEntity>
-
-    @Query("SELECT cs FROM ConversationShareEntity cs WHERE cs.conversation.id = ?1 AND cs.sharedByUsername = ?2")
-    fun findByConversationIdAndSharedBy(conversationId: UUID, username: String): List<ConversationShareEntity>
 }
 
