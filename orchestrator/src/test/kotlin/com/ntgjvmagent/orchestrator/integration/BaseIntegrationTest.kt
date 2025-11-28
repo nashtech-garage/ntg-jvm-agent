@@ -1,8 +1,12 @@
 package com.ntgjvmagent.orchestrator.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.integration.config.PostgresTestContainer
+import com.ntgjvmagent.orchestrator.integration.config.TestAuditorConfig
 import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
+import com.ntgjvmagent.orchestrator.repository.UserRepository
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,6 +14,7 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -35,7 +40,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Container spins up once per class
 @ContextConfiguration(initializers = [PostgresTestContainer.Initializer::class])
-@Import(TestEmbeddingConfig::class)
+@Import(TestEmbeddingConfig::class, TestAuditorConfig::class)
 @Tag("integration")
 @ActiveProfiles("test")
 abstract class BaseIntegrationTest {
@@ -44,6 +49,24 @@ abstract class BaseIntegrationTest {
 
     @Autowired
     protected lateinit var objectMapper: ObjectMapper
+
+    @Autowired
+    lateinit var userRepository: UserRepository
+
+    @BeforeAll
+    fun setupTestUser() {
+        if (userRepository.findByIdOrNull(TestAuditorConfig.TEST_USER_ID) == null) {
+            userRepository.save(
+                User(
+                    id = TestAuditorConfig.TEST_USER_ID,
+                    username = "integrationtestuser",
+                    password = "password",
+                    name = "Integration Test User",
+                    email = "integrationtestuser@testemail.com",
+                ),
+            )
+        }
+    }
 
     protected fun asJson(obj: Any): String = objectMapper.writeValueAsString(obj)
 

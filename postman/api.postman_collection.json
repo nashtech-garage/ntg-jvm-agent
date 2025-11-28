@@ -138,7 +138,7 @@
       "name": "Agent",
       "item": [
         {
-          "name": "List all active agents",
+          "name": "List all agents",
           "request": {
             "method": "GET",
             "header": [
@@ -150,6 +150,24 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/agents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","agents"]
+            }
+          }
+        },
+        {
+          "name": "List all active agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/agents/active",
               "host": ["{{baseUrl}}"],
               "path": ["api","agents"]
             }
@@ -191,7 +209,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Example Agent\",\n  \"model\": \"gpt-4\",\n  \"description\": \"Optional description\",\n  \"temperature\": 0.7\n}"
+              "raw": "{\n  \"name\": \"Agent GPT4\",\n  \"description\": \"Optional description\",\n  \"provider\": \"OpenAI\",\n  \"baseUrl\": \"https://models.github.ai/inference\",\n  \"apiKey\": \"github_pat_XXXXXXXXXX\",\n  \"chatCompletionsPath\": \"/v1/chat/completions\",\n  \"model\": \"gpt-4o\",\n  \"embeddingModel\": \"openai/text-embedding-3-small\",\n  \"dimension\": 1536,\n  \"embeddingsPath\": \"/embeddings\",\n  \"temperature\": 0.7\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/agents",
@@ -218,7 +236,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Agent\",\n  \"model\": \"gpt-4\",\n  \"description\": \"Updated description\",\n  \"temperature\": 0.9\n}"
+              "raw": "{\n  \"name\": \"Updated Agent GPT4\",\n  \"description\": \"Updated description\",\n  \"provider\": \"OpenAI\",\n  \"baseUrl\": \"https://models.github.ai/inference\",\n  \"apiKey\": \"github_pat_XXXXXXXXXX\",\n  \"chatCompletionsPath\": \"/v1/chat/completions\",\n  \"model\": \"gpt-4o\",\n  \"embeddingModel\": \"openai/text-embedding-3-small\",\n  \"dimension\": 1536,\n  \"embeddingsPath\": \"/embeddings\",\n  \"temperature\": 0.9\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/agents/{{agent_id}}",

@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     return NextResponse.json(null, { status: 401 });
   }
   try {
-    const res = await fetch(agentUrl, {
+    const res = await fetch(`${agentUrl}/active`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

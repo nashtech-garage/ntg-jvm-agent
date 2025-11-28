@@ -23,14 +23,15 @@ class AgentRepositoryIT
             val agent =
                 Agent(
                     name = "Repo Agent",
-                    model = "gpt-4o-mini",
                     description = "Repository test",
-                    temperature = BigDecimal("0.8"),
+                    provider = "OpenAI",
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
-                    embeddingsPath = "/embeddings",
+                    model = "gpt-4o-mini",
                     embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
+                    temperature = BigDecimal("0.8"),
                 )
 
             val saved = repo.save(agent)
@@ -47,23 +48,25 @@ class AgentRepositoryIT
             repo.save(
                 Agent(
                     name = "Agent 1",
-                    model = "gpt-4o-mini",
+                    provider = "OpenAI",
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
-                    embeddingsPath = "/embeddings",
+                    model = "gpt-4o-mini",
                     embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
                 ),
             )
             repo.save(
                 Agent(
                     name = "Agent 2",
-                    model = "gpt-4o-mini",
+                    provider = "OpenAI",
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
-                    embeddingsPath = "/embeddings",
+                    model = "gpt-4o-mini",
                     embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
                 ),
             )
 

@@ -48,7 +48,7 @@ export default function AdminLayout({
       <div className="flex h-screen overflow-hidden">
         <Sidebar user={user} />
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
+          <div className="p-6 lg:p-8 max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

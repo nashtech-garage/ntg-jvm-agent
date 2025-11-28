@@ -43,12 +43,13 @@ class AgentToolAssignmentServiceIT
                 agentRepository.save(
                     Agent(
                         name = "Agent Smith ${UUID.randomUUID()}",
-                        model = "T-800",
+                        provider = "OpenAI",
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
-                        embeddingsPath = "/embeddings",
+                        model = "T-800",
                         embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
             activeTool = toolRepository.save(Tool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })

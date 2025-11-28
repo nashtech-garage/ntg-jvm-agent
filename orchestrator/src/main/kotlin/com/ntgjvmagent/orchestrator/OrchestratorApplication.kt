@@ -2,7 +2,9 @@ package com.ntgjvmagent.orchestrator
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 
+@EnableJpaAuditing(auditorAwareRef = "auditorAware")
 @SpringBootApplication(
     exclude = [
         org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration::class,
