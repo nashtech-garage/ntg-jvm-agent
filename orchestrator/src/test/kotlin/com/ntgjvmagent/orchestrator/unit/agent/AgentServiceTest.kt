@@ -13,7 +13,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 import kotlin.test.Test
@@ -154,17 +154,23 @@ class AgentServiceTest {
     private fun buildAgent(id: UUID = UUID.randomUUID()) =
         Agent(
             name = "Test Agent",
-            model = "gpt-4o-mini",
             description = "desc",
+            provider = "OpenAI",
+            baseUrl = "https://models.github.ai/inference",
+            apiKey = "fake-github-token",
+            chatCompletionsPath = "/v1/chat/completions",
+            model = "gpt-4o-mini",
+            embeddingModel = "openai/text-embedding-3-small",
+            embeddingsPath = "/embeddings",
+            topP = BigDecimal("1.0"),
             temperature = BigDecimal("0.7"),
             maxTokens = 2048,
-            topP = BigDecimal("1.0"),
             frequencyPenalty = BigDecimal("0.0"),
             presencePenalty = BigDecimal("0.0"),
         ).apply {
             this.active = true
             this.id = id
-            this.createdAt = OffsetDateTime.now()
+            this.createdAt = Instant.now()
         }
 
     private fun buildRequest(
@@ -182,5 +188,11 @@ class AgentServiceTest {
         active = true,
         provider = "openai",
         settings = mapOf("max_retries" to 3),
+        baseUrl = "https://models.github.ai/inference",
+        apiKey = "fake-github-token",
+        chatCompletionsPath = "/v1/chat/completions",
+        embeddingsPath = "/embeddings",
+        embeddingModel = "openai/text-embedding-3-small",
+        dimension = 1536,
     )
 }

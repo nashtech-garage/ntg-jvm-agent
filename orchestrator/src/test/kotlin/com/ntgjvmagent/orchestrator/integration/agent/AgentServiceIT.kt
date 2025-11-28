@@ -31,15 +31,21 @@ class AgentServiceIT
             active: Boolean = true,
         ) = AgentRequestDto(
             name = name,
-            model = "gpt-4o-mini",
             description = "integration test agent",
-            temperature = 0.7,
-            maxTokens = 2048,
-            topP = 1.0,
-            frequencyPenalty = 0.0,
-            presencePenalty = 0.0,
             active = active,
             provider = "openai",
+            baseUrl = "https://models.github.ai/inference",
+            apiKey = "fake-github-token",
+            chatCompletionsPath = "/v1/chat/completions",
+            model = "gpt-4o-mini",
+            embeddingModel = "openai/text-embedding-3-small",
+            dimension = 1536,
+            embeddingsPath = "/embeddings",
+            topP = 1.0,
+            temperature = 0.7,
+            maxTokens = 2048,
+            frequencyPenalty = 0.0,
+            presencePenalty = 0.0,
             settings = mapOf("max_retries" to 3),
         )
 
@@ -65,7 +71,20 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should fetch agent by id`() {
-            val saved = repo.save(Agent(name = "AgentGet", model = "gpt-4o-mini"))
+            val saved =
+                repo
+                    .save(
+                        Agent(
+                            name = "AgentGet",
+                            provider = "OpenAI",
+                            baseUrl = "https://models.github.ai/inference",
+                            apiKey = "fake-github-token",
+                            chatCompletionsPath = "/v1/chat/completions",
+                            model = "gpt-4o-mini",
+                            embeddingModel = "openai/text-embedding-3-small",
+                            embeddingsPath = "/embeddings",
+                        ),
+                    )
             val found = service.getById(saved.id!!)
 
             assertEquals(saved.id, found.id)
@@ -89,8 +108,30 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should return only active agents`() {
-            repo.save(Agent(name = "ActiveA", model = "gpt-4o-mini").apply { this.active = true })
-            repo.save(Agent(name = "InactiveB", model = "gpt-4o-mini").apply { this.active = false })
+            repo.save(
+                Agent(
+                    name = "ActiveA",
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
+                ).apply { this.active = true },
+            )
+            repo.save(
+                Agent(
+                    name = "InactiveB",
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
+                ).apply { this.active = false },
+            )
 
             val activeAgents = service.getAllActive()
 
@@ -104,7 +145,20 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should update agent successfully`() {
-            val saved = repo.save(Agent(name = "BeforeUpdate", model = "gpt-4o-mini"))
+            val saved =
+                repo
+                    .save(
+                        Agent(
+                            name = "BeforeUpdate",
+                            provider = "OpenAI",
+                            baseUrl = "https://models.github.ai/inference",
+                            apiKey = "fake-github-token",
+                            chatCompletionsPath = "/v1/chat/completions",
+                            model = "gpt-4o-mini",
+                            embeddingModel = "openai/text-embedding-3-small",
+                            embeddingsPath = "/embeddings",
+                        ),
+                    )
 
             val updateReq =
                 buildRequest(
@@ -137,7 +191,19 @@ class AgentServiceIT
         // ---------------------------
         @Test
         fun `should soft delete agent`() {
-            val saved = repo.save(Agent(name = "SoftDelete", model = "gpt-4o-mini"))
+            val saved =
+                repo.save(
+                    Agent(
+                        name = "SoftDelete",
+                        provider = "OpenAI",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "fake-github-token",
+                        chatCompletionsPath = "/v1/chat/completions",
+                        model = "gpt-4o-mini",
+                        embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
+                    ),
+                )
 
             service.softDelete(saved.id!!)
 

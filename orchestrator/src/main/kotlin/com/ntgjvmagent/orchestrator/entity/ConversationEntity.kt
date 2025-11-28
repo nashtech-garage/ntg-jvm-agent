@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 @Table(name = "conversation")
 data class ConversationEntity(
     @Column(columnDefinition = "TEXT")
-    val title: String,
+    var title: String,
     val username: String,
     @Column(name = "is_active")
     var isActive: Boolean = true,

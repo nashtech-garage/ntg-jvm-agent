@@ -23,11 +23,13 @@ class AgentTool(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var config: Map<String, Any>? = null,
+    @Column(name = "active", nullable = false)
+    var active: Boolean = true,
 ) : BaseEntity() {
     companion object {
         fun of(
             agent: Agent,
             tool: Tool,
-        ) = AgentTool(agent, tool)
+        ) = AgentTool(agent = agent, tool = tool)
     }
 }

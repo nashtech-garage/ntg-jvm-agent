@@ -1,12 +1,12 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.UUID
 
 data class ChatMessageResponseVm(
     val id: UUID,
     val content: String,
-    val createdAt: OffsetDateTime,
+    val createdAt: Instant,
     val type: Int,
     val medias: List<ChatMessageMediaVm>,
 )

@@ -7,6 +7,7 @@ export const Constants = {
   FAILED_TO_FETCH_CONVERSATIONS_MSG: 'Failed to fetch conversations',
   FAILED_TO_FETCH_USER_INFO_MSG: 'Failed to fetch user info',
   DELETE_CONVERSATION_SUCCESS_MSG: 'Deleted conversation successfully',
+  FAILED_TO_FETCH_AGENTS_MSG: 'Failed to fetch agents',
 };
 
 export const authPathname = ['/login', '/auth', '/api/auth'];

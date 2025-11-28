@@ -1,17 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import EditUserModal from '@/app/components/EditUserModal';
-import { User } from '@/app/models/user';
-
-interface UserPageDto {
-  users: User[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  lastPage: boolean;
-}
+import { useCallback, useEffect, useState } from 'react';
+import CreateUserModal from '@/app/components/Modal/CreateUserModal';
+import { User, UserPageDto } from '@/app/models/user';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -19,31 +10,30 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users?page=${page}&size=10`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data: UserPageDto = await response.json();
+      setUsers(data.users || []);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]); // page is included because it's used inside fetchUsers
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/users?page=${page}&size=10`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data: UserPageDto = await response.json();
-        setUsers(data.users || []);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
-  }, [page]);
+  }, [fetchUsers]);
 
   const handleStatusToggle = async (username: string) => {
     // Mock status toggle - replace with actual API call
@@ -75,7 +65,10 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+        >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -166,7 +159,7 @@ export default function UserManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.username} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -206,12 +199,7 @@ export default function UserManagement() {
                     >
                       {user.enabled ? 'Deactivate' : 'Activate'}
                     </button>
-                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium"
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setIsModalOpen(true);
-                      }}
-                    >
+                    <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                       Edit
                     </button>
                     <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
@@ -246,21 +234,14 @@ export default function UserManagement() {
         </button>
       </div>
 
-      {/* Edit User Modal */}
-      {selectedUser && (
-        <EditUserModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          user={selectedUser}
-          onSubmit={(updatedUser) => {
-            setUsers((prev) =>
-              prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-            );
-            setIsModalOpen(false);
-          }}
-        />
-      )}
-
+      <CreateUserModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onUserCreated={() => {
+          setPage(0);
+          fetchUsers();
+        }}
+      />
     </div>
   );
 }
