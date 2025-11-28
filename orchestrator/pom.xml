@@ -179,6 +179,11 @@
       <artifactId>hibernate-vector</artifactId>
       <version>6.6.33.Final</version>
     </dependency>
+    <dependency>
+      <groupId>io.hypersistence</groupId>
+      <artifactId>hypersistence-utils-hibernate-63</artifactId>
+      <version>3.8.1</version>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -288,7 +293,7 @@
         <artifactId>flyway-maven-plugin</artifactId>
         <version>11.14.0</version>
         <configuration>
-          <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent</url>
+          <url>jdbc:postgresql://localhost:5432/ntg_jvm_agent3</url>
           <user>admin</user>
           <password>admin</password>
           <schemas>

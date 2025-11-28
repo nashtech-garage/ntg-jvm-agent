@@ -8,6 +8,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.OffsetDateTime
+import org.hibernate.annotations.Type
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 
 @Entity
 @Table(name = "conversation_share")
@@ -23,5 +25,8 @@ data class ConversationShareEntity(
     var isExpired: Boolean = false,
     @Column(name = "expires_at")
     val expiresAt: OffsetDateTime? = null,
+    @Type(JsonBinaryType::class)
+    @Column(name = "shared_message_ids", columnDefinition = "JSONB")
+    val sharedMessageIds: List<String> = emptyList(), // JSONB array: ["uuid1", "uuid2", ...]
 ) : BaseEntity()
 

@@ -38,10 +38,13 @@ class ConversationShareService(
         }
 
         val shareToken = generateShareToken()
-
         val expiresAt = OffsetDateTime.now().plusDays(request.expiryDays.toLong())
 
-        // Create and save the share record
+        // Get current messages and save their IDs
+        val currentMessages = messageRepo.listMessageByConversationId(conversationId)
+        val messageIds = currentMessages.mapNotNull { it.id?.toString() }
+
+        // Create and save the share record with message IDs
         val conversationShare =
             ConversationShareEntity(
                 conversation = conversation,
@@ -49,6 +52,7 @@ class ConversationShareService(
                 shareToken = shareToken,
                 isExpired = false,
                 expiresAt = expiresAt,
+                sharedMessageIds = messageIds,
             )
 
         val savedShare = conversationShareRepo.save(conversationShare)
@@ -104,10 +108,19 @@ class ConversationShareService(
         }
 
         val conversation = share.conversation
-        val messages =
+
+        // Get shared message IDs from JSONB array
+        val sharedMessageIds: List<String> = share.sharedMessageIds
+
+        // Get messages only with saved IDs
+        val messages = if (sharedMessageIds.isNotEmpty()) {
             messageRepo
                 .listMessageByConversationId(conversation.id ?: UUID.randomUUID())
+                .filter { msg -> msg.id?.toString() in sharedMessageIds }
                 .map { ChatMessageMapper.toResponse(it) }
+        } else {
+            emptyList()
+        }
 
         return SharedConversationViewVm(
             id = conversation.id ?: UUID.randomUUID(),

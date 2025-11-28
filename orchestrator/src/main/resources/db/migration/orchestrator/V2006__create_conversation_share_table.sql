@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS conversation_share (
     share_token             VARCHAR(255) UNIQUE NOT NULL,
     is_expired              BOOLEAN DEFAULT FALSE,
     expires_at              TIMESTAMPTZ,
+    shared_message_ids      JSONB DEFAULT '[]'::JSONB,
     created_at              TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_conversation_share_conversation FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON DELETE CASCADE
