@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import EditUserModal from '@/app/components/EditUserModal';
 import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
