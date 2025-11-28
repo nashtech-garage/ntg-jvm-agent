@@ -46,7 +46,7 @@ project-root/
   |-- models/              # Data model definitions
   |-- types/               # TypeScript definitions
   |-- utils/               # Pure utilities (logging, css, fetcher, etc.)
-  |-- middleware.ts # Handle authorization or other global request handling
+  |-- middleware.ts        # Handle authorization or other global request handling
   |-- styles/              # Global styles (globals.css, Tailwind layers)
   |-- __mock__/            # Mock data for UI development or UT
 ```
