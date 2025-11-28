@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -138,5 +139,64 @@ class UserServiceTest {
         assertEquals(setOf(UserRoleEnum.ROLE_USER.roleName), result.roles)
         verify(userRepository, times(1)).save(any())
         verify(rolesRepository, times(1)).findByName(UserRoleEnum.ROLE_USER.roleName)
+    }
+
+    @Test
+    fun `deactivateUser should set enabled to false and return updated dto`() {
+        val username = "testuser"
+        val userId = UUID.randomUUID()
+
+        val existingUser = UserEntity(
+            id = userId,
+            username = username,
+            password = "password",
+            enabled = true,
+            name = "Test User",
+            email = "test@example.com",
+        )
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(existingUser))
+
+        val updatedUser = existingUser.copy(enabled = false)
+        `when`(userRepository.save(any())).thenReturn(updatedUser)
+
+        val result = userService.deactivateUser(username)
+
+        assertEquals(username, result.username)
+
+        val captor = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository, times(1)).save(captor.capture())
+        val savedEntity = captor.value
+        assertEquals(false, savedEntity.enabled)
+    }
+
+
+    @Test
+    fun `activateUser should set enabled to true and return updated dto`() {
+        val username = "disableduser"
+        val userId = UUID.randomUUID()
+
+        val existingUser = UserEntity(
+            id = userId,
+            username = username,
+            password = "password",
+            enabled = false,
+            name = "Disabled User",
+            email = "disabled@example.com",
+        )
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(existingUser))
+
+        val updatedUser = existingUser.copy(enabled = true)
+        `when`(userRepository.save(any())).thenReturn(updatedUser)
+
+        val result = userService.activateUser(username)
+
+        assertEquals(username, result.username)
+
+        val captor = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository, times(1)).save(captor.capture())
+        val savedEntity = captor.value
+        assertEquals(true, savedEntity.enabled)
     }
 }
