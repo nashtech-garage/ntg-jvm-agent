@@ -31,6 +31,7 @@ class ChatModelService(
     fun call(
         request: ChatRequestVm,
         history: List<String> = emptyList(),
+        summary: String = "",
     ): String? {
         val combinedPrompt =
             buildString {
@@ -39,8 +40,20 @@ class ChatModelService(
                 )
                 history.forEach { item ->
                     appendLine(item)
+                    if (summary.isNotBlank()) {
+                        appendLine("Conversation summary so far:")
+                        appendLine(summary)
+                        appendLine()
+                    }
+
+                    if (history.isNotEmpty()) {
+                        appendLine("Chat history:")
+                        history.forEach { item ->
+                            appendLine(item)
+                        }
+                        appendLine()
+                    }
                 }
-                appendLine("User: ${request.question}")
             }
 
         val model = dynamicModelService.getChatModel(request.agentId)
@@ -134,5 +147,29 @@ class ChatModelService(
             allCallbacks,
             allowedToolNames,
         )
+    }
+
+    fun createDynamicSummary(
+        agentId: UUID,
+        messagesToSummarize: List<String>,
+    ): String {
+        if (messagesToSummarize.isEmpty()) return ""
+
+        val joinedMessages = messagesToSummarize.joinToString("\n")
+
+        val promptText =
+            Constant.SUMMARY_UPDATE_PROMPT
+                .replace("{{latest_message}}", joinedMessages)
+
+        val prompt = Prompt(promptText)
+        val chatModel = dynamicModelService.getChatModel(agentId)
+        val chatClient = ChatClient.builder(chatModel).build()
+
+        val response =
+            chatClient
+                .prompt(prompt)
+                .call()
+
+        return response.content() ?: ""
     }
 }

@@ -9,7 +9,7 @@ interface SidebarProps {
   user: UserInfo;
 }
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar({ user }: Readonly<SidebarProps>) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
@@ -28,27 +28,69 @@ export default function Sidebar({ user }: SidebarProps) {
       href: '/admin',
       label: 'Dashboard',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-layout-dashboard-icon lucide-layout-dashboard"
+        >
+          <rect width="7" height="9" x="3" y="3" rx="1" />
+          <rect width="7" height="5" x="14" y="3" rx="1" />
+          <rect width="7" height="9" x="14" y="12" rx="1" />
+          <rect width="7" height="5" x="3" y="16" rx="1" />
+        </svg>
+      ),
+    },
+    {
+      href: '/admin/agents',
+      label: 'Agents',
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-hat-glasses-icon lucide-hat-glasses"
+        >
+          <path d="M14 18a2 2 0 0 0-4 0" />
+          <path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11" />
+          <path d="M2 11h20" />
+          <circle cx="17" cy="18" r="3" />
+          <circle cx="7" cy="18" r="3" />
         </svg>
       ),
     },
     {
       href: '/admin/users',
-      label: 'User Management',
+      label: 'Users',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-          />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="lucide lucide-users-icon lucide-users"
+        >
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <path d="M16 3.128a4 4 0 0 1 0 7.744" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <circle cx="9" cy="7" r="4" />
         </svg>
       ),
     },
@@ -113,7 +155,7 @@ export default function Sidebar({ user }: SidebarProps) {
         <div className="flex items-center justify-between">
           <h1
             className={`font-bold text-xl transition-opacity duration-300 ${
-              isOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'
+              isOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden hidden'
             }`}
           >
             Admin Portal
@@ -147,9 +189,11 @@ export default function Sidebar({ user }: SidebarProps) {
             key={item.href}
             href={item.href}
             className={`flex items-center px-4 py-3 text-sm hover:bg-gray-700 transition-all duration-200 group ${
-              pathname === item.href ? 'bg-gray-700 border-r-4 border-blue-500' : ''
+              pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
+                ? 'bg-gray-700 border-r-4 border-blue-500'
+                : ''
             }`}
-            title={!isOpen ? item.label : undefined}
+            title={isOpen ? undefined : item.label}
           >
             <div className="flex-shrink-0 mr-3">{item.icon}</div>
             <span
@@ -182,7 +226,7 @@ export default function Sidebar({ user }: SidebarProps) {
           className={`flex items-center w-full px-3 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors ${
             isOpen ? 'justify-start' : 'justify-center'
           }`}
-          title={!isOpen ? 'Logout' : undefined}
+          title={isOpen ? undefined : 'Logout'}
         >
           <svg
             className="w-4 h-4 flex-shrink-0"

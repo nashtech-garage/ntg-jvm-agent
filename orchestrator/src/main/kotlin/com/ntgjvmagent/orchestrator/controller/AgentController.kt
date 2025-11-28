@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
+import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
 import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
 import com.ntgjvmagent.orchestrator.service.AgentService
@@ -26,6 +27,11 @@ class AgentController(
     private val service: AgentService,
 ) {
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "List all agents")
+    fun getAll(): List<AgentListResponseDto> = service.getAll()
+
+    @GetMapping("/active")
     @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
     @Operation(summary = "List all active agents")
     fun getAllActive(): List<AgentResponseDto> = service.getAllActive()

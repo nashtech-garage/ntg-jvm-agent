@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.component
 
+import com.ntgjvmagent.orchestrator.utils.Utils
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.stereotype.Component
 
@@ -12,14 +13,7 @@ class FilteredToolCallbackProvider {
         if (allowedTools.isEmpty()) return emptyList()
 
         return callbacks.filter { cb ->
-            val toolName =
-                cb
-                    ?.toolDefinition
-                    ?.name()
-                    ?.takeIf { it.isNotBlank() }
-                    ?.substringAfterLast("_")
-                    ?.takeIf { it.isNotBlank() }
-
+            val toolName = Utils.getShortToolName(cb?.toolDefinition?.name())
             toolName in allowedTools
         }
     }

@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS conversation (
     title               TEXT,
     is_active           BOOLEAN DEFAULT TRUE,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_by          UUID REFERENCES users(id),
+    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_by          UUID REFERENCES users(id)
 );
 
 -- === Trigger to auto-update updated_at column ===
@@ -39,9 +41,10 @@ CREATE TABLE IF NOT EXISTS chat_message (
     content             TEXT,
     conversation_id     UUID NOT NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_by          UUID REFERENCES users(id),
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_by          UUID REFERENCES users(id),
     CONSTRAINT fk_chat_message_conversation FOREIGN KEY (conversation_id) REFERENCES conversation(id)
-
 );
 
 -- === Trigger to auto-update updated_at column ===

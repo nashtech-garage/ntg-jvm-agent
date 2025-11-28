@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import EditUserModal from '@/app/components/EditUserModal';
+import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
 import { User, UserPageDto } from '@/app/models/user';
 
@@ -15,7 +16,7 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/users?page=${page}&size=10`);
@@ -32,11 +33,11 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]); // page is included because it's used inside fetchUsers
 
   useEffect(() => {
     fetchUsers();
-  }, [page]);
+  }, [fetchUsers]);
 
   const handleStatusToggle = async (username: string) => {
     // Mock status toggle - replace with actual API call

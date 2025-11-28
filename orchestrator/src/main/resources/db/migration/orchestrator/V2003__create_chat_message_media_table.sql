@@ -4,14 +4,16 @@
 -- ====================================================================
 
 CREATE TABLE IF NOT EXISTS chat_message_media (
-	created_at timestamptz(6) NOT NULL,
-	file_size int8 NOT NULL DEFAULT 0,
-	updated_at timestamptz(6) NULL,
-	chat_message_id uuid NOT NULL,
 	id uuid NOT NULL,
-	content_type varchar(255) NULL,
+	chat_message_id uuid NOT NULL,
 	file_name varchar(255) NULL,
+	file_size int8 NOT NULL DEFAULT 0,
+	content_type varchar(255) NULL,
 	"data" bytea NULL,
+	created_at timestamptz(6) NOT NULL,
+	created_by UUID REFERENCES users(id),
+	updated_at timestamptz(6) NULL,
+  updated_by UUID REFERENCES users(id),
 	CONSTRAINT chat_message_media_pkey PRIMARY KEY (id)
 );
 
