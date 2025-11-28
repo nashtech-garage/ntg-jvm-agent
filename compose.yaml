@@ -87,7 +87,7 @@ services:
     build:
       context: ./mcp-server
       dockerfile: Dockerfile
-    image: mcp-server:latest
+    image: ghcr.io/nashtech-garage/ntg-jvm-agent-mcp-server:latest
     container_name: mcp-server
     environment:
       SERVER_PORT: 9003
@@ -109,7 +109,7 @@ services:
     build:
       context: ./authorization-server
       dockerfile: Dockerfile
-    image: auth-server:latest
+    image: ghcr.io/nashtech-garage/ntg-jvm-agent-authorization-server:latest
     container_name: auth-server
     depends_on:
       - postgres
@@ -128,7 +128,7 @@ services:
     build:
       context: ./orchestrator
       dockerfile: Dockerfile
-    image: orchestrator:latest
+    image: ghcr.io/nashtech-garage/ntg-jvm-agent-orchestrator:latest
     container_name: orchestrator
     depends_on:
       - postgres
@@ -164,7 +164,7 @@ services:
     build:
       context: ./chat-ui
       dockerfile: Dockerfile
-    image: chat-ui:latest
+    image: ghcr.io/nashtech-garage/ntg-jvm-agent-chat-ui:latest
     container_name: chat-ui
     ports:
       - "3000:3000"
@@ -189,7 +189,7 @@ services:
     build:
       context: ./admin-ui
       dockerfile: Dockerfile
-    image: admin-ui:latest
+    image: ghcr.io/nashtech-garage/ntg-jvm-agent-admin-ui:latest
     container_name: admin-ui
     ports:
       - "3001:3001"
