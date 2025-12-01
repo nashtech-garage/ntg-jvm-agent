@@ -1,5 +1,5 @@
 import { AUTH_SERVER_URL } from '@/utils/utils';
-import { decodeToken, setTokenIntoCookie } from '@/utils/serverUtils';
+import { decodeToken, setTokenIntoCookie } from '@/utils/server-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {

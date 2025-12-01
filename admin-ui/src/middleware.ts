@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getRefreshToken, setTokenIntoCookie } from '@/utils/serverUtils';
+import { getRefreshToken, setTokenIntoCookie } from '@/utils/server-utils';
 
 export async function middleware(request: NextRequest) {
   // Check if user is accessing admin routes

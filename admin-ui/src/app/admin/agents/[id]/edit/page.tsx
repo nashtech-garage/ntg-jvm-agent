@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import AgentForm from '@/components/agent/AgentForm';
+import AgentForm from '@/components/agent/agent-form';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, AgentFormData } from '@/types/agent';
 

@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { Plus, Edit } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail } from '@/types/agent';
 

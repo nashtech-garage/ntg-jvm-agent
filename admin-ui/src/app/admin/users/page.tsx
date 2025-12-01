@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import CreateUserModal from '@/components/modal/CreateUserModal';
+import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
 
 export default function UserManagement() {

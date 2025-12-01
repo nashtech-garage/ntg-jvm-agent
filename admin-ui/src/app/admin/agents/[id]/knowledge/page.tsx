@@ -4,8 +4,8 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/Table';
+} from '@/components/ui/table';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, KnowledgeListData } from '@/types/agent';
 

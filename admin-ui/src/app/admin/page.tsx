@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { UserInfo } from '@/models/token';
-import AddKnowledge from '@/components/AddKnowledge';
+import AddKnowledge from '@/components/add-knowledge';
 
 interface DashboardStats {
   totalUsers: number;

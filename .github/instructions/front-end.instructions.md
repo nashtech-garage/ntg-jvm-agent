@@ -35,7 +35,7 @@ project-root/
       |-- external-script/ # Define external embedded scripts (<Script />)
       |-- <other-file>/    # Specific UI components in page (auth, admin, chat, etc.)
   |-- constants/           # Static configuration
-      |-- siteConfig.ts    # Centralize site configuration / environment
+      |-- site-config.ts    # Centralize site configuration / environment
       |-- url.ts           # Include all path or URL in both internal and external links
       |-- <other-file>.ts  # All left constants (fixed value, hardcode string, enum, etc.)
   |-- contexts/            # React context providers
@@ -53,11 +53,13 @@ project-root/
 
 ### Naming Conventions
 
-- Components: PascalCase (e.g., `UserProfile.tsx` or `AuthContext.tsx`).
-- Non-component files: camelCase (e.g., `chatHistory.service.ts`, `menuConfig.ts`).
-- Directories: kebab-case.
+- Directories: kebab-case (e.g., `user-modal`, `site-config.ts` or `button-group.tsx`).
+- Normal files: kebab-case (e.g., `site-config.ts` or `button-group.tsx`)
+- Component name: PascalCase (e.g., `Button` or `ButtonGroup`).
+- Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`)
 - Route segments: kebab-case folders; use `(group)` folders only when intentionally grouping routes.
-- Context/providers end with `Provider`; hooks start with `use`; stores end with `Store`.
+- Contexts/providers: file use PascalCase (e.g., `AuthContext.tsx`) and end with `Provider`.
+- Hooks start with `use`, stores: end with `Store`.
 
 ## Implementation Guidelines
 

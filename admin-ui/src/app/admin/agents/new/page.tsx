@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import AgentForm from '@/components/agent/AgentForm';
+import AgentForm from '@/components/agent/agent-form';
 import { AgentFormData } from '@/types/agent';
 
 export default function AgentCreatePage() {

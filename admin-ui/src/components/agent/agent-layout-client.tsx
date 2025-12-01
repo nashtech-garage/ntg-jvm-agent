@@ -3,8 +3,8 @@
 import React, { ReactNode } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/utils/fetcher';
-import AgentTabs from '@/components/agent/AgentTabs';
-import TestAgentPanel from '@/components/agent/TestAgentPanel';
+import AgentTabs from '@/components/agent/agent-tabs';
+import TestAgentPanel from '@/components/agent/test-agent-panel';
 import { AgentContext } from '@/contexts/AgentContext';
 
 interface AgentLayoutClientProps {
