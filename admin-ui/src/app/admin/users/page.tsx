@@ -36,13 +36,6 @@ export default function UserManagement() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleStatusToggle = async (username: string) => {
-    // Mock status toggle - replace with actual API call
-    setUsers((prev) =>
-      prev.map((user) => (user.username === username ? { ...user, enabled: !user.enabled } : user))
-    );
-  };
-
   const nextPage = () => {
     if (page < totalPages - 1) setPage((prev) => prev + 1);
   };
