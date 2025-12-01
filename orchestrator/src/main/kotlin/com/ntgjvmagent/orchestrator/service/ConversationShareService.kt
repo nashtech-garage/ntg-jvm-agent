@@ -24,6 +24,7 @@ class ConversationShareService(
     companion object {
         private const val SHARE_TOKEN_LENGTH = 32
     }
+
     @Transactional
     fun shareConversation(
         conversationId: UUID,
