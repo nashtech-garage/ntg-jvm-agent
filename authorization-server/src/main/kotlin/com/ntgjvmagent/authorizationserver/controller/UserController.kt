@@ -43,6 +43,7 @@ class UserController(
     }
 
     @PutMapping("/{username}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     fun deactivateUser(
         @PathVariable username: String,
     ): ResponseEntity<UserDto> {
@@ -51,6 +52,7 @@ class UserController(
     }
 
     @PutMapping("/{username}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     fun activateUser(
         @PathVariable username: String,
     ): ResponseEntity<UserDto> {
