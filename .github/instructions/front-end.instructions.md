@@ -55,10 +55,10 @@ project-root/
 
 - Directories: kebab-case (e.g., `user-modal`, `site-config.ts` or `button-group.tsx`).
 - Normal files: kebab-case (e.g., `site-config.ts` or `button-group.tsx`)
-- Component name: PascalCase (e.g., `Button` or `ButtonGroup`).
-- Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`)
 - Route segments: kebab-case folders; use `(group)` folders only when intentionally grouping routes.
-- Contexts/providers: file use PascalCase (e.g., `AuthContext.tsx`) and end with `Provider`.
+- Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`)
+- Component name: PascalCase (e.g., `Button` or `ButtonGroup`).
+- Use `PascalCase` for the file name (e.g., `AuthContext.tsx`). The provider component should be named with a `Provider` suffix (e.g., `AuthProvider`).
 - Hooks start with `use`, stores: end with `Store`.
 
 ## Implementation Guidelines
@@ -70,6 +70,7 @@ project-root/
 
 - **Functional Components & Hooks:** Prefer **functional components with React Hooks**. Avoid class components unless explicitly for error boundaries.
 - **Single Responsibility:** Each component should ideally have one primary responsibility. **Components should be kept small and focused.**
+- **Type/Interface Naming:** Use `PascalCase` for all `type` and `interface` definitions (e.g., `UserProfileProps`, `ButtonProps`).
 - **Component Naming:** Use `PascalCase` for all component names (e.g., `MyButton`, `UserAvatar`).
 - **Props:**
   - Use `camelCase` for prop names.
@@ -78,12 +79,13 @@ project-root/
 - **Immutability:** Never mutate props or state directly. Always create new objects or arrays for updates.
 - **Fragments:** Use `<>` or `React.Fragment` to avoid unnecessary DOM wrapper elements.
 - **Custom Hooks:** Extract reusable stateful logic into **custom hooks** (e.g., `useDebounce`, `useLocalStorage`).
-- **UI Components:** Use [@radix-ui/*](https://www.radix-ui.com/themes/docs/overview/getting-started) for building UI components to ensure consistency and accessibility.
+- **UI Components:** Use [Shadcn UI](https://ui.shadcn.com) for building UI components to ensure consistency and accessibility. It provides pre-styled components by adding a styling layer on top of Radix UI with Tailwind CSS.
 
 ### State Management
 
 - **Local State:** Use `useState` for component-level state.
 - **Global State:** For global or shared state, prefer **React Context API** or a dedicated state management library (Zustand). Avoid prop drilling.
+- **Client-Side Data Fetching:** Use a hook-based library like **SWR** for fetching, caching, and revalidating data on the client. Centralize fetcher functions in `utils/` or `services/`.
 
 ### API routes
 
