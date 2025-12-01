@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ChatResult from '@/app/components/ChatResult';
-import { ChatResponse } from '@/app/models/chat-response';
+import { ChatMessage } from '@/app/models/chat-message';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ interface SharedConversation {
   title: string;
   createdAt: string;
   sharedByUsername: string;
-  messages: any[];
+  messages: ChatMessage[];
 }
 
 export default function SharedConversationPage() {
@@ -27,16 +27,16 @@ export default function SharedConversationPage() {
       try {
         const res = await fetch(`/api/chat/shared/${shareToken}`);
         if (!res.ok) {
-          const error = await res.json();
-          toast.error(error.error || 'Failed to load shared conversation');
+          const errorData = await res.json() as { error?: string };
+          toast.error(errorData.error || 'Failed to load shared conversation');
           setIsLoading(false);
           return;
         }
 
-        const data = await res.json();
+        const data = await res.json() as SharedConversation;
         setConversation(data);
       } catch (error) {
-        toast.error(`Error loading conversation: ${error}`);
+         toast.error(`Error loading conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsLoading(false);
       }
