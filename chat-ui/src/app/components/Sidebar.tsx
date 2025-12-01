@@ -100,10 +100,11 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST' });
       router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
+      toast.error('Logout failed');
     }
   };
 
