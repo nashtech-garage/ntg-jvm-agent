@@ -3,8 +3,8 @@ import { ORCHESTRATOR_URL } from '@/app/utils/server-utils';
 
 const baseUrl = `${ORCHESTRATOR_URL}/api/share/shared-conversations`;
 
-export async function GET(req: Request, { params }: { params: { shareToken: string } }) {
-  const shareToken = params.shareToken;
+export async function GET(req: Request, { params }: { params: Promise<{ shareToken: string }> }) {
+  const { shareToken } = await params;
   if (!shareToken) {
     return NextResponse.json({ error: 'Share token is required' }, { status: 400 });
   }

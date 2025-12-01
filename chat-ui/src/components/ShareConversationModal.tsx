@@ -68,7 +68,7 @@ export default function ShareConversationModal({
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4">Share Conversation</h2>
         <p className="text-gray-600 mb-4">
-          Share "<strong>{conversationTitle}</strong>" with others
+          Share &quot;<strong>{conversationTitle}</strong>&quot; with others
         </p>
 
         {shareUrl ? (
