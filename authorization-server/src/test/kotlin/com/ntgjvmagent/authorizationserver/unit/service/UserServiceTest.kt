@@ -26,6 +26,9 @@ import org.springframework.data.domain.PageRequest
 import java.util.Optional
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.mockito.Mockito.never
+
 
 @ExtendWith(MockitoExtension::class)
 class UserServiceTest {
@@ -200,4 +203,21 @@ class UserServiceTest {
         val savedEntity = captor.value
         assertEquals(true, savedEntity.enabled)
     }
+
+    @Test
+    fun `deactivateUser should throw exception when user does not exist`() {
+        val username = "non_existing_user"
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
+
+        val exception = assertThrows(RuntimeException::class.java) {
+            userService.deactivateUser(username)
+        }
+
+        assertEquals("User '$username' not found", exception.message)
+        verify(userRepository, times(1)).findUserByUserName(username)
+        verify(userRepository, never()).save(any())
+    }
+
+
 }
