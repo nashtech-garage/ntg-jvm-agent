@@ -6,7 +6,7 @@ import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
-import com.ntgjvmagent.orchestrator.service.AgentToolAssignmentService
+import com.ntgjvmagent.orchestrator.service.AgentToolService
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.assertThrows
@@ -24,7 +24,7 @@ class AgentToolAssignmentServiceIT
         private val agentRepository: AgentRepository,
         private val toolRepository: ToolRepository,
         private val agentToolRepository: AgentToolRepository,
-        private val agentToolAssignmentService: AgentToolAssignmentService,
+        private val agentToolAssignmentService: AgentToolService,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var activeTool: Tool
@@ -39,7 +39,19 @@ class AgentToolAssignmentServiceIT
             toolRepository.flush()
             agentRepository.flush()
 
-            agent = agentRepository.save(Agent(name = "Agent Smith ${UUID.randomUUID()}", model = "T-800"))
+            agent =
+                agentRepository.save(
+                    Agent(
+                        name = "Agent Smith ${UUID.randomUUID()}",
+                        provider = "OpenAI",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "fake-github-token",
+                        chatCompletionsPath = "/v1/chat/completions",
+                        model = "T-800",
+                        embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
+                    ),
+                )
             activeTool = toolRepository.save(Tool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })
             inactiveTool =
                 toolRepository.save(Tool(name = "Inactive Gadget ${UUID.randomUUID()}").apply { active = false })

@@ -25,14 +25,21 @@ class AgentControllerIT
             val request =
                 AgentRequestDto(
                     name = "API Agent",
-                    model = "gpt-4o-mini",
                     description = "Integration test agent",
+                    active = true,
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    dimension = 1536,
+                    embeddingsPath = "/embeddings",
+                    topP = 1.0,
                     temperature = 0.7,
                     maxTokens = 2048,
-                    topP = 1.0,
                     frequencyPenalty = 0.0,
                     presencePenalty = 0.0,
-                    active = true,
                 )
 
             val createResult =

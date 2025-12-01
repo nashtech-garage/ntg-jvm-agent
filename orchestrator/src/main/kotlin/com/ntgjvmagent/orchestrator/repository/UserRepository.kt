@@ -1,9 +1,7 @@
 package com.ntgjvmagent.orchestrator.repository
 
-import com.ntgjvmagent.orchestrator.entity.UserEntity
+import com.ntgjvmagent.orchestrator.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
-interface UserRepository : JpaRepository<UserEntity, UUID> {
-    fun findByUsername(username: String): UserEntity?
-}
+interface UserRepository : JpaRepository<User, UUID>

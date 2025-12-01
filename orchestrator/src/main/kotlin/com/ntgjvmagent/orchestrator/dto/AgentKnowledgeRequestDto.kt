@@ -7,6 +7,5 @@ data class AgentKnowledgeRequestDto(
     val sourceType: String? = null,
     val sourceUri: String? = null,
     val metadata: Map<String, Any>? = null,
-    val embeddingModel: String? = null,
     val active: Boolean = true,
 )

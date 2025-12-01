@@ -15,8 +15,8 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
-import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
@@ -25,6 +25,7 @@ class ConversationService(
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
     private val messageMediaRepo: ChatMessageMediaRepository,
+    private val historyLimit: Int = 5,
 ) {
     @Transactional
     fun createConversation(
@@ -54,7 +55,7 @@ class ConversationService(
         chatReq: ChatRequestVm,
         username: String,
     ): UUID {
-        val titleSummarize = this.chatModelService.createSummarize(chatReq.question)
+        val titleSummarize = this.chatModelService.createSummarize(chatReq.agentId, chatReq.question)
         val conversation =
             ConversationEntity(
                 title = titleSummarize ?: chatReq.question,
@@ -81,7 +82,9 @@ class ConversationService(
                 type = Constant.QUESTION_TYPE,
             )
         val questionEntity = this.messageRepo.save(questionMsg)
+
         saveMessageMedia(request, questionEntity)
+
         val conversationResponse: ConversationResponseVm =
             ConversationResponseVmImpl(
                 conversationId,
@@ -94,36 +97,25 @@ class ConversationService(
                 .listMessageByConversationId(conversationId)
                 .map { ChatMessageMapper.toHistoryFormat(it) }
 
-        val answer: String? =
+        val splitIndex = history.size - historyLimit
+
+        val (olderMessages, recentMessages) =
+            if (splitIndex > 0) {
+                history.partition { history.indexOf(it) < splitIndex }
+            } else {
+                Pair(emptyList(), history)
+            }
+
+        val summary = chatModelService.createDynamicSummary(request.agentId, olderMessages)
+
+        val answer =
             chatModelService.call(
                 request = request,
-                history = history,
+                history = recentMessages,
+                summary = summary,
             )
 
-        // Only save reply if it has actual reply
-        answer?.let {
-            val answerMsg =
-                ChatMessageEntity(
-                    content = answer,
-                    conversation = conversation,
-                    type = Constant.ANSWER_TYPE,
-                )
-            val answerMsgEntity = this.messageRepo.save(answerMsg)
-            return ChatResponseVm(
-                conversationResponse,
-                ChatMessageResponseVm(
-                    answerMsgEntity.id ?: UUID.randomUUID(),
-                    answerMsgEntity.content,
-                    answerMsgEntity.createdAt!!,
-                    type = Constant.ANSWER_TYPE,
-                    medias = emptyList(),
-                ),
-            )
-        }
-        return ChatResponseVm(
-            conversationResponse,
-            null,
-        )
+        return buildChatResponse(answer, conversationResponse, conversation)
     }
 
     @Transactional
@@ -132,6 +124,7 @@ class ConversationService(
             this.conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
+
         conversation.isActive = false
         this.conversationRepo.save(conversation)
     }
@@ -182,4 +175,36 @@ class ConversationService(
             }
         messageMediaRepo.saveAll(mediaEntities)
     }
+
+    private fun buildChatResponse(
+        answer: String?,
+        conversationResponse: ConversationResponseVm,
+        conversation: ConversationEntity,
+    ): ChatResponseVm =
+        // Only save reply if it has actual reply
+        if (answer != null) {
+            val answerEntity =
+                messageRepo.save(
+                    ChatMessageEntity(
+                        content = answer,
+                        conversation = conversation,
+                        type = Constant.ANSWER_TYPE,
+                    ),
+                )
+            ChatResponseVm(
+                conversationResponse,
+                ChatMessageResponseVm(
+                    answerEntity.id ?: UUID.randomUUID(),
+                    answerEntity.content,
+                    answerEntity.createdAt!!,
+                    type = Constant.ANSWER_TYPE,
+                    medias = emptyList(),
+                ),
+            )
+        } else {
+            ChatResponseVm(
+                conversationResponse,
+                null,
+            )
+        }
 }

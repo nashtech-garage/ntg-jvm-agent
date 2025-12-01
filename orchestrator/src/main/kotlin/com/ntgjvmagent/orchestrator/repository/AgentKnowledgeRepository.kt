@@ -7,6 +7,8 @@ import java.util.UUID
 
 @Repository
 interface AgentKnowledgeRepository : JpaRepository<AgentKnowledge, UUID> {
+    fun findAllByAgentId(agentId: UUID): List<AgentKnowledge>
+
     fun findAllByAgentIdAndActiveTrue(agentId: UUID): List<AgentKnowledge>
 
     fun findByIdAndAgentId(

@@ -1,11 +1,9 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.config.VectorEmbeddingProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
-import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
@@ -17,7 +15,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -26,14 +23,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 
-@Import(TestEmbeddingConfig::class)
 class KnowledgeChunkControllerIT
     @Autowired
     constructor(
         private val chunkRepo: KnowledgeChunkRepository,
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val agentRepo: AgentRepository,
-        private val properties: VectorEmbeddingProperties,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
@@ -51,7 +46,13 @@ class KnowledgeChunkControllerIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
+                        provider = "OpenAI",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "fake-github-token",
+                        chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4",
+                        embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
 
@@ -86,7 +87,6 @@ class KnowledgeChunkControllerIT
             val persisted = chunkRepo.findAll()
             assertEquals(1, persisted.size)
             assertEquals("Test chunk", persisted[0].content)
-            assertEquals(properties.embeddingDimension, persisted[0].embedding.size)
         }
 
         @Test
@@ -99,7 +99,6 @@ class KnowledgeChunkControllerIT
                         sourceType = "pdf",
                         sourceUri = "unit-test://file.pdf",
                         metadata = mapOf("createdBy" to "integration-test"),
-                        embeddingModel = "mock-embedding",
                     ),
                 )
             val knowledgeId = knowledge.id!!

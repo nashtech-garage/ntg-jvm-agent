@@ -3,7 +3,6 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
-import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
@@ -12,10 +11,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import kotlin.test.Test
 
-@Import(TestEmbeddingConfig::class)
 class KnowledgeChunkServiceIT
     @Autowired
     constructor(
@@ -40,7 +37,13 @@ class KnowledgeChunkServiceIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
+                        provider = "OpenAI",
+                        baseUrl = "https://models.github.ai/inference",
+                        apiKey = "fake-github-token",
+                        chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4",
+                        embeddingModel = "openai/text-embedding-3-small",
+                        embeddingsPath = "/embeddings",
                     ),
                 )
 
@@ -59,9 +62,9 @@ class KnowledgeChunkServiceIT
             val chunk = chunkService.addChunk(agent.id!!, knowledge.id!!, content)
 
             val persisted = chunkRepo.findById(chunk.id).orElseThrow()
-
+            val embedding = persisted.embedding768 ?: persisted.embedding1536
             assertEquals(content, persisted.content)
-            assertNotNull(persisted.embedding)
+            assertNotNull(embedding)
         }
 
         @Test

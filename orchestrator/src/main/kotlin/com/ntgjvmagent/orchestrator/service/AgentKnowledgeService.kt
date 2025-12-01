@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeListResponseDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
@@ -17,8 +18,8 @@ class AgentKnowledgeService(
     private val agentRepo: AgentRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getByAgent(agentId: UUID): List<AgentKnowledgeResponseDto> =
-        repo.findAllByAgentIdAndActiveTrue(agentId).map(AgentKnowledgeMapper::toResponse)
+    fun getByAgent(agentId: UUID): List<AgentKnowledgeListResponseDto> =
+        repo.findAllByAgentId(agentId).map(AgentKnowledgeMapper::toListResponse)
 
     @Transactional(readOnly = true)
     fun getOneForAgent(
@@ -66,7 +67,6 @@ class AgentKnowledgeService(
             sourceType = request.sourceType
             sourceUri = request.sourceUri
             metadata = request.metadata
-            embeddingModel = request.embeddingModel
             active = request.active
         }
 

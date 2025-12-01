@@ -23,7 +23,10 @@ class KnowledgeChunk(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var metadata: Map<String, Any>? = null,
-    @Column(name = "embedding")
+    @Column(name = "embedding_768")
     @JdbcTypeCode(SqlTypes.VECTOR)
-    var embedding: FloatArray,
+    var embedding768: FloatArray?,
+    @Column(name = "embedding_1536")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    var embedding1536: FloatArray?,
 ) : BaseEntity()

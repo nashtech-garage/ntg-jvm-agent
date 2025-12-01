@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/app/components/Modal/CreateUserModal';
 import { User, UserPageDto } from '@/app/models/user';
 import { Toaster, toast } from 'react-hot-toast';
@@ -13,7 +13,7 @@ export default function UserManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/users?page=${page}&size=10`);
@@ -30,11 +30,11 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]); // page is included because it's used inside fetchUsers
 
   useEffect(() => {
     fetchUsers();
-  }, [page]);
+  }, [fetchUsers]);
 
   const handleStatusToggle = async (username: string) => {
     // Mock status toggle - replace with actual API call

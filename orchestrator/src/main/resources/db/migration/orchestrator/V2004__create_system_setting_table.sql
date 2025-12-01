@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS system_setting (
     user_registration   BOOLEAN NOT NULL,
     email_verification  BOOLEAN NOT NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_by          UUID REFERENCES users(id),
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_by          UUID REFERENCES users(id),
     CONSTRAINT system_setting_singleton CHECK (id = '67078936-185a-43f7-b36c-03b3e7aff4f0')
 );
 

@@ -23,8 +23,14 @@ class AgentRepositoryIT
             val agent =
                 Agent(
                     name = "Repo Agent",
-                    model = "gpt-4o-mini",
                     description = "Repository test",
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
                     temperature = BigDecimal("0.8"),
                 )
 
@@ -39,8 +45,30 @@ class AgentRepositoryIT
         @Test
         @DisplayName("should find all agents")
         fun shouldFindAllAgents() {
-            repo.save(Agent(name = "Agent 1", model = "gpt-4o-mini"))
-            repo.save(Agent(name = "Agent 2", model = "gpt-4o-mini"))
+            repo.save(
+                Agent(
+                    name = "Agent 1",
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
+                ),
+            )
+            repo.save(
+                Agent(
+                    name = "Agent 2",
+                    provider = "OpenAI",
+                    baseUrl = "https://models.github.ai/inference",
+                    apiKey = "fake-github-token",
+                    chatCompletionsPath = "/v1/chat/completions",
+                    model = "gpt-4o-mini",
+                    embeddingModel = "openai/text-embedding-3-small",
+                    embeddingsPath = "/embeddings",
+                ),
+            )
 
             val all = repo.findAll()
             assertThat(all).hasSizeGreaterThanOrEqualTo(2)
