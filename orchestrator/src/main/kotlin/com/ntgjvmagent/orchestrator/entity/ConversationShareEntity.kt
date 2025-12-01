@@ -1,15 +1,15 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import java.time.OffsetDateTime
 import org.hibernate.annotations.Type
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import java.time.OffsetDateTime
 
 @Entity
 @Table(name = "conversation_share")
@@ -29,4 +29,3 @@ data class ConversationShareEntity(
     @Column(name = "shared_message_ids", columnDefinition = "JSONB")
     val sharedMessageIds: List<String> = emptyList(), // JSONB array: ["uuid1", "uuid2", ...]
 ) : BaseEntity()
-

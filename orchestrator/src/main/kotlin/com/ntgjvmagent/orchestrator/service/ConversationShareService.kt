@@ -7,7 +7,6 @@ import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationShareRepository
-import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationShareResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ShareConversationRequest
 import com.ntgjvmagent.orchestrator.viewmodel.SharedConversationViewVm
@@ -22,6 +21,9 @@ class ConversationShareService(
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
 ) {
+    companion object {
+        private const val SHARE_TOKEN_LENGTH = 32
+    }
     @Transactional
     fun shareConversation(
         conversationId: UUID,
@@ -113,14 +115,15 @@ class ConversationShareService(
         val sharedMessageIds: List<String> = share.sharedMessageIds
 
         // Get messages only with saved IDs
-        val messages = if (sharedMessageIds.isNotEmpty()) {
-            messageRepo
-                .listMessageByConversationId(conversation.id ?: UUID.randomUUID())
-                .filter { msg -> msg.id?.toString() in sharedMessageIds }
-                .map { ChatMessageMapper.toResponse(it) }
-        } else {
-            emptyList()
-        }
+        val messages =
+            if (sharedMessageIds.isNotEmpty()) {
+                messageRepo
+                    .listMessageByConversationId(conversation.id ?: UUID.randomUUID())
+                    .filter { msg -> msg.id?.toString() in sharedMessageIds }
+                    .map { ChatMessageMapper.toResponse(it) }
+            } else {
+                emptyList()
+            }
 
         return SharedConversationViewVm(
             id = conversation.id ?: UUID.randomUUID(),
@@ -163,7 +166,6 @@ class ConversationShareService(
 
     private fun generateShareToken(): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        return (1..32).map { allowedChars.random() }.joinToString("")
+        return (1..SHARE_TOKEN_LENGTH).map { allowedChars.random() }.joinToString("")
     }
 }
-

@@ -45,4 +45,3 @@ data class SharedConversationViewVm(
     val sharedByUsername: String,
     val messages: List<ChatMessageResponseVm>,
 )
-
