@@ -163,6 +163,7 @@ class UserServiceTest {
         val result = userService.deactivateUser(username)
 
         assertEquals(username, result.username)
+        assertEquals(false, result.enabled)
 
         val captor = ArgumentCaptor.forClass(UserEntity::class.java)
         verify(userRepository, times(1)).save(captor.capture())
