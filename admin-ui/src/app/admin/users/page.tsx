@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/components/modal/create-user-modal';
-import { User, UserPageDto } from '@/models/user';
 import { User, UserPageDto } from '@/app/models/user';
 import { Toaster, toast } from 'react-hot-toast';
 
