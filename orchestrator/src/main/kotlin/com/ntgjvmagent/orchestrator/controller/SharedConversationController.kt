@@ -85,4 +85,3 @@ class SharedConversationController(
         return ResponseEntity.ok(revokedShare)
     }
 }
-
