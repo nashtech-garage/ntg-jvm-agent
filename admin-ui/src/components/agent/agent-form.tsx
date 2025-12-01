@@ -28,7 +28,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-import { AgentFormParams } from '@/app/types/agent';
+import { AgentFormParams } from '@/types/agent';
 
 import type * as monaco from 'monaco-editor';
 import dynamic from 'next/dynamic';

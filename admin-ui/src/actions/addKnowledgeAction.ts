@@ -1,8 +1,8 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { KnowledgeInput, KnowledgeResponse } from '../models/knowledge';
-import { checkFileType, isPDFFile, isValidPDFFile } from '../utils/utils';
+import { KnowledgeInput, KnowledgeResponse } from '@/models/knowledge';
+import { checkFileType, isPDFFile, isValidPDFFile } from '@/utils/utils';
 
 export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeResponse> {
   const file = formData?.knowledge?.[0];

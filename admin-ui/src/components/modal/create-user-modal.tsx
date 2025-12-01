@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CreateUserRequest } from '@/app/models/user';
+import { CreateUserRequest } from '@/models/user';
 import { X, Loader } from 'lucide-react';
 
 const createUserSchema = z.object({

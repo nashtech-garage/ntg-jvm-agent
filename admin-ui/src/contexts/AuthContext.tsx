@@ -9,7 +9,7 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
-import { UserInfo, TokenInfo } from '../models/token';
+import { UserInfo, TokenInfo } from '@/models/token';
 
 interface AuthContextType {
   user: UserInfo | null;

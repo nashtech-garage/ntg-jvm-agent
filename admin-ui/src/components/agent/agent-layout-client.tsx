@@ -2,10 +2,10 @@
 
 import React, { ReactNode } from 'react';
 import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
-import AgentTabs from '@/app/components/agent/AgentTabs';
-import TestAgentPanel from '@/app/components/agent/TestAgentPanel';
-import { AgentContext } from '@/app/contexts/AgentContext';
+import { fetcher } from '@/utils/fetcher';
+import AgentTabs from '@/components/agent/agent-tabs';
+import TestAgentPanel from '@/components/agent/test-agent-panel';
+import { AgentContext } from '@/contexts/AgentContext';
 
 interface AgentLayoutClientProps {
   id: string;

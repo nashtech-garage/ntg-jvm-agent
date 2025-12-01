@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import './globals.css';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'NTG Admin Portal',

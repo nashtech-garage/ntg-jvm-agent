@@ -8,7 +8,7 @@ data class AgentKnowledgeListResponseDto(
     val type: String?,
     val availableTo: String,
     val usage: String?,
-    val lastModifiedBy: String,
-    val lastModifiedWhen: String,
+    val lastModifiedBy: String?,
+    val lastModifiedWhen: String?,
     val status: String,
 )
