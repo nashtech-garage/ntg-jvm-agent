@@ -58,7 +58,7 @@ project-root/
 - Route segments: kebab-case folders; use `(group)` folders only when intentionally grouping routes.
 - Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`)
 - Component name: PascalCase (e.g., `Button` or `ButtonGroup`).
-- Use `PascalCase` for the file name (e.g., `AuthContext.tsx`). The provider component should be named with a `Provider` suffix (e.g., `AuthProvider`).
+- Contexts/providers: end with `Provider` (e.g., `AuthProvider`).
 - Hooks start with `use`, stores: end with `Store`.
 
 ## Implementation Guidelines
