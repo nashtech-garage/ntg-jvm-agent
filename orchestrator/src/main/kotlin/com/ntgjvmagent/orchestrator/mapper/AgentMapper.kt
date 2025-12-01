@@ -56,7 +56,7 @@ object AgentMapper {
             name = agent.name,
             model = agent.model,
             lastModifiedBy = agent.updatedBy?.name ?: "Unknown",
-            lastModifiedWhen = agent.updatedAt.toRelativeString()!!,
+            lastModifiedWhen = agent.updatedAt?.toRelativeString(),
             lastPublishedWhen = "",
             owner = agent.createdBy?.name ?: "Unknown",
             status = if (agent.active) "Active" else "Inactive",

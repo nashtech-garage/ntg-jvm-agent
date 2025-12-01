@@ -7,7 +7,7 @@ data class AgentToolResponseDto(
     val toolName: String,
     val toolType: String?,
     val availableTo: String,
-    val lastModifiedBy: String,
-    val lastModifiedWhen: String,
+    val lastModifiedBy: String?,
+    val lastModifiedWhen: String?,
     val enabled: Boolean,
 )

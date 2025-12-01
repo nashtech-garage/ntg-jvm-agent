@@ -40,7 +40,7 @@ object AgentKnowledgeMapper {
             availableTo = entity.agent.name,
             usage = "",
             lastModifiedBy = entity.updatedBy?.name ?: "Unknown",
-            lastModifiedWhen = entity.updatedAt.toRelativeString()!!,
+            lastModifiedWhen = entity.updatedAt?.toRelativeString(),
             status = "Ready",
         )
 }
