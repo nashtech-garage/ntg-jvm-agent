@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CreateUserRequest } from '@/models/user';
 import { X, Loader } from 'lucide-react';
+import logger from '@/utils/logger';
 
 const createUserSchema = z.object({
   username: z
@@ -81,7 +82,7 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
       reset();
       onClose();
     } catch (error) {
-      console.error('Error creating user:', error);
+      logger.error('Error creating user:', error);
       setApiError(error instanceof Error ? error.message : 'Failed to create user');
     } finally {
       setIsSubmitting(false);

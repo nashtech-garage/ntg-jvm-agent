@@ -3,6 +3,8 @@
 import { cookies } from 'next/headers';
 import { KnowledgeInput, KnowledgeResponse } from '@/models/knowledge';
 import { checkFileType, isPDFFile, isValidPDFFile } from '@/utils/utils';
+import { SITE_CONFIG } from '@/constants/site-config';
+import logger from '@/utils/logger';
 
 export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeResponse> {
   const file = formData?.knowledge?.[0];
@@ -19,7 +21,7 @@ export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeR
     return { success: false, error: 'Wrong PDF file' };
   }
 
-  const knowledgeUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/knowledge`;
+  const knowledgeUrl = `${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/knowledge`;
   const cookieStore = cookies();
   const accessToken = (await cookieStore).get('access_token')?.value;
   if (!accessToken) {
@@ -38,7 +40,7 @@ export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeR
   if (result.ok) {
     return { success: true };
   } else {
-    console.error(`${result.status} error from add knowledge action`, await result.json());
+    logger.error(`${result.status} error from add knowledge action`, await result.json());
     return { success: false, error: 'Failed to import document' };
   }
 }

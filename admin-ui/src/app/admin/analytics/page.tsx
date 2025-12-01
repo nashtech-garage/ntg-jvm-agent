@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import logger from '@/utils/logger';
 
 interface AnalyticsData {
   pageViews: { date: string; views: number }[];
@@ -55,7 +56,7 @@ export default function AdminAnalytics() {
         };
         setAnalytics(mockData);
       } catch (error) {
-        console.error('Failed to fetch analytics:', error);
+        logger.error('Failed to fetch analytics:', error);
       } finally {
         setLoading(false);
       }

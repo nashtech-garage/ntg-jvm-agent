@@ -6,25 +6,27 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/models/token';
 import { Constants } from '@/constants/constant';
+import { IS_PRODUCTION, SITE_CONFIG } from '@/constants/site-config';
+import logger from './logger';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
 export function decodeToken(token: string) {
   try {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
   } catch (error) {
-    console.error('Failed to decode token:', error);
+    logger.error('Failed to decode token:', error);
     return null;
   }
 }
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
-    const tokenUrl = `${process.env.NEXT_PUBLIC_AUTH_SERVER}/oauth2/token`;
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
+    const tokenUrl = `${SITE_CONFIG.AUTH_SERVER}/oauth2/token`;
+    const clientId = SITE_CONFIG.CLIENT_ID;
+    const clientSecret = SITE_CONFIG.CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      console.error('Missing required environment variables: CLIENT_ID and/or CLIENT_SECRET');
+      logger.error('Missing required environment variables: CLIENT_ID and/or CLIENT_SECRET');
       return null;
     }
 
@@ -45,13 +47,13 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
 
     if (!res.ok) {
       const errorBody = await res.text();
-      console.error(`Token refresh failed: HTTP ${res.status} - ${errorBody}`);
+      logger.error(`Token refresh failed: HTTP ${res.status} - ${errorBody}`);
       return null;
     }
 
     return await res.json();
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    logger.error('Token refresh failed:', error);
     return null;
   }
 }
@@ -61,7 +63,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
     res.cookies.set('access_token', tokenInfo.access_token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: IS_PRODUCTION,
       path: '/',
       maxAge: tokenInfo.expires_in ?? 3600,
     });
@@ -72,7 +74,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
     res.cookies.set('refresh_token', tokenInfo.refresh_token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: IS_PRODUCTION,
       path: '/',
       maxAge: Constants.THIRTY_DAYS_IN_SECONDS,
     });

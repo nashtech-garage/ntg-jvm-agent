@@ -1,7 +1,7 @@
 'use client';
 import React, { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { addKnowledge } from '@/actions/addKnowledgeAction';
+import { addKnowledge } from '@/actions/add-knowledge-action';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { checkFileType, isPDFFile, isValidPDFFile } from '@/utils/utils';

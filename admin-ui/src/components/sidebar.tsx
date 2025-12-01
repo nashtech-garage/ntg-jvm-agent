@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserInfo } from '@/models/token';
+import logger from '@/utils/logger';
 
 interface SidebarProps {
   user: UserInfo;
@@ -19,7 +20,7 @@ export default function Sidebar({ user }: Readonly<SidebarProps>) {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed:', error);
     }
   };
 

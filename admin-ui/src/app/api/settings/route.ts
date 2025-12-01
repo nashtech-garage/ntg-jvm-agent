@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { SITE_CONFIG } from '@/constants/site-config';
 
-const baseUrl = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/settings`;
+const baseUrl = `${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/settings`;
 
 export async function GET() {
   const cookieStore = cookies();

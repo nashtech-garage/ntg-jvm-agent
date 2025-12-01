@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
 import { Toaster, toast } from 'react-hot-toast';
+import logger from '@/utils/logger';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -26,7 +27,7 @@ export default function UserManagement() {
       setUsers(data.users || []);
       setTotalPages(data.totalPages);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      logger.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export default function UserManagement() {
 
       if (!response.ok) {
         const text = await response.text();
-        console.error('Backend response:', response.status, text);
+        logger.error(`Backend response: ${response.status}`, text);
         throw new Error('Failed to update user status');
       }
       setUsers((prev) =>
@@ -66,7 +67,7 @@ export default function UserManagement() {
       const message = `User "${username}" has been ${action} successfully.`;
       toast.success(message);
     } catch (error) {
-      console.error('Error updating user status:', error);
+      logger.error('Error updating user status:', error);
       const action = enabled ? 'activate' : 'deactivate';
       const message = `Failed to ${action} user "${username}".`;
       toast.error(message);

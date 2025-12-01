@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SITE_CONFIG } from '@/constants/site-config';
+import logger from '@/utils/logger';
 
 interface SystemSettings {
   id: string;
@@ -43,7 +45,7 @@ export default function AdminSettings() {
         const data: SystemSettings = await response.json();
         setSettings(data);
       } catch (error) {
-        console.error('Failed to fetch  system settings:', error);
+        logger.error('Failed to fetch  system settings:', error);
       } finally {
         setLoading(false);
       }
@@ -83,7 +85,7 @@ export default function AdminSettings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      logger.error('Failed to save settings:', error);
     } finally {
       setSaving(false);
     }
@@ -318,14 +320,13 @@ export default function AdminSettings() {
             </p>
             <div className="space-y-2 text-sm">
               <div>
-                <strong>Client ID:</strong> {process.env.NEXT_PUBLIC_CLIENT_ID || 'Not configured'}
+                <strong>Client ID:</strong> {SITE_CONFIG.CLIENT_ID_PUBLIC || 'Not configured'}
               </div>
               <div>
-                <strong>Auth Server:</strong>{' '}
-                {process.env.NEXT_PUBLIC_AUTH_SERVER || 'Not configured'}
+                <strong>Auth Server:</strong> {SITE_CONFIG.AUTH_SERVER || 'Not configured'}
               </div>
               <div>
-                <strong>Scope:</strong> {process.env.NEXT_PUBLIC_SCOPE || 'Not configured'}
+                <strong>Scope:</strong> {SITE_CONFIG.SCOPE || 'Not configured'}
               </div>
             </div>
           </div>
