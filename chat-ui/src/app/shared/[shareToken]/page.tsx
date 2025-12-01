@@ -27,16 +27,18 @@ export default function SharedConversationPage() {
       try {
         const res = await fetch(`/api/chat/shared/${shareToken}`);
         if (!res.ok) {
-          const errorData = await res.json() as { error?: string };
+          const errorData = (await res.json()) as { error?: string };
           toast.error(errorData.error || 'Failed to load shared conversation');
           setIsLoading(false);
           return;
         }
 
-        const data = await res.json() as SharedConversation;
+        const data = (await res.json()) as SharedConversation;
         setConversation(data);
       } catch (error) {
-         toast.error(`Error loading conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        toast.error(
+          `Error loading conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       } finally {
         setIsLoading(false);
       }
@@ -82,9 +84,7 @@ export default function SharedConversationPage() {
           </Link>
           <div className="flex-1">
             <h1 className="text-xl font-semibold">{conversation.title}</h1>
-            <p className="text-sm text-gray-500">
-              Shared by {conversation.sharedByUsername}
-            </p>
+            <p className="text-sm text-gray-500">Shared by {conversation.sharedByUsername}</p>
           </div>
         </div>
       </div>
@@ -95,4 +95,3 @@ export default function SharedConversationPage() {
     </div>
   );
 }
-

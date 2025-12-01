@@ -74,9 +74,7 @@ export default function ShareConversationModal({
         {shareUrl ? (
           <div className="space-y-4">
             <div className="bg-green-50 border border-green-200 rounded p-4">
-              <p className="text-sm text-green-800 mb-2">
-                ✓ Share link created successfully!
-              </p>
+              <p className="text-sm text-green-800 mb-2">✓ Share link created successfully!</p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -101,11 +99,8 @@ export default function ShareConversationModal({
           </div>
         ) : (
           <form onSubmit={handleShare} className="space-y-4">
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expiry Days
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Days</label>
               <select
                 value={expiryDays}
                 onChange={(e) => setExpiryDays(Number(e.target.value))}
@@ -147,4 +142,3 @@ export default function ShareConversationModal({
     </div>
   );
 }
-
