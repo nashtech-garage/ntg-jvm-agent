@@ -25,9 +25,7 @@ interface SharedConversationViewProps {
   shareToken: string;
 }
 
-export default function SharedConversationView({
-  shareToken,
-}: SharedConversationViewProps) {
+export default function SharedConversationView({ shareToken }: SharedConversationViewProps) {
   const [data, setData] = useState<SharedConversationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -100,7 +98,9 @@ export default function SharedConversationView({
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900">{data.title}</h1>
           <div className="flex gap-4 text-sm text-gray-600 mt-2">
-            <span>Shared by: <strong>{data.sharedByUsername}</strong></span>
+            <span>
+              Shared by: <strong>{data.sharedByUsername}</strong>
+            </span>
             <span>Created: {formatDate(data.createdAt)}</span>
           </div>
           <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
@@ -131,21 +131,14 @@ export default function SharedConversationView({
                       : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
                   }`}
                 >
-                  <p className="break-words whitespace-pre-wrap">
-                    {message.content}
-                  </p>
-                  <div className="text-xs mt-2 opacity-70">
-                    {formatDate(message.createdAt)}
-                  </div>
+                  <p className="break-words whitespace-pre-wrap">{message.content}</p>
+                  <div className="text-xs mt-2 opacity-70">{formatDate(message.createdAt)}</div>
 
                   {/* Media attachments */}
                   {message.medias && message.medias.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {message.medias.map((media) => (
-                        <div
-                          key={media.id}
-                          className="bg-black bg-opacity-20 rounded p-2 text-sm"
-                        >
+                        <div key={media.id} className="bg-black bg-opacity-20 rounded p-2 text-sm">
                           📎 {media.fileName} ({formatFileSize(media.fileSize)})
                         </div>
                       ))}
@@ -175,4 +168,3 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
-

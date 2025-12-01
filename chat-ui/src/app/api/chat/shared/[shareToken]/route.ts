@@ -24,7 +24,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ shareTok
         }
       }
 
-      return NextResponse.json({ error: errorData.message || 'Failed to fetch shared conversation' }, { status: res.status });
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to fetch shared conversation' },
+        { status: res.status }
+      );
     }
 
     const jsonResult = await res.json();
@@ -37,4 +40,3 @@ export async function GET(req: Request, { params }: { params: Promise<{ shareTok
     );
   }
 }
-
