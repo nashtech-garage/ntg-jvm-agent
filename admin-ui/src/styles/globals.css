@@ -140,3 +140,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* toast custom */
+@layer components {
+  .app-toast {
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow:
+      0 10px 15px -3px rgba(15, 23, 42, 0.4),
+      0 4px 6px -4px rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    /* slate-400-ish */
+  }
+
+  .app-toast-success {
+    border-left: 4px solid #22c55e;
+    /* green-500 */
+  }
+
+  .app-toast-error {
+    border-left: 4px solid #ef4444;
+    /* red-500 */
+  }
+}
