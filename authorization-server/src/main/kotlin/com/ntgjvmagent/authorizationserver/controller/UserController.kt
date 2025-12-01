@@ -40,7 +40,7 @@ class UserController(
     fun updateUser(
         @PathVariable id: UUID,
         @RequestBody @Valid request: UpdateUserRequestDto
-    ): ResponseEntity<UpdateUserResponseDto?> {
+    ): ResponseEntity<UpdateUserResponseDto> {
         val updatedUser = userService.updateUser(id, request)
         return ResponseEntity.ok(updatedUser)
     }

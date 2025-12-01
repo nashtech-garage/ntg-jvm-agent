@@ -12,8 +12,8 @@ import com.ntgjvmagent.authorizationserver.repository.UserRepository
 import com.ntgjvmagent.authorizationserver.repository.RolesRepository
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.service.impl.UserServiceImpl
-import org.junit.Assert.assertThrows
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -261,6 +261,27 @@ class UserServiceTest {
         }
 
         assertEquals(currentUsername, result.username)
+
+        verify(userRepository, never()).findUserByUserName(anyString())
+        verify(userRepository, times(1)).findById(existingUser.id!!)
+        verify(userRepository, times(1)).save(any(UserEntity::class.java))
+    }
+
+    @Test
+    fun `updateUser does not throw when updating email to the same value`() {
+        val currentEmail = existingUser.email
+        val request = UpdateUserRequestDto(email = currentEmail)
+
+        `when`(userRepository.findById(existingUser.id!!))
+            .thenReturn(Optional.of(existingUser))
+
+        `when`(userRepository.save(any(UserEntity::class.java))).thenAnswer { it.arguments[0] }
+
+        val result = assertDoesNotThrow {
+            userService.updateUser(existingUser.id!!, request)
+        }
+
+        assertEquals(currentEmail, result.email)
 
         verify(userRepository, never()).findUserByUserName(anyString())
         verify(userRepository, times(1)).findById(existingUser.id!!)
