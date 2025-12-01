@@ -4,8 +4,8 @@
 
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { TokenInfo } from '../models/token';
-import { Constants } from './constant';
+import { TokenInfo } from '@/models/token';
+import { Constants } from '@/constants/constant';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
 export function decodeToken(token: string) {

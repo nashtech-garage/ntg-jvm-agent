@@ -5,8 +5,8 @@ import { Plus, Edit } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAgent } from '@/app/contexts/AgentContext';
-import { AgentDetail } from '@/app/types/agent';
+import { useAgent } from '@/contexts/AgentContext';
+import { AgentDetail } from '@/types/agent';
 
 export default function AgentOverviewPage() {
   const { agent } = useAgent() as {

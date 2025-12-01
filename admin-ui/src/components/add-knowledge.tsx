@@ -1,11 +1,11 @@
 'use client';
 import React, { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
-import { addKnowledge } from '../actions/AddKnowledgeAction';
+import { addKnowledge } from '@/actions/addKnowledgeAction';
 import z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { checkFileType, isPDFFile, isValidPDFFile } from '../utils/utils';
-import { KnowledgeInput } from '../models/knowledge';
+import { checkFileType, isPDFFile, isValidPDFFile } from '@/utils/utils';
+import { KnowledgeInput } from '@/models/knowledge';
 
 const formSchema = z.object({
   knowledge: z
