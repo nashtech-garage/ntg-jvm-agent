@@ -6,14 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint .",
     "format": "npx prettier --write ."
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
-    "next": "15.5.3",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "next": "^15.5.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -23,8 +25,11 @@
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9",
-    "eslint-config-next": "15.5.3",
-    "prettier": "2.7.1",
+    "eslint-config-next": "^16.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-tailwindcss": "^4.0.0-beta.0",
+    "prettier": "^3.3.3",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.6",
     "react-textarea-autosize": "^8.5.9",

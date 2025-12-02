@@ -4,6 +4,7 @@ import com.ntgjvmagent.authorizationserver.dto.UpdateUserRequestDto
 import com.ntgjvmagent.authorizationserver.dto.UpdateUserResponseDto
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
 import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
+import com.ntgjvmagent.authorizationserver.dto.UserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import com.ntgjvmagent.authorizationserver.service.UserService
 import com.ntgjvmagent.authorizationserver.utils.Constant
@@ -12,10 +13,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -52,5 +52,23 @@ class UserController(
     ): ResponseEntity<CreateUserDto> {
         val response = userService.createUser(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
+    }
+
+    @PutMapping("/{username}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun deactivateUser(
+        @PathVariable username: String,
+    ): ResponseEntity<UserDto> {
+        val userDto = userService.deactivateUser(username)
+        return ResponseEntity.ok(userDto)
+    }
+
+    @PutMapping("/{username}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun activateUser(
+        @PathVariable username: String,
+    ): ResponseEntity<UserDto> {
+        val userDto = userService.activateUser(username)
+        return ResponseEntity.ok(userDto)
     }
 }

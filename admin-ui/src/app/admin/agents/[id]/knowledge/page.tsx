@@ -14,8 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useAgent } from '@/app/contexts/AgentContext';
-import { AgentDetail, KnowledgeListData } from '@/app/types/agent';
+import { useAgent } from '@/contexts/AgentContext';
+import { AgentDetail, KnowledgeListData } from '@/types/agent';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -1,29 +1,39 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import logger from '@/utils/logger';
 
 function CallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
+  const code = searchParams.get('code');
+  const state = searchParams.get('state') || '/admin';
+  const errorParam = searchParams.get('error');
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    const state = searchParams.get('state') || '/admin';
-    const errorParam = searchParams.get('error');
-
+  const urlError = useMemo(() => {
     if (errorParam) {
-      setError(`Authentication failed: ${errorParam}`);
-      return;
+      return `Authentication failed: ${errorParam}`;
     }
 
     if (!code) {
-      setError('No authorization code received');
+      return 'No authorization code received';
+    }
+
+    return null;
+  }, [code, errorParam]);
+
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const error = requestError ?? urlError;
+
+  useEffect(() => {
+    if (error || !code) {
       return;
     }
 
     // Exchange authorization code for tokens
+    const controller = new AbortController();
+
     fetch('/api/auth/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -32,6 +42,7 @@ function CallbackPageContent() {
         redirect_uri: `${window.location.origin}/auth/callback`,
       }),
       credentials: 'include',
+      signal: controller.signal,
     })
       .then((response) => {
         if (response.ok) {
@@ -41,14 +52,19 @@ function CallbackPageContent() {
           // redirect to forbidden page if user lacks admin role
           router.replace('/forbidden');
         } else {
-          setError('Authentication failed. Please try again.');
+          setRequestError('Authentication failed. Please try again.');
         }
       })
       .catch((err) => {
-        console.error('Authentication error:', err);
-        setError('Authentication failed. Please try again.');
+        if (controller.signal.aborted) {
+          return;
+        }
+        logger.error('Authentication error:', err);
+        setRequestError('Authentication failed. Please try again.');
       });
-  }, [router, searchParams]);
+
+    return () => controller.abort();
+  }, [code, error, router, state]);
 
   if (error) {
     return (

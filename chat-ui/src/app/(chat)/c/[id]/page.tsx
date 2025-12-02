@@ -1,11 +1,11 @@
 'use client';
 
-import { useChatContext } from '@/app/contexts/ChatContext';
+import { useChatContext } from '@/contexts/ChatContext';
 import ChatPage from '../../page';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
-import { customizeFetch } from '@/app/utils/custom-fetch';
+import { customizeFetch } from '@/utils/custom-fetch';
 
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();

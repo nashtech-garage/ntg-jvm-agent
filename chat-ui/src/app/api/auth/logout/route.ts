@@ -1,5 +1,6 @@
-import { deleteCookies } from '@/app/utils/server-utils';
 import { NextResponse } from 'next/server';
+import logger from '@/utils/logger';
+import { deleteCookies } from '@/utils/server-utils';
 
 export async function POST() {
   try {
@@ -9,7 +10,7 @@ export async function POST() {
 
     return response;
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

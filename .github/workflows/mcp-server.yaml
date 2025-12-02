@@ -1,0 +1,75 @@
+name:  mcp-server ci
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'mcp-server/**'
+      - ".github/workflows/mcp-server-ci.yaml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'mcp-server/**'
+      - ".github/workflows/mcp-server-ci.yaml"
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    env:
+      FROM_ORIGINAL_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+      - name: Download Detekt
+        run: curl -sSLO https://github.com/detekt/detekt/releases/download/v1.23.8/detekt-cli-1.23.8-all.jar
+        working-directory: mcp-server
+      - name: Run Detekt
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        run: |
+          java -jar detekt-cli-1.23.8-all.jar \
+            --input src/main/ \
+            --report xml:checkstyle-result.xml \
+            --config detekt.yml
+        working-directory: mcp-server
+      - name: Annotate Detekt Results
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        with:
+          path: "./mcp-server/checkstyle-result.xml"
+      - name: Run Maven Build Command
+        run: mvn clean install
+        working-directory: mcp-server
+      - name: Report Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' && (success() || failure()) }}
+        with:
+          name: mcp-server-Unit-Test-Results
+          path: mcp-server/target/surefire-reports/TEST-*.xml
+          reporter: java-junit
+      - name: SonarCloud Scan
+        if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: mcp-server
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Log in to the Container registry
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker images
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./mcp-server
+          push: true
+          tags: ghcr.io/nashtech-garage/ntg-jvm-agent-mcp-server:latest

@@ -2,19 +2,23 @@ package com.ntgjvmagent.authorizationserver.service.impl
 
 import com.ntgjvmagent.authorizationserver.dto.UpdateUserRequestDto
 import com.ntgjvmagent.authorizationserver.dto.UpdateUserResponseDto
+import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
+import com.ntgjvmagent.authorizationserver.dto.UserDto
 import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import com.ntgjvmagent.authorizationserver.exception.EmailAlreadyUsedException
 import com.ntgjvmagent.authorizationserver.exception.UserNotFoundException
 import com.ntgjvmagent.authorizationserver.exception.UsernameAlreadyUsedException
 import com.ntgjvmagent.authorizationserver.mapper.toPageDto
 import com.ntgjvmagent.authorizationserver.mapper.toUpdateResponse
-import com.ntgjvmagent.authorizationserver.dto.CreateUserDto
 import com.ntgjvmagent.authorizationserver.request.CreateUserRequest
+import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import com.ntgjvmagent.authorizationserver.entity.UserRolesEntity
-import com.ntgjvmagent.authorizationserver.mapper.toUserEntity
 import com.ntgjvmagent.authorizationserver.mapper.toCreateUserDto
-import com.ntgjvmagent.authorizationserver.repository.UserRepository
+import com.ntgjvmagent.authorizationserver.mapper.toDto
+import com.ntgjvmagent.authorizationserver.mapper.toPageDto
+import com.ntgjvmagent.authorizationserver.mapper.toUserEntity
 import com.ntgjvmagent.authorizationserver.repository.RolesRepository
+import com.ntgjvmagent.authorizationserver.repository.UserRepository
 import com.ntgjvmagent.authorizationserver.service.UserService
 import com.ntgjvmagent.authorizationserver.utils.PasswordGenerator
 import org.slf4j.Logger
@@ -99,5 +103,27 @@ class UserServiceImpl(
         val savedUser = userRepository.save(userEntity)
         logger.info("User '{}' created successfully", request.username)
         return savedUser.toCreateUserDto(tempPassword)
+    }
+
+    override fun deactivateUser(username: String): UserDto {
+        val user = getUserByUserName(username)
+        val updatedUser = user.copy(enabled = false)
+        val saved = userRepository.save(updatedUser)
+        logger.info("User '{}' activated successfully", username)
+
+        return saved.toDto()
+    }
+
+    override fun activateUser(username: String): UserDto {
+        val user = getUserByUserName(username)
+        val updatedUser = user.copy(enabled = true)
+        val saved = userRepository.save(updatedUser)
+        logger.info("User '{}' deactivated successfully", username)
+        return saved.toDto()
+    }
+
+    fun getUserByUserName(username: String): UserEntity {
+        return userRepository.findUserByUserName(username)
+            .orElseThrow { IllegalArgumentException("User '$username' not found") }
     }
 }

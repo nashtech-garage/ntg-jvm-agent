@@ -15,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useAgent } from '@/app/contexts/AgentContext';
-import { AgentDetail, ToolListData } from '@/app/types/agent';
+import { useAgent } from '@/contexts/AgentContext';
+import { AgentDetail, ToolListData } from '@/types/agent';
+import logger from '@/utils/logger';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -51,7 +52,7 @@ export default function ToolsPage() {
       // Refresh the table
       mutate(`/api/agents/${agent.id}/tools`);
     } catch (err) {
-      console.error('Failed to toggle:', err);
+      logger.error('Failed to toggle:', err);
     }
   };
 

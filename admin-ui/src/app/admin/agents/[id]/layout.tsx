@@ -1,4 +1,4 @@
-import AgentLayoutClient from '@/app/components/agent/AgentLayoutClient';
+import AgentLayoutClient from '@/components/agent/agent-layout-client';
 
 export default async function AgentDetailsLayout({
   params,

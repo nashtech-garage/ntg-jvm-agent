@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -29,6 +30,9 @@ import org.springframework.data.domain.PageRequest
 import java.util.Optional
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.mockito.Mockito.never
+
 
 @ExtendWith(MockitoExtension::class)
 class UserServiceTest {
@@ -287,5 +291,82 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(existingUser.id!!)
         verify(userRepository, times(1)).save(any(UserEntity::class.java))
     }
+
+
+    @Test
+    fun `deactivateUser should set enabled to false and return updated dto`() {
+        val username = "testuser"
+        val userId = UUID.randomUUID()
+
+        val existingUser = UserEntity(
+            id = userId,
+            username = username,
+            password = "password",
+            enabled = true,
+            name = "Test User",
+            email = "test@example.com",
+        )
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(existingUser))
+
+        val updatedUser = existingUser.copy(enabled = false)
+        `when`(userRepository.save(any())).thenReturn(updatedUser)
+
+        val result = userService.deactivateUser(username)
+
+        assertEquals(username, result.username)
+        assertEquals(false, result.enabled)
+
+        val captor = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository, times(1)).save(captor.capture())
+        val savedEntity = captor.value
+        assertEquals(false, savedEntity.enabled)
+    }
+
+
+    @Test
+    fun `activateUser should set enabled to true and return updated dto`() {
+        val username = "disableduser"
+        val userId = UUID.randomUUID()
+
+        val existingUser = UserEntity(
+            id = userId,
+            username = username,
+            password = "password",
+            enabled = false,
+            name = "Disabled User",
+            email = "disabled@example.com",
+        )
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(existingUser))
+
+        val updatedUser = existingUser.copy(enabled = true)
+        `when`(userRepository.save(any())).thenReturn(updatedUser)
+
+        val result = userService.activateUser(username)
+
+        assertEquals(username, result.username)
+
+        val captor = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository, times(1)).save(captor.capture())
+        val savedEntity = captor.value
+        assertEquals(true, savedEntity.enabled)
+    }
+
+    @Test
+    fun `deactivateUser should throw exception when user does not exist`() {
+        val username = "non_existing_user"
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
+
+        val exception = assertThrows(RuntimeException::class.java) {
+            userService.deactivateUser(username)
+        }
+
+        assertEquals("User '$username' not found", exception.message)
+        verify(userRepository, times(1)).findUserByUserName(username)
+        verify(userRepository, never()).save(any())
+    }
+
 
 }

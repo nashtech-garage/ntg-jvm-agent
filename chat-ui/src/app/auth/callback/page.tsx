@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import logger from '@/utils/logger';
 
 export default function CallbackPage() {
   const router = useRouter();
@@ -28,7 +29,9 @@ export default function CallbackPage() {
           // handle error
         }
       })
-      .catch(console.error);
+      .catch((error) => {
+        logger.error('Error during token exchange:', error);
+      });
   }, [router]);
 
   return <div className="flex justify-between items-center">Finishing sign in...</div>;
