@@ -29,11 +29,11 @@ export default function AgentDropdown() {
     const fetchAgents = async () => {
       try {
         const res = await fetch('/api/agent');
-        const agents = await res.json();
-        if (agents.length) {
-          setAgents(agents);
-          setSelected(agents[0]);
-          setSelectedAgent(agents[0]);
+        const fetchedAgents = await res.json();
+        if (fetchedAgents.length) {
+          setAgents(fetchedAgents);
+          setSelected(fetchedAgents[0]);
+          setSelectedAgent(fetchedAgents[0]);
         }
       } catch (error) {
         toast.error(`Error fetching agents: ${error}`);
@@ -44,7 +44,7 @@ export default function AgentDropdown() {
       fetchAgents();
     }
     return () => document.removeEventListener('mousedown', handle);
-  }, []);
+  }, [agents.length, setAgents, setSelectedAgent]);
 
   return (
     <div ref={boxRef} className="relative inline-block">
