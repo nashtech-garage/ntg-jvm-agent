@@ -181,6 +181,7 @@ class ConversationService(
                     answerEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
                     medias = emptyList(),
+                    reaction = answerEntity.reaction,
                 ),
             )
         } else {

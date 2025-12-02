@@ -12,6 +12,8 @@ import { customizeFetch } from '@/utils/custom-fetch';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
 import logger from '@/utils/logger';
+import { REACTION_PATH } from '@/constants/url';
+import { Reaction } from '@/types/reaction';
 
 export default function Page() {
   const {
@@ -151,6 +153,7 @@ export default function Page() {
       })),
       createdAt: new Date().toISOString(),
       type: 1,
+      reaction: 'NONE' as const,
     };
     /* Show question in screen immediately */
     setChatMessages([...chatMessages, question]);
@@ -161,6 +164,7 @@ export default function Page() {
       medias: [],
       createdAt: new Date().toISOString(),
       type: 2,
+      reaction: 'NONE' as const,
     };
 
     setChatMessages((prev) => [...prev, tempMessage]);
@@ -177,6 +181,32 @@ export default function Page() {
       toast.error(result.message);
       setIsTyping(false);
       setChatMessages((prev) => prev.filter((msg) => msg.id !== 'streaming'));
+    }
+  };
+
+  const handleReaction = async (messageId: string, reaction: Reaction) => {
+    const current = chatMessages.find((m) => m.id === messageId)?.reaction ?? 'NONE';
+    const newReaction = current === reaction ? 'NONE' : reaction;
+
+    setChatMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, reaction: newReaction } : m))
+    );
+    try {
+      const response = await customizeFetch(REACTION_PATH.CHAT_MESSAGE_REACTION(messageId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction: newReaction }),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        toast.error(errorResult.error || 'Failed to update reaction');
+      }
+    } catch (err) {
+      logger.error('Failed to react:', err);
+      setChatMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reaction: current } : m))
+      );
     }
   };
 
@@ -209,6 +239,7 @@ export default function Page() {
                 isTyping={isTyping}
                 agentAvatar={selectedAgent?.avatar}
                 agentName={selectedAgent?.name}
+                onReaction={handleReaction}
               />
             </div>
           </div>
