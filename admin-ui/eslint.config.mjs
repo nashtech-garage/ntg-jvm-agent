@@ -1,8 +1,9 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { defineConfig } from 'eslint/config';
+// Next.js-related imports
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
+// ESLint plugin imports
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import tailwindcss from 'eslint-plugin-tailwindcss';
@@ -10,7 +11,7 @@ import tailwindcss from 'eslint-plugin-tailwindcss';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const tailwindConfigPath = path.join(__dirname, 'tailwind.config.js');
 
-const eslintConfig = defineConfig([
+const config = [
   {
     ignores: ['node_modules/**', '.next/**', 'tailwind.config.js'],
   },
@@ -35,6 +36,6 @@ const eslintConfig = defineConfig([
       },
     },
   },
-]);
+];
 
-export default eslintConfig;
+export default config;
