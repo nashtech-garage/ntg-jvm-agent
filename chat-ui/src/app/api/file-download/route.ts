@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
-import { Constants } from '@/app/utils/constant';
+import { getAccessToken } from '@/utils/server-utils';
+import { Constants } from '@/constants/constant';
+import { SERVER_CONFIG } from '@/constants/site-config';
+import logger from '@/utils/logger';
 
-const baseUrl = `${ORCHESTRATOR_URL}/api/files`;
+const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/files`;
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);
@@ -56,7 +58,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
-    console.error('Error downloading file:', err);
+    logger.error('Error downloading file:', err);
     return NextResponse.json(
       { error: `${Constants.FAILED_TO_FETCH_CONVERSATIONS_MSG} ${String(err)}` },
       { status: 500 }

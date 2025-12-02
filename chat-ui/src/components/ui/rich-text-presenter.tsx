@@ -3,7 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { Citation } from '../models/chat-message';
+import { Citation } from '@/models/chat-message';
+import logger from '@/utils/logger';
 
 interface RichTextPresenterProps {
   content: string;
@@ -62,7 +63,7 @@ export default function RichTextPresenter({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading file:', error);
+      logger.error('Error downloading file:', error);
       alert('Can not download file. Please try again.');
     }
   };
