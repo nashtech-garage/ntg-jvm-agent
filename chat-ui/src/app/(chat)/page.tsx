@@ -10,8 +10,12 @@ import { useChatContext } from '@/contexts/ChatContext';
 import { FileSelectInfo } from '@/models/file-select-info';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
+import logger from '@/utils/logger';
+import { REACTION_PATH } from '@/constants/url';
+import { Reaction } from '@/types/reaction';
 import { useToaster } from '@/contexts/ToasterContext';
 import { useChatStream } from '@/hooks/use-chat-stream';
+import { customizeFetch } from '@/utils/custom-fetch';
 
 function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
   return {
@@ -24,6 +28,7 @@ function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
     })),
     createdAt: new Date().toISOString(),
     type: 1,
+    reaction: Reaction.NONE,
   };
 }
 
@@ -34,6 +39,7 @@ function buildStreamingMessage() {
     medias: [],
     createdAt: new Date().toISOString(),
     type: 2,
+    reaction: Reaction.NONE,
   };
 }
 
@@ -117,6 +123,32 @@ export default function Page() {
     }
   };
 
+  const handleReaction = async (messageId: string, reaction: Reaction) => {
+    const current = chatMessages.find((m) => m.id === messageId)?.reaction ?? Reaction.NONE;
+    const newReaction = current === reaction ? Reaction.NONE : reaction;
+
+    setChatMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, reaction: newReaction } : m))
+    );
+    try {
+      const response = await customizeFetch(REACTION_PATH.CHAT_MESSAGE_REACTION(messageId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction: newReaction }),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        showError(errorResult.error || 'Failed to update reaction');
+      }
+    } catch (err) {
+      logger.error('Failed to react:', err);
+      setChatMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reaction: current } : m))
+      );
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header>
@@ -146,6 +178,7 @@ export default function Page() {
                 isTyping={isTyping}
                 agentAvatar={selectedAgent?.avatar}
                 agentName={selectedAgent?.name}
+                onReaction={handleReaction}
               />
             </div>
           </div>

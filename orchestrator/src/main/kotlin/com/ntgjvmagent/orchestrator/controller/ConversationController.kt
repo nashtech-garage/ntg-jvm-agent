@@ -2,9 +2,11 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.component.CurrentUserProvider
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
 import com.ntgjvmagent.orchestrator.service.ConversationCommandService
 import com.ntgjvmagent.orchestrator.service.ConversationQueryService
 import com.ntgjvmagent.orchestrator.service.ConversationStreamingService
+import com.ntgjvmagent.orchestrator.service.MessageService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationUpdateRequestVm
@@ -31,6 +33,7 @@ class ConversationController(
     private val conversationQueryService: ConversationQueryService,
     private val conversationStreamingService: ConversationStreamingService,
     private val currentUserProvider: CurrentUserProvider,
+    private val messageService: MessageService,
 ) {
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
@@ -76,5 +79,15 @@ class ConversationController(
                 userId,
             )
         return ResponseEntity.ok(updatedConversation)
+    }
+
+    @PutMapping("/messages/{messageId}/reaction")
+    fun setReaction(
+        @PathVariable messageId: UUID,
+        @Valid @RequestBody reactionRequest: ReactionRequestDto,
+    ): ResponseEntity<ChatMessageResponseVm> {
+        val userId = currentUserProvider.getUserId()
+        val updated = messageService.reactMessage(messageId, reactionRequest.reaction, userId)
+        return ResponseEntity.ok(updated)
     }
 }
