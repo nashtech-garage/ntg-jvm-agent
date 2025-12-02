@@ -72,7 +72,7 @@ class ConversationShareService(
             shareToken = shareToken,
             isExpired = false,
             expiresAt = expiresAt,
-            createdAt = savedShare.createdAt ?: OffsetDateTime.now(),
+            createdAt = (savedShare.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
         )
     }
 
@@ -133,7 +133,7 @@ class ConversationShareService(
         return SharedConversationViewVm(
             id = conversation.id ?: error("Conversation ID cannot be null"),
             title = conversation.title,
-            createdAt = conversation.createdAt ?: OffsetDateTime.now(),
+            createdAt = (conversation.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
             sharedByUsername = share.sharedByUsername,
             messages = messages,
         )
@@ -166,7 +166,7 @@ class ConversationShareService(
             shareToken = share.shareToken,
             isExpired = share.isExpired,
             expiresAt = share.expiresAt,
-            createdAt = share.createdAt ?: OffsetDateTime.now(),
+            createdAt = (share.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
         )
 
     private fun generateShareToken(): String {
