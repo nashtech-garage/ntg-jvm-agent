@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.viewmodel
 
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
-import jakarta.validation.constraints.NotBlank
 import java.time.OffsetDateTime
 import java.util.UUID
 

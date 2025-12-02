@@ -10,8 +10,8 @@ import com.ntgjvmagent.orchestrator.repository.ConversationShareRepository
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationShareResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ShareConversationRequest
 import com.ntgjvmagent.orchestrator.viewmodel.SharedConversationViewVm
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.time.OffsetDateTime
 import java.util.UUID
