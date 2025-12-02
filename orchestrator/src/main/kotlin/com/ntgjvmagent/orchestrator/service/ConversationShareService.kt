@@ -131,7 +131,7 @@ class ConversationShareService(
             }
 
         return SharedConversationViewVm(
-            id = conversation.id ?: throw IllegalStateException("Conversation ID cannot be null"),
+            id = conversation.id ?: error("Conversation ID cannot be null"),
             title = conversation.title,
             createdAt = conversation.createdAt ?: OffsetDateTime.now(),
             sharedByUsername = share.sharedByUsername,
@@ -171,6 +171,8 @@ class ConversationShareService(
 
     private fun generateShareToken(): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        return (1..SHARE_TOKEN_LENGTH).map { allowedChars[secureRandom.nextInt(SHARE_TOKEN_CHAR_INDEX_RANGE)] }.joinToString("")
+        return (1..SHARE_TOKEN_LENGTH)
+            .map { allowedChars[secureRandom.nextInt(SHARE_TOKEN_CHAR_INDEX_RANGE)] }
+            .joinToString("")
     }
 }

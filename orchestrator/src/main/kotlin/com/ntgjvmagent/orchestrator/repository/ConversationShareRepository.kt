@@ -13,6 +13,7 @@ interface ConversationShareRepository : JpaRepository<ConversationShareEntity, U
     @EntityGraph(attributePaths = ["conversation"])
     fun findByShareToken(shareToken: String): Optional<ConversationShareEntity>
 
+    @EntityGraph(attributePaths = ["conversation"])
     @Query("SELECT cs FROM ConversationShareEntity cs WHERE cs.conversation.id = ?1 AND cs.isExpired = false")
     fun findActiveSharesByConversationId(conversationId: UUID): List<ConversationShareEntity>
 }
