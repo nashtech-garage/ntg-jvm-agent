@@ -98,7 +98,7 @@ class JwtAuthConverterConfig(
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/public/**").permitAll()
+                it.requestMatchers("/public/**", "/api/settings/isMaintenance").permitAll()
                 it.anyRequest().authenticated()
             }.oauth2ResourceServer { rs ->
                 rs.jwt { jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter) }

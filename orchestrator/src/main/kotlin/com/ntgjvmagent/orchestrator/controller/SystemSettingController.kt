@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
+import com.ntgjvmagent.orchestrator.dto.MaintenanceModeResponseDto
 import com.ntgjvmagent.orchestrator.dto.SystemSettingRequestDto
 import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.service.SystemSettingService
@@ -14,14 +15,19 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/settings")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
 class SystemSettingController(
     private val systemSettingService: SystemSettingService,
 ) {
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping
     fun getSystemSetting(): ResponseEntity<SystemSettingResponseDto> =
         ResponseEntity.ok(systemSettingService.getSystemSetting())
 
+    @GetMapping("/{isMaintenance}")
+    fun getSystemSettingMaintenanceMode(): ResponseEntity<MaintenanceModeResponseDto> =
+        ResponseEntity.ok(systemSettingService.getSystemSettingMaintenanceMode())
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping
     fun updateSystemSetting(
         @Valid @RequestBody request: SystemSettingRequestDto,

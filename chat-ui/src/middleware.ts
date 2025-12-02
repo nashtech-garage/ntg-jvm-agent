@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { setTokenIntoCookie, getRefreshToken, deleteCookies } from './app/utils/server-utils';
 import { authPathname } from './app/utils/constant';
+import { getSetting } from './app/utils/setting-utils';
 
 export async function middleware(req: NextRequest) {
+  const data = await getSetting();
+  if (data?.maintenanceMode) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/maintenance';
+    return NextResponse.rewrite(url);
+  }
   const pathName = req.nextUrl.pathname;
 
   const accessToken = req.cookies.get('access_token');
