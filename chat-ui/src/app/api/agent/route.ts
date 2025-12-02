@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/utils/server-utils';
+import { getAccessToken } from '@/utils/server-utils';
 import { Constants } from '@/constants/constant';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
-const agentUrl = `${ORCHESTRATOR_URL}/api/agents`;
+const agentUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`;
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);

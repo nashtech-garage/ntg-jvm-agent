@@ -1,17 +1,17 @@
 'use client';
 
-import { SITE_CONFIG } from '@/constants/site-config';
+import { PUBLIC_CONFIG } from '@/constants/site-config';
 
 export default function LoginPage() {
   const startOAuth = () => {
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: `${SITE_CONFIG.CLIENT_ID_PUBLIC}`,
+      client_id: `${PUBLIC_CONFIG.CLIENT_ID}`,
       redirect_uri: `${location.origin}/auth/callback`,
-      scope: `${SITE_CONFIG.SCOPE}`,
+      scope: `${PUBLIC_CONFIG.SCOPE}`,
     });
 
-    window.location.href = `${SITE_CONFIG.AUTH_SERVER}/oauth2/authorize?${params.toString()}`;
+    window.location.href = `${PUBLIC_CONFIG.AUTH_SERVER}/oauth2/authorize?${params.toString()}`;
   };
 
   return (

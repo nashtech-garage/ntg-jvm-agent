@@ -2,14 +2,14 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/models/token';
 import { Constants } from '@/constants/constant';
-import { IS_PRODUCTION, SITE_CONFIG } from '@/constants/site-config';
+import { IS_PRODUCTION, SERVER_CONFIG } from '@/constants/site-config';
 import logger from './logger';
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
-    const tokenUrl = `${SITE_CONFIG.AUTH_SERVER_URL}/oauth2/token`;
-    const clientId = SITE_CONFIG.CLIENT_ID;
-    const clientSecret = SITE_CONFIG.CLIENT_SECRET;
+    const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
+    const clientId = SERVER_CONFIG.CLIENT_ID;
+    const clientSecret = SERVER_CONFIG.CLIENT_SECRET;
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const body = new URLSearchParams();
