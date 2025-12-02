@@ -1,22 +1,15 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { TokenInfo } from '@/app/models/token';
-import { Constants } from '@/app/utils/constant';
-
-const isServer = typeof window === 'undefined';
-export const AUTH_SERVER_URL = isServer
-  ? process.env.AUTH_SERVER_INTERNAL_URL
-  : process.env.NEXT_PUBLIC_AUTH_SERVER;
-
-export const ORCHESTRATOR_URL = isServer
-  ? process.env.ORCHESTRATOR_INTERNAL_URL
-  : process.env.NEXT_PUBLIC_ORCHESTRATOR;
+import { TokenInfo } from '@/models/token';
+import { Constants } from '@/constants/constant';
+import { IS_PRODUCTION, SERVER_CONFIG } from '@/constants/site-config';
+import logger from './logger';
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
-    const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
+    const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
+    const clientId = SERVER_CONFIG.CLIENT_ID;
+    const clientSecret = SERVER_CONFIG.CLIENT_SECRET;
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const body = new URLSearchParams();
@@ -33,13 +26,13 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     });
 
     if (!res.ok) {
-      console.error('Token refresh failed:', res.status, await res.text());
+      logger.error(`Token refresh failed: ${res.status}`, await res.text());
       return null;
     }
 
     return await res.json();
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    logger.error('Token refresh failed:', error);
     return null;
   }
 }
@@ -49,7 +42,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
     res.cookies.set('access_token', tokenInfo.access_token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: IS_PRODUCTION,
       path: '/',
       maxAge: tokenInfo.expires_in ?? 3600,
     });
@@ -60,7 +53,7 @@ export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
     res.cookies.set('refresh_token', tokenInfo.refresh_token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: IS_PRODUCTION,
       path: '/',
       maxAge: Constants.THIRTY_DAYS_IN_SECONDS,
     });

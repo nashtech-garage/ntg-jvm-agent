@@ -1,5 +1,5 @@
-import './globals.css';
 import { Toaster } from 'sonner';
+import '@/styles/globals.css';
 
 export const metadata = {
   title: 'Chat UI',

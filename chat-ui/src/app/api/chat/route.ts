@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
-import { Constants } from '@/app/utils/constant';
+import { getAccessToken } from '@/utils/server-utils';
+import { Constants } from '@/constants/constant';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
-const baseUrl = `${ORCHESTRATOR_URL}/api/conversations`;
+const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/conversations`;
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);

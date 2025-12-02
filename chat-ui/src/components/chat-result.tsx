@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ChatMessage } from '../models/chat-message';
-import RichTextPresenter from './RichTextPresenter';
-import TypingIndicator from './TypingIndicator';
-import { Constants } from '../utils/constant';
 import Image from 'next/image';
+import { ChatMessage } from '@/models/chat-message';
+import RichTextPresenter from '@/components/ui/rich-text-presenter';
+import TypingIndicator from '@/components/ui/typing-indicator';
+import { Constants } from '@/constants/constant';
 
 export default function ChatResult({
   results,

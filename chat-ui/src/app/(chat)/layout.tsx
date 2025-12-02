@@ -1,5 +1,5 @@
-import Sidebar from '../components/Sidebar';
-import { ChatProvider } from '../contexts/ChatContext';
+import Sidebar from '@/components/sidebar';
+import { ChatProvider } from '@/contexts/ChatContext';
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
   return (

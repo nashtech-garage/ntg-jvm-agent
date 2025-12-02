@@ -5,8 +5,9 @@ import { ChevronLeft, ChevronRight, Trash, SquarePen, MoreVertical } from 'lucid
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
-import { Constants } from '../utils/constant';
+import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
+import logger from '@/utils/logger';
 
 export default function Sidebar() {
   const {
@@ -103,7 +104,7 @@ export default function Sidebar() {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.replace('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed:', error);
       toast.error('Logout failed');
     }
   };

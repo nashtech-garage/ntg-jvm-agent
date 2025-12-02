@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { AUTH_SERVER_URL, getAccessToken } from '@/app/utils/server-utils';
-import { Constants } from '@/app/utils/constant';
+import { getAccessToken } from '@/utils/server-utils';
+import { Constants } from '@/constants/constant';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
+    const res = await fetch(`${SERVER_CONFIG.AUTH_SERVER}/userinfo`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
