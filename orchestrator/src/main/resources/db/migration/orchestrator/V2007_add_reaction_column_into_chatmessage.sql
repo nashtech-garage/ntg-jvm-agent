@@ -1,0 +1,2 @@
+ALTER TABLE chat_message
+ADD COLUMN reaction ENUM('LIKE','DISLIKE') DEFAULT NULL;
