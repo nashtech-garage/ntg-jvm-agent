@@ -1,11 +1,14 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ninjasquad.springmockk.MockkBean
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
+import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
+import io.mockk.verify
 import jakarta.persistence.EntityManager
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,6 +29,9 @@ class AgentServiceIT
         private val repo: AgentRepository,
         private val entityManager: EntityManager,
     ) : BaseIntegrationTest() {
+        @MockkBean(relaxUnitFun = true)
+        lateinit var dynamicModelService: DynamicModelService
+
         private fun buildRequest(
             name: String = "Agent A",
             active: Boolean = true,
@@ -157,7 +163,7 @@ class AgentServiceIT
                             model = "gpt-4o-mini",
                             embeddingModel = "openai/text-embedding-3-small",
                             embeddingsPath = "/embeddings",
-                        ),
+                        ).apply { this.active = true },
                     )
 
             val updateReq =
@@ -171,6 +177,15 @@ class AgentServiceIT
             assertEquals("AfterUpdate", updated.name)
             assertFalse(updated.active)
             assertEquals("Updated agent", updated.description)
+
+            entityManager.flush()
+            entityManager.clear()
+            val persisted = repo.findById(saved.id!!).orElseThrow()
+            assertEquals("AfterUpdate", persisted.name)
+            assertFalse(persisted.active)
+            assertEquals("Updated agent", persisted.description)
+
+            verify { dynamicModelService.invalidateCacheForAgent(saved.id!!) }
         }
 
         @Test

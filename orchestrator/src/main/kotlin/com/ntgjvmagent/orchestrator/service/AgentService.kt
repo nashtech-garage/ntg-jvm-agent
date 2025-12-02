@@ -15,6 +15,7 @@ import java.util.UUID
 @Service
 class AgentService(
     private val repo: AgentRepository,
+    private val dynamicModelService: DynamicModelService,
 ) {
     @Transactional(readOnly = true)
     fun getAll(): List<AgentListResponseDto> = repo.findAll().map(AgentMapper::toListResponse)
@@ -57,13 +58,14 @@ class AgentService(
             active = request.active
             provider = request.provider
             settings = request.settings
-            baseUrl = request.baseUrl
             apiKey = request.apiKey
+            baseUrl = request.baseUrl
             chatCompletionsPath = request.chatCompletionsPath
-            embeddingsPath = request.embeddingsPath
             embeddingModel = request.embeddingModel
             dimension = request.dimension
+            embeddingsPath = request.embeddingsPath
         }
+        dynamicModelService.invalidateCacheForAgent(id)
         return AgentMapper.toResponse(repo.save(existing))
     }
 

@@ -179,6 +179,13 @@
       <artifactId>hibernate-vector</artifactId>
       <version>6.6.33.Final</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.ninja-squad</groupId>
+      <artifactId>springmockk</artifactId>
+      <version>4.0.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
