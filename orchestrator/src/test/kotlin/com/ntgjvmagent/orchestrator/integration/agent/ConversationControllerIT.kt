@@ -1,19 +1,18 @@
-package com.ntgjvmagent.orchestrator.integration
+package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationUpdateRequestVm
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.util.UUID
 
 @DisplayName("ConversationController Integration Tests")
@@ -52,16 +51,16 @@ class ConversationControllerIT @Autowired constructor(
         val result =
             mockMvc
                 .perform(requestBuilder)
-                .andExpect(status().isOk)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val responseTree = mapper.readTree(responseJson)
 
-        assertThat(responseTree.get("conversationId")).isNotNull
-        assertThat(responseTree.get("title")).isNotNull
-        assertThat(responseTree.get("answer")).isNotNull
+        Assertions.assertThat(responseTree.get("conversationId")).isNotNull
+        Assertions.assertThat(responseTree.get("title")).isNotNull
+        Assertions.assertThat(responseTree.get("answer")).isNotNull
 
         testConversationId = UUID.fromString(responseTree.get("conversationId").asText())
     }
@@ -82,15 +81,15 @@ class ConversationControllerIT @Autowired constructor(
         val result =
             mockMvc
                 .perform(requestBuilder)
-                .andExpect(status().isOk)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val conversationId = mapper.readTree(responseJson).get("conversationId").asText()
         testConversationId = UUID.fromString(conversationId)
 
-        assertThat(testConversationId).isNotNull
+        Assertions.assertThat(testConversationId).isNotNull
     }
 
     @Test
@@ -119,14 +118,14 @@ class ConversationControllerIT @Autowired constructor(
         val result =
             mockMvc
                 .perform(getAuth("/api/conversations/user"))
-                .andExpect(status().isOk)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val conversations = mapper.readTree(responseJson)
 
-        assertThat(conversations.size()).isGreaterThanOrEqualTo(2)
+        Assertions.assertThat(conversations.size()).isGreaterThanOrEqualTo(2)
     }
 
     @Test
@@ -142,14 +141,14 @@ class ConversationControllerIT @Autowired constructor(
         val result =
             mockMvc
                 .perform(getAuth("/api/conversations/${savedConversation.id}/messages"))
-                .andExpect(status().isOk)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val messages = mapper.readTree(responseJson)
 
-        assertThat(messages.size()).isGreaterThanOrEqualTo(0)
+        Assertions.assertThat(messages.size()).isGreaterThanOrEqualTo(0)
     }
 
     @Test
@@ -159,8 +158,8 @@ class ConversationControllerIT @Autowired constructor(
 
         mockMvc
             .perform(getAuth("/api/conversations/$nonExistentId/messages"))
-            .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Not Found"))
     }
 
     @Test
@@ -175,12 +174,12 @@ class ConversationControllerIT @Autowired constructor(
 
         mockMvc
             .perform(deleteAuth("/api/conversations/${savedConversation.id}"))
-            .andExpect(status().isNoContent)
+            .andExpect(MockMvcResultMatchers.status().isNoContent)
             .andReturn()
 
         val deletedConversation = conversationRepository.findById(savedConversation.id!!)
-        assertThat(deletedConversation.isPresent).isTrue
-        assertThat(deletedConversation.get().isActive).isFalse
+        Assertions.assertThat(deletedConversation.isPresent).isTrue
+        Assertions.assertThat(deletedConversation.get().isActive).isFalse
     }
 
     @Test
@@ -190,7 +189,7 @@ class ConversationControllerIT @Autowired constructor(
 
         mockMvc
             .perform(deleteAuth("/api/conversations/$nonExistentId"))
-            .andExpect(status().isNotFound)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
     }
 
     @Test
@@ -210,17 +209,17 @@ class ConversationControllerIT @Autowired constructor(
                 .perform(
                     putAuth("/api/conversations/${savedConversation.id}", updateRequest),
                 )
-                .andExpect(status().isOk)
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val updatedTitle = mapper.readTree(responseJson).get("title").asText()
 
-        assertThat(updatedTitle).isEqualTo("New Title")
+        Assertions.assertThat(updatedTitle).isEqualTo("New Title")
 
         val updatedConversation = conversationRepository.findById(savedConversation.id!!)
-        assertThat(updatedConversation.get().title).isEqualTo("New Title")
+        Assertions.assertThat(updatedConversation.get().title).isEqualTo("New Title")
     }
 
     @Test
@@ -243,13 +242,13 @@ class ConversationControllerIT @Autowired constructor(
                 .perform(
                     putAuth("/api/conversations/${savedConversation.id}", updateRequest),
                 )
-                .andExpect(status().isOk)
+                .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val updatedTitle = mapper.readTree(responseJson).get("title").asText()
 
-        assertThat(updatedTitle).isEqualTo("New Title with Spaces")
+        Assertions.assertThat(updatedTitle).isEqualTo("New Title with Spaces")
     }
 
     @Test
@@ -269,8 +268,8 @@ class ConversationControllerIT @Autowired constructor(
             .perform(
                 putAuth("/api/conversations/${savedConversation.id}", updateRequest),
             )
-            .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.error").value("Not Found"))
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.error").value("Not Found"))
     }
 
     @Test
@@ -283,7 +282,7 @@ class ConversationControllerIT @Autowired constructor(
             .perform(
                 putAuth("/api/conversations/$nonExistentId", updateRequest),
             )
-            .andExpect(status().isNotFound)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
     }
 
     @Test
@@ -308,15 +307,15 @@ class ConversationControllerIT @Autowired constructor(
         val result =
             mockMvc
                 .perform(getAuth("/api/conversations/user"))
-                .andExpect(status().isOk)
+                .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
 
         val responseJson = result.response.contentAsString
         val conversations = mapper.readTree(responseJson)
 
         val titles = conversations.map { it.get("title").asText() }
-        assertThat(titles).contains("Active Conversation")
-        assertThat(titles).doesNotContain("Inactive Conversation")
+        Assertions.assertThat(titles).contains("Active Conversation")
+        Assertions.assertThat(titles).doesNotContain("Inactive Conversation")
     }
 
     @Test
@@ -324,8 +323,8 @@ class ConversationControllerIT @Autowired constructor(
     fun shouldHandleEmptyConversationList() {
         mockMvc
             .perform(getAuth("/api/conversations/user"))
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
             .andReturn()
     }
 }
