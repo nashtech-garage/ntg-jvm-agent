@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { setTokenIntoCookie, getRefreshToken, deleteCookies } from './utils/server-utils';
-import { authPathname } from '@/constants/url';
 
 export async function middleware(req: NextRequest) {
   const pathName = req.nextUrl.pathname;
