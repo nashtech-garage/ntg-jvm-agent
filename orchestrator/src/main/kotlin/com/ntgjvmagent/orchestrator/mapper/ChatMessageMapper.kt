@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.mapper
 
+import com.ntgjvmagent.orchestrator.dto.CitationDto
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageMediaVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
@@ -30,6 +31,16 @@ object ChatMessageMapper {
                         fileName = mm.fileName,
                         contentType = mm.contentType,
                         data = "data:${mm.contentType};base64,$base64",
+                    )
+                },
+            citations =
+                chatMessage.citations.map { c ->
+                    CitationDto(
+                        chunkId = c.chunkId,
+                        fileName = c.fileName,
+                        filePath = c.filePath,
+                        charStart = c.charStart,
+                        charEnd = c.charEnd,
                     )
                 },
         )

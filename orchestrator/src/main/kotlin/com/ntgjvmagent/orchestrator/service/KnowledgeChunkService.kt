@@ -146,13 +146,31 @@ class KnowledgeChunkService(
     }
 
     private fun buildDocument(chunk: KnowledgeChunk): Document {
-        val metadata =
-            (chunk.metadata ?: emptyMap()) +
-                mapOf(
-                    "chunk_id" to chunk.id.toString(),
-                    "knowledge_id" to chunk.knowledge.id.toString(),
-                    "chunk_order" to chunk.chunkOrder.toString(),
-                )
-        return Document(chunk.id.toString(), chunk.content, metadata)
+        val md = chunk.metadata ?: emptyMap<String, Any>()
+        val fileName = md["fileName"] ?: ""
+        val filePath = md["filePath"] ?: ""
+        val charStart = (md["charStart"] as? Number)?.toInt() ?: 0
+        val charEnd = (md["charEnd"] as? Number)?.toInt() ?: 0
+
+        val docMeta =
+            mapOf(
+                "chunkId" to chunk.id.toString(),
+                "knowledgeId" to chunk.knowledge.id.toString(),
+                "agentId" to
+                    chunk.knowledge.agent.id
+                        .toString(),
+                "chunkOrder" to chunk.chunkOrder,
+                "fileName" to fileName,
+                "filePath" to filePath,
+                "charStart" to charStart,
+                "charEnd" to charEnd,
+            )
+
+        return Document
+            .builder()
+            .id(chunk.id.toString())
+            .text(chunk.content)
+            .metadata(docMeta)
+            .build()
     }
 }

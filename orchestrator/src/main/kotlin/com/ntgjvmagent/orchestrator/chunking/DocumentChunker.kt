@@ -34,37 +34,55 @@ class DocumentChunker(
         file: MultipartFile,
         profileName: String? = null,
     ): List<Document> {
-        val result: List<Document> =
-            if (file.isEmpty) {
-                emptyList()
-            } else {
-                val fileName = file.originalFilename ?: "unknown"
-                val extension = fileName.substringAfterLast('.', "").lowercase()
-                val text = textExtractor.extract(file, extension)
+        val fileName = file.originalFilename ?: "unknown"
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        val text = textExtractor.extract(file, extension)
 
-                if (text.isBlank()) {
-                    emptyList()
+        if (text.isBlank() || file.isEmpty) return emptyList()
+
+        val chosenProfile = profileName ?: profileDetector.detect(text, extension)
+        val splitter = splitters[chosenProfile] ?: error("Unknown splitter profile: $chosenProfile")
+
+        val originalDoc = Document.builder().text(text).build()
+        val splitDocs = splitter.apply(listOf(originalDoc))
+
+        var searchIndex = 0
+        val results = mutableListOf<Document>()
+
+        splitDocs.forEach { d ->
+            val chunkText = d.text ?: ""
+            // Find the occurrence starting from last search index to avoid earlier matches
+            val start = text.indexOf(chunkText, searchIndex)
+            val resolvedStart =
+                if (start >= 0) {
+                    start
                 } else {
-                    val chosenProfile = profileName ?: profileDetector.detect(text, extension)
-                    val splitter =
-                        splitters[chosenProfile]
-                            ?: error("Unknown splitter profile: $chosenProfile")
-
-                    val metadata = mutableMapOf<String, Any>()
-                    if (fileName.isNotBlank()) metadata["source"] = fileName
-                    metadata["profile"] = chosenProfile
-
-                    val document =
-                        Document
-                            .builder()
-                            .text(text)
-                            .metadata(metadata)
-                            .build()
-
-                    splitter.apply(listOf(document))
+                    // fallback: try to find by trimming whitespace
+                    val trimmed = chunkText.trim()
+                    if (trimmed.isEmpty()) {
+                        searchIndex
+                    } else {
+                        text.indexOf(trimmed, searchIndex).takeIf { it >= 0 } ?: searchIndex
+                    }
                 }
-            }
+            val end = resolvedStart + chunkText.length
+            searchIndex = end.coerceAtLeast(searchIndex)
 
-        return result
+            val metadata = mutableMapOf<String, Any>()
+            if (fileName.isNotBlank()) metadata["fileName"] = fileName
+            metadata["profile"] = chosenProfile
+            metadata["charStart"] = resolvedStart
+            metadata["charEnd"] = end
+
+            val docWithMeta =
+                Document
+                    .builder()
+                    .text(chunkText)
+                    .metadata(metadata)
+                    .build()
+            results += docWithMeta
+        }
+
+        return results
     }
 }

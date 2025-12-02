@@ -2,16 +2,23 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
 import com.ntgjvmagent.orchestrator.component.GlobalToolCallbackProvider
+import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
+import com.ntgjvmagent.orchestrator.dto.CitationDto
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
+import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.Prompt
+import org.springframework.ai.chat.prompt.PromptTemplate
+import org.springframework.ai.document.Document
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor
+import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever
+import org.springframework.ai.template.st.StTemplateRenderer
 import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
@@ -32,39 +39,14 @@ class ChatModelService(
         request: ChatRequestVm,
         history: List<String> = emptyList(),
         summary: String = "",
-    ): String? {
-        val combinedPrompt =
-            buildString {
-                appendLine(
-                    Constant.SEARCH_TOOL_INSTRUCTION.trimIndent(),
-                )
-                history.forEach { item ->
-                    appendLine(item)
-                    if (summary.isNotBlank()) {
-                        appendLine("Conversation summary so far:")
-                        appendLine(summary)
-                        appendLine()
-                    }
-
-                    if (history.isNotEmpty()) {
-                        appendLine("Chat history:")
-                        history.forEach { item ->
-                            appendLine(item)
-                        }
-                        appendLine()
-                    }
-                }
-            }
+    ): ChatResponseDto {
+        val combinedPrompt = buildCombinedPrompt(history, summary)
 
         val model = dynamicModelService.getChatModel(request.agentId)
         val chatClient = ChatClient.builder(model).build()
-        val qaAdvisor = createQaAdvisorForAgent(request.agentId)
 
-        var promptBuilder = chatClient.prompt()
-        if (qaAdvisor != null) {
-            promptBuilder = promptBuilder.advisors(qaAdvisor)
-        }
-        val response =
+        val promptBuilder = createPromptBuilder(request.agentId, chatClient)
+        val result =
             promptBuilder
                 .toolCallbacks(createToolForAgent(request.agentId))
                 .user { u ->
@@ -84,9 +66,16 @@ class ChatModelService(
                             }
                         }
                 }.call()
-                .content()
+                .chatResponse()
 
-        return response
+        val response = result?.result?.output?.text
+
+        val citations = extractCitations(result)
+
+        return ChatResponseDto(
+            answer = response,
+            citations = citations,
+        )
     }
 
     fun createSummarize(
@@ -106,7 +95,55 @@ class ChatModelService(
         return response.result.output.text
     }
 
-    fun createQaAdvisorForAgent(agentId: UUID): QuestionAnswerAdvisor? {
+    fun createRagAdvisor(agentId: UUID): RetrievalAugmentationAdvisor {
+        val documentRetriever =
+            VectorStoreDocumentRetriever
+                .builder()
+                .topK(Constant.TOP_K)
+                .vectorStore(vectorStoreService.getVectorStore(agentId))
+                .build()
+
+        val customPromptTemplate =
+            PromptTemplate
+                .builder()
+                .renderer(
+                    StTemplateRenderer
+                        .builder()
+                        .startDelimiterToken('<')
+                        .endDelimiterToken('>')
+                        .build(),
+                ).template(
+                    Constant.RAG_PROMPT_TEMPLATE.trimIndent(),
+                ).build()
+        val customDocumentFormatter: (List<Document>) -> String = { documents ->
+            documents.joinToString(separator = System.lineSeparator() + System.lineSeparator()) { doc ->
+                val chunkId = doc.metadata["chunkId"]
+                """
+                ----
+                [chunkId=$chunkId]
+                ${doc.text}
+                """.trimIndent()
+            }
+        }
+        val contextualQueryAugmenter =
+            ContextualQueryAugmenter
+                .builder()
+                .documentFormatter(customDocumentFormatter)
+                .promptTemplate(customPromptTemplate)
+                .allowEmptyContext(true)
+                .build()
+
+        return RetrievalAugmentationAdvisor
+            .builder()
+            .documentRetriever(documentRetriever)
+            .queryAugmenter(contextualQueryAugmenter)
+            .build()
+    }
+
+    fun createPromptBuilder(
+        agentId: UUID,
+        chatClient: ChatClient,
+    ): ChatClient.ChatClientRequestSpec {
         val knowledgeIds: List<String> =
             agentKnowledgeRepo
                 .findAllByAgentIdAndActiveTrue(
@@ -114,7 +151,7 @@ class ChatModelService(
                 ).map { it.id.toString() }
 
         if (knowledgeIds.isEmpty()) {
-            return null
+            return chatClient.prompt()
         }
         val idsArray =
             knowledgeIds.joinToString(
@@ -122,17 +159,12 @@ class ChatModelService(
                 postfix = "]",
                 separator = ",",
             ) { "\"$it\"" }
+        val ragAdvisor = createRagAdvisor(agentId)
 
-        val searchRequest =
-            SearchRequest
-                .builder()
-                .topK(Constant.TOP_K)
-                .filterExpression("knowledge_id IN $idsArray")
-                .build()
-        return QuestionAnswerAdvisor
-            .builder(vectorStoreService.getVectorStore(agentId))
-            .searchRequest(searchRequest)
-            .build()
+        return chatClient
+            .prompt()
+            .advisors(ragAdvisor)
+            .advisors { it.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "knowledgeId IN $idsArray") }
     }
 
     fun createToolForAgent(agentId: UUID): List<ToolCallback?> {
@@ -171,5 +203,46 @@ class ChatModelService(
                 .call()
 
         return response.content() ?: ""
+    }
+
+    private fun buildCombinedPrompt(
+        history: List<String>,
+        summary: String,
+    ): String =
+        buildString {
+            appendLine(Constant.SEARCH_TOOL_INSTRUCTION.trimIndent())
+
+            history.forEach { item ->
+                appendLine(item)
+                if (summary.isNotBlank()) {
+                    appendLine("Conversation summary so far:")
+                    appendLine(summary)
+                    appendLine()
+                }
+
+                if (history.isNotEmpty()) {
+                    appendLine("Chat history:")
+                    history.forEach { appendLine(it) }
+                    appendLine()
+                }
+            }
+        }
+
+    private fun extractCitations(result: ChatResponse?): List<CitationDto> {
+        val documents =
+            result?.metadata?.get<List<Document>>("rag_document_context")
+                ?: emptyList()
+
+        return documents.map { doc ->
+            val meta = doc.metadata
+
+            CitationDto(
+                chunkId = meta["chunkId"].toString(),
+                fileName = meta["fileName"].toString(),
+                filePath = meta["filePath"].toString(),
+                charStart = meta["charStart"].toString().toInt(),
+                charEnd = meta["charEnd"].toString().toInt(),
+            )
+        }
     }
 }

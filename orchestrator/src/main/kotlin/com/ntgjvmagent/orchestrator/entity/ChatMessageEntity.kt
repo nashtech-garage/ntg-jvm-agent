@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "chat_message")
-data class ChatMessageEntity(
+class ChatMessageEntity(
     @Column(columnDefinition = "TEXT")
     val content: String,
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,5 +25,31 @@ data class ChatMessageEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    val messageMedias: MutableList<ChatMessageMediaEntity> = mutableListOf(),
-) : BaseEntity()
+    val messageMedias: MutableSet<ChatMessageMediaEntity> = mutableSetOf(),
+    @OneToMany(
+        mappedBy = "chatMessage",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+    )
+    val citations: MutableSet<ChatMessageCitationEntity> = mutableSetOf(),
+) : BaseEntity() {
+    fun addCitation(
+        chunkId: String,
+        fileName: String,
+        filePath: String,
+        charStart: Int,
+        charEnd: Int,
+    ) {
+        val citation =
+            ChatMessageCitationEntity(
+                chunkId = chunkId,
+                fileName = fileName,
+                filePath = filePath,
+                charStart = charStart,
+                charEnd = charEnd,
+                chatMessage = this,
+            )
+        this.citations.add(citation)
+    }
+}

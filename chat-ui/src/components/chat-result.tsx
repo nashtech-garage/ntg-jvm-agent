@@ -52,7 +52,9 @@ export default function ChatResult({
               </div>
             </div>
           )}
-          {Constants.ANSWER_TYPE === r.type && <RichTextPresenter content={r.content} />}
+          {Constants.ANSWER_TYPE === r.type && (
+            <RichTextPresenter content={r.content} citations={r.citations} />
+          )}
         </div>
       ))}
       {isTyping && (

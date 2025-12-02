@@ -14,6 +14,7 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
         SELECT m
         FROM ChatMessageEntity m
         LEFT JOIN FETCH m.messageMedias
+        LEFT JOIN FETCH m.citations
         WHERE m.conversation.id = :conversationId
         ORDER BY m.createdAt ASC
         """,
