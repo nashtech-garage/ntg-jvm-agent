@@ -1,3 +1,5 @@
+// Disable specific no-console ESLint rules for this logger utility
+/* eslint-disable no-console */
 type LogType = 'log' | 'warn' | 'error';
 
 const createLogger = (level: LogType, message: string, data?: unknown) => {

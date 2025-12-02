@@ -1,19 +1,40 @@
-import { dirname } from 'path';
+import path from 'path';
 import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
+import tailwindcss from 'eslint-plugin-tailwindcss';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const tailwindConfigPath = path.join(__dirname, 'tailwind.config.js');
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+const eslintConfig = defineConfig([
   {
-    ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts'],
+    ignores: ['node_modules/**', '.next/**', 'tailwind.config.js'],
   },
-];
+  ...nextVitals,
+  ...nextTs,
+  prettierConfig,
+  {
+    plugins: {
+      prettier,
+      tailwindcss,
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-console': 'error',
+      'tailwindcss/classnames-order': 'off',
+      'tailwindcss/no-custom-classname': 'off',
+    },
+    settings: {
+      tailwindcss: {
+        config: tailwindConfigPath,
+      },
+    },
+  },
+]);
 
 export default eslintConfig;
