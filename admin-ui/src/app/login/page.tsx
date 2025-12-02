@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SITE_CONFIG } from '@/constants/site-config';
 
@@ -8,19 +8,24 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
   const redirectUrl = searchParams.get('redirect') || '/admin';
   const errorParam = searchParams.get('error');
 
-  useEffect(() => {
-    // Show error message if present in URL
+  const urlError = useMemo(() => {
     if (errorParam === 'insufficient_privileges') {
-      setError('You do not have admin privileges to access this application.');
-    } else if (errorParam === 'access_denied') {
-      setError('Access was denied. Please contact your administrator.');
+      return 'You do not have admin privileges to access this application.';
     }
+    if (errorParam === 'access_denied') {
+      return 'Access was denied. Please contact your administrator.';
+    }
+    return null;
+  }, [errorParam]);
 
+  const error = runtimeError ?? urlError;
+
+  useEffect(() => {
     // Check if user is already authenticated
     fetch('/api/auth/me', { credentials: 'include' })
       .then((response) => {
@@ -31,17 +36,19 @@ function LoginPageContent() {
       .catch(() => {
         // User is not authenticated, stay on login page
       });
-  }, [router, redirectUrl, errorParam]);
+  }, [redirectUrl, router]);
 
   const handleLogin = () => {
     setIsLoading(true);
-    setError(null);
+    setRuntimeError(null);
 
     // Redirect to authorization server for OAuth flow
     const baseAuthServer = SITE_CONFIG.AUTH_SERVER;
     if (!baseAuthServer) {
       setIsLoading(false);
-      setError('Authorization server URL is not configured. Please contact your administrator.');
+      setRuntimeError(
+        'Authorization server URL is not configured. Please contact your administrator.'
+      );
       return;
     }
     const authUrl = new URL('/oauth2/authorize', baseAuthServer);
