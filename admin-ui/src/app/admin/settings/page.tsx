@@ -45,7 +45,7 @@ export default function AdminSettings() {
         const data: SystemSettings = await response.json();
         setSettings(data);
       } catch (error) {
-        logger.error('Failed to fetch  system settings:', error);
+        logger.error('Failed to fetch system settings:', error);
       } finally {
         setLoading(false);
       }
