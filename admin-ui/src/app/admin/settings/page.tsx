@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { PUBLIC_CONFIG } from '@/constants/site-config';
 import logger from '@/utils/logger';
 
 interface SystemSettings {
@@ -320,13 +320,13 @@ export default function AdminSettings() {
             </p>
             <div className="space-y-2 text-sm">
               <div>
-                <strong>Client ID:</strong> {SITE_CONFIG.CLIENT_ID_PUBLIC || 'Not configured'}
+                <strong>Client ID:</strong> {PUBLIC_CONFIG.CLIENT_ID || 'Not configured'}
               </div>
               <div>
-                <strong>Auth Server:</strong> {SITE_CONFIG.AUTH_SERVER || 'Not configured'}
+                <strong>Auth Server:</strong> {PUBLIC_CONFIG.AUTH_SERVER || 'Not configured'}
               </div>
               <div>
-                <strong>Scope:</strong> {SITE_CONFIG.SCOPE || 'Not configured'}
+                <strong>Scope:</strong> {PUBLIC_CONFIG.SCOPE || 'Not configured'}
               </div>
             </div>
           </div>

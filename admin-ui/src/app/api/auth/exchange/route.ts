@@ -1,6 +1,6 @@
 import { decodeToken, setTokenIntoCookie } from '@/utils/server-utils';
 import { NextRequest, NextResponse } from 'next/server';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from '@/utils/logger';
 
 export async function POST(request: NextRequest) {
@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
     if (!code) {
       return NextResponse.json({ error: 'Authorization code is required' }, { status: 400 });
     }
-    const tokenUrl = `${SITE_CONFIG.AUTH_SERVER_URL}/oauth2/token`;
-    const clientId = SITE_CONFIG.CLIENT_ID;
-    const clientSecret = SITE_CONFIG.CLIENT_SECRET;
+    const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
+    const clientId = SERVER_CONFIG.CLIENT_ID;
+    const clientSecret = SERVER_CONFIG.CLIENT_SECRET;
 
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 

@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const backendRes = await fetch(`${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}`, {
+  const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -38,7 +38,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   // Parse request body from frontend
   const body = await req.json();
 
-  const backendRes = await fetch(`${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}`, {
+  const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

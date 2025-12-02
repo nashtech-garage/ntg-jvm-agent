@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { decodeToken, getAccessToken } from '@/utils/server-utils';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from '@/utils/logger';
 
 export async function GET(req: Request) {
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     }
 
     // Fetch user info from the OAuth2 provider
-    const userInfoResponse = await fetch(`${SITE_CONFIG.AUTH_SERVER_URL}/userinfo`, {
+    const userInfoResponse = await fetch(`${SERVER_CONFIG.AUTH_SERVER}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

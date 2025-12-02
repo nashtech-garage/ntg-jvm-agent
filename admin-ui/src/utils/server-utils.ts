@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/models/token';
 import { Constants } from '@/constants/constant';
-import { IS_PRODUCTION, SITE_CONFIG } from '@/constants/site-config';
+import { IS_PRODUCTION, SERVER_CONFIG } from '@/constants/site-config';
 import logger from './logger';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
@@ -21,9 +21,9 @@ export function decodeToken(token: string) {
 
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
-    const tokenUrl = `${SITE_CONFIG.AUTH_SERVER}/oauth2/token`;
-    const clientId = SITE_CONFIG.CLIENT_ID;
-    const clientSecret = SITE_CONFIG.CLIENT_SECRET;
+    const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
+    const clientId = SERVER_CONFIG.CLIENT_ID;
+    const clientSecret = SERVER_CONFIG.CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       logger.error('Missing required environment variables: CLIENT_ID and/or CLIENT_SECRET');
