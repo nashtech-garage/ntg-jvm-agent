@@ -5,9 +5,12 @@ import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
 import com.ntgjvmagent.orchestrator.config.ChunkerProperties
 import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeFile
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.KnowledgeFileRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
+import com.ntgjvmagent.orchestrator.service.KnowledgeFileStorageService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
 import io.mockk.every
 import io.mockk.mockk
@@ -20,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockMultipartFile
 import java.io.ByteArrayOutputStream
+import java.nio.file.Paths
+import java.util.Optional
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -29,6 +34,8 @@ class KnowledgeImportServiceTest {
     private lateinit var knowledgeRepo: AgentKnowledgeRepository
     private lateinit var documentChunker: DocumentChunker
     private lateinit var service: KnowledgeImportService
+    private lateinit var fileStorageService: KnowledgeFileStorageService
+    private lateinit var knowledgeFileRepo: KnowledgeFileRepository
 
     private val agentId = UUID.randomUUID()
     private val knowledgeId = UUID.randomUUID()
@@ -37,12 +44,27 @@ class KnowledgeImportServiceTest {
     fun setUp() {
         chunkService = mockk()
         knowledgeRepo = mockk()
+        fileStorageService = mockk()
+        knowledgeFileRepo = mockk()
 
         // Always return true for knowledge existence
         every { knowledgeRepo.existsByIdAndAgentId(any(), any()) } returns true
 
+        every { knowledgeRepo.findById(any()) } answers {
+            Optional.of(mockk())
+        }
+
+        val knowledgeFile = mockk<KnowledgeFile>()
+        every { knowledgeFile.id } returns UUID.randomUUID()
+        every { knowledgeFile.fileName } returns "mock-result.txt"
+        every { knowledgeFile.filePath } returns "storage/mock-result.txt"
+
+        every { knowledgeFileRepo.save(any()) } answers { knowledgeFile }
+
         // Setup chunk order mock
         every { chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId) } returns 0
+
+        every { fileStorageService.saveFile(any(), any(), any()) } returns Paths.get("storage/mock-result.txt")
 
         // Correctly map arguments (NO MORE CLASSCAST ISSUES)
         every {
@@ -85,7 +107,8 @@ class KnowledgeImportServiceTest {
                 ChunkerProfileDetector(),
             )
 
-        service = KnowledgeImportService(chunkService, knowledgeRepo, documentChunker)
+        service =
+            KnowledgeImportService(chunkService, knowledgeRepo, documentChunker, fileStorageService, knowledgeFileRepo)
     }
 
     // -------------------------------------------------------

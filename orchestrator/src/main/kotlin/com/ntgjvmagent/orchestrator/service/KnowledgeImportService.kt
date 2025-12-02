@@ -1,11 +1,14 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeFile
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.KnowledgeFileRepository
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -16,6 +19,8 @@ class KnowledgeImportService(
     private val chunkService: KnowledgeChunkService,
     private val knowledgeRepo: AgentKnowledgeRepository,
     private val documentChunker: DocumentChunker,
+    private val fileStorageService: KnowledgeFileStorageService,
+    private val knowledgeFileRepo: KnowledgeFileRepository,
 ) {
     private val logger = LoggerFactory.getLogger(KnowledgeImportService::class.java)
 
@@ -33,6 +38,23 @@ class KnowledgeImportService(
             throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
         }
 
+        // Save original file to storage
+        val savedPath = fileStorageService.saveFile(agentId, knowledgeId, file)
+
+        // Persist KnowledgeFile record
+        val knowledge =
+            knowledgeRepo.findByIdOrNull(knowledgeId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found")
+        val fileRecord =
+            KnowledgeFile(
+                knowledge = knowledge,
+                fileName = fileName ?: savedPath.fileName.toString(),
+                filePath = savedPath.toAbsolutePath().toString(),
+                contentType = file.contentType ?: "application/octet-stream",
+                fileSize = file.size,
+            )
+        val savedFileEntity = knowledgeFileRepo.save(fileRecord)
+
         // Split file into chunks
         val documents = documentChunker.splitDocumentIntoChunks(file)
         if (documents.isEmpty()) {
@@ -44,12 +66,21 @@ class KnowledgeImportService(
 
         // Create DB chunks and add to vector store
         documents.forEach { doc ->
+            val docMeta =
+                doc.metadata +
+                    mapOf(
+                        "fileId" to savedFileEntity.id.toString(),
+                        "filePath" to savedFileEntity.filePath,
+                        "fileName" to savedFileEntity.fileName,
+                        "charStart" to (doc.metadata["charStart"] ?: 0),
+                        "charEnd" to (doc.metadata["charEnd"] ?: 0),
+                    )
             chunkService.addChunk(
                 agentId = agentId,
                 knowledgeId = knowledgeId,
                 chunkOrder = currentOrder,
                 content = doc.text!!,
-                metadata = doc.metadata,
+                metadata = docMeta,
             )
             currentOrder++
         }
@@ -60,6 +91,8 @@ class KnowledgeImportService(
         return KnowledgeImportingResponseVm(
             originalFilename = fileName!!,
             numberOfSegment = numberOfSegments,
+            fileId = savedFileEntity.id!!,
+            filePath = savedFileEntity.filePath,
         )
     }
 }

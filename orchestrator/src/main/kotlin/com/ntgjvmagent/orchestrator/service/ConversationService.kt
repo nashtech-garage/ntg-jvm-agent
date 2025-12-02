@@ -1,5 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
+import com.ntgjvmagent.orchestrator.dto.CitationDto
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
@@ -44,11 +46,15 @@ class ConversationService(
         return conversations
     }
 
+    @Transactional(readOnly = true)
     fun listMessageByConversation(conversationId: UUID): List<ChatMessageResponseVm> {
-        this.conversationRepo
+        conversationRepo
             .findById(conversationId)
             .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-        return this.messageRepo.listMessageByConversationId(conversationId).map { ChatMessageMapper.toResponse(it) }
+
+        val messages = messageRepo.listMessageByConversationId(conversationId)
+
+        return messages.map { ChatMessageMapper.toResponse(it) }
     }
 
     private fun createNewConversation(
@@ -177,20 +183,23 @@ class ConversationService(
     }
 
     private fun buildChatResponse(
-        answer: String?,
+        chatResponse: ChatResponseDto,
         conversationResponse: ConversationResponseVm,
         conversation: ConversationEntity,
     ): ChatResponseVm =
         // Only save reply if it has actual reply
-        if (answer != null) {
+        if (chatResponse.answer != null) {
             val answerEntity =
                 messageRepo.save(
                     ChatMessageEntity(
-                        content = answer,
+                        content = chatResponse.answer,
                         conversation = conversation,
                         type = Constant.ANSWER_TYPE,
                     ),
                 )
+            if (chatResponse.citations.isNotEmpty()) {
+                saveMessageCitations(answerEntity, chatResponse.citations)
+            }
             ChatResponseVm(
                 conversationResponse,
                 ChatMessageResponseVm(
@@ -199,6 +208,7 @@ class ConversationService(
                     answerEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
                     medias = emptyList(),
+                    citations = chatResponse.citations,
                 ),
             )
         } else {
@@ -207,4 +217,20 @@ class ConversationService(
                 null,
             )
         }
+
+    private fun saveMessageCitations(
+        answerEntity: ChatMessageEntity,
+        citations: List<CitationDto>,
+    ) {
+        citations.forEach {
+            answerEntity.addCitation(
+                chunkId = it.chunkId,
+                fileName = it.fileName,
+                filePath = it.filePath,
+                charStart = it.charStart,
+                charEnd = it.charEnd,
+            )
+        }
+        messageRepo.save(answerEntity)
+    }
 }

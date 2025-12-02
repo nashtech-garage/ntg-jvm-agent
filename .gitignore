@@ -34,3 +34,6 @@ build/
 
 ### Environment Files ###
 .env.local
+
+### agent knowledge ###
+/orchestrator/storage/
