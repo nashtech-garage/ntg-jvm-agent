@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import logger from '@/utils/logger';
 
 interface LogEntry {
   id: string;
@@ -71,7 +72,7 @@ export default function AdminLogs() {
         ];
         setLogs(mockLogs);
       } catch (error) {
-        console.error('Failed to fetch logs:', error);
+        logger.error('Failed to fetch logs:', error);
       } finally {
         setLoading(false);
       }

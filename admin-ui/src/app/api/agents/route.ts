@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { SITE_CONFIG } from '@/constants/site-config';
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -8,7 +9,7 @@ export async function GET() {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const backendRes = await fetch(`${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/agents`, {
+  const backendRes = await fetch(`${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/agents`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
   // Parse request body from frontend
   const body = await req.json();
 
-  const backendRes = await fetch(`${process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER}/api/agents`, {
+  const backendRes = await fetch(`${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/agents`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

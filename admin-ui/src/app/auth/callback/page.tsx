@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import logger from '@/utils/logger';
 
 function CallbackPageContent() {
   const router = useRouter();
@@ -45,7 +46,7 @@ function CallbackPageContent() {
         }
       })
       .catch((err) => {
-        console.error('Authentication error:', err);
+        logger.error('Authentication error:', err);
         setError('Authentication failed. Please try again.');
       });
   }, [router, searchParams]);

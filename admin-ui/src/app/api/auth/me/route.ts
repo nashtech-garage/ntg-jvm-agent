@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { AUTH_SERVER_URL } from '@/utils/utils';
 import { decodeToken, getAccessToken } from '@/utils/server-utils';
+import { SITE_CONFIG } from '@/constants/site-config';
+import logger from '@/utils/logger';
 
 export async function GET(req: Request) {
   try {
@@ -11,7 +12,7 @@ export async function GET(req: Request) {
     }
 
     // Fetch user info from the OAuth2 provider
-    const userInfoResponse = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
+    const userInfoResponse = await fetch(`${SITE_CONFIG.AUTH_SERVER_URL}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    console.error('Auth check error:', error);
+    logger.error('Auth check error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

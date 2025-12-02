@@ -10,6 +10,7 @@ import React, {
   useCallback,
 } from 'react';
 import { UserInfo, TokenInfo } from '@/models/token';
+import logger from '@/utils/logger';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setToken(userData.token);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      logger.error('Auth check failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return false;
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       credentials: 'include',
     })
       .catch((error) => {
-        console.error('Logout failed:', error);
+        logger.error('Logout failed:', error);
       })
       .finally(() => {
         setUser(null);

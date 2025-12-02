@@ -1,6 +1,7 @@
-import { AUTH_SERVER_URL } from '@/utils/utils';
 import { decodeToken, setTokenIntoCookie } from '@/utils/server-utils';
 import { NextRequest, NextResponse } from 'next/server';
+import { SITE_CONFIG } from '@/constants/site-config';
+import logger from '@/utils/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,9 +10,9 @@ export async function POST(request: NextRequest) {
     if (!code) {
       return NextResponse.json({ error: 'Authorization code is required' }, { status: 400 });
     }
-    const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
-    const clientId = process.env.CLIENT_ID;
-    const clientSecret = process.env.CLIENT_SECRET;
+    const tokenUrl = `${SITE_CONFIG.AUTH_SERVER_URL}/oauth2/token`;
+    const clientId = SITE_CONFIG.CLIENT_ID;
+    const clientSecret = SITE_CONFIG.CLIENT_SECRET;
 
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('Token exchange failed:', errorText);
+      logger.error('Token exchange failed:', errorText);
       return NextResponse.json({ error: 'Token exchange failed' }, { status: 401 });
     }
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       username: decodedToken?.sub,
       roles: decodedToken?.roles || [],
     };
-    console.log('Decoded token:', decodedToken);
+    logger.info('Decoded token:', decodedToken);
 
     // Check if user has admin role
     if (!userInfo.roles?.some((role: string) => role === 'ADMIN')) {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
