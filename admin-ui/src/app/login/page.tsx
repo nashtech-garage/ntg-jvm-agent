@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { PUBLIC_CONFIG } from '@/constants/site-config';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -43,7 +43,7 @@ function LoginPageContent() {
     setRuntimeError(null);
 
     // Redirect to authorization server for OAuth flow
-    const baseAuthServer = SITE_CONFIG.AUTH_SERVER;
+    const baseAuthServer = PUBLIC_CONFIG.AUTH_SERVER;
     if (!baseAuthServer) {
       setIsLoading(false);
       setRuntimeError(
@@ -53,7 +53,7 @@ function LoginPageContent() {
     }
     const authUrl = new URL('/oauth2/authorize', baseAuthServer);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('client_id', SITE_CONFIG.CLIENT_ID_PUBLIC || 'demo-client');
+    authUrl.searchParams.set('client_id', PUBLIC_CONFIG.CLIENT_ID || 'demo-client');
     authUrl.searchParams.set('redirect_uri', `${window.location.origin}/auth/callback`);
     authUrl.searchParams.set(
       'scope',

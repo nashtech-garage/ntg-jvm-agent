@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { KnowledgeInput, KnowledgeResponse } from '@/models/knowledge';
 import { checkFileType, isPDFFile, isValidPDFFile } from '@/utils/utils';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from '@/utils/logger';
 
 export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeResponse> {
@@ -21,7 +21,7 @@ export async function addKnowledge(formData: KnowledgeInput): Promise<KnowledgeR
     return { success: false, error: 'Wrong PDF file' };
   }
 
-  const knowledgeUrl = `${SITE_CONFIG.ORCHESTRATOR_SERVER}/api/knowledge`;
+  const knowledgeUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/knowledge`;
   const cookieStore = cookies();
   const accessToken = (await cookieStore).get('access_token')?.value;
   if (!accessToken) {

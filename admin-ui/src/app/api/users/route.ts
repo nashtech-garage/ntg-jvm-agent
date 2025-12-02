@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { SITE_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
-const baseUrl = `${SITE_CONFIG.AUTH_SERVER}/api/users`;
+const baseUrl = `${SERVER_CONFIG.AUTH_SERVER}/api/users`;
 
 export async function GET(req: Request) {
   const cookieStore = cookies();
