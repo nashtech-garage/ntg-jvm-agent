@@ -1,23 +1,22 @@
-package com.ntgjvmagent.orchestrator.integration
+package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationShareEntity
+import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationShareRepository
 import com.ntgjvmagent.orchestrator.viewmodel.ShareConversationRequest
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -77,19 +76,19 @@ class SharedConversationControllerIT @Autowired constructor(
                     shareRequest,
                 )
             )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.conversationId").value(savedConversation.id.toString()))
-            .andExpect(jsonPath("$.conversationTitle").value("Shared Conversation"))
-            .andExpect(jsonPath("$.sharedByUsername").value(testUsername))
-            .andExpect(jsonPath("$.shareToken").isNotEmpty)
-            .andExpect(jsonPath("$.isExpired").value(false as Any))
-            .andExpect(jsonPath("$.expiresAt").isNotEmpty)
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.conversationId").value(savedConversation.id.toString()))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.conversationTitle").value("Shared Conversation"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.sharedByUsername").value(testUsername))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shareToken").isNotEmpty)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.isExpired").value(false as Any))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.expiresAt").isNotEmpty)
             .andReturn()
 
         val responseJson = result.response.contentAsString
         testShareToken = mapper.readTree(responseJson).get("shareToken").asText()
-        assertThat(testShareToken).isNotNull
+        Assertions.assertThat(testShareToken).isNotNull
     }
 
     @Test
@@ -112,7 +111,7 @@ class SharedConversationControllerIT @Autowired constructor(
                     shareRequest,
                 )
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -129,7 +128,7 @@ class SharedConversationControllerIT @Autowired constructor(
                     shareRequest,
                 )
             )
-            .andExpect(status().isNotFound)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
             .andReturn()
     }
 
@@ -151,7 +150,7 @@ class SharedConversationControllerIT @Autowired constructor(
                     invalidShareRequest,
                 )
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -173,7 +172,7 @@ class SharedConversationControllerIT @Autowired constructor(
                     invalidShareRequest,
                 )
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -213,15 +212,15 @@ class SharedConversationControllerIT @Autowired constructor(
         // Execute: Get shared conversation with token (no auth needed)
         mockMvc
             .perform(
-                get("/api/share/shared-conversations/${savedShare.shareToken}")
+                MockMvcRequestBuilders.get("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.id").value(savedConversation.id.toString()))
-            .andExpect(jsonPath("$.title").value("Public Shared Conversation"))
-            .andExpect(jsonPath("$.sharedByUsername").value(testUsername))
-            .andExpect(jsonPath("$.messages").isArray)
-            .andExpect(jsonPath("$.messages.length()").value(2))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(savedConversation.id.toString()))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Public Shared Conversation"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.sharedByUsername").value(testUsername))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.messages").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.messages.length()").value(2))
             .andReturn()
     }
 
@@ -230,9 +229,9 @@ class SharedConversationControllerIT @Autowired constructor(
     fun shouldReturn404ForInvalidShareToken() {
         mockMvc
             .perform(
-                get("/api/share/shared-conversations/invalid-token-${UUID.randomUUID()}")
+                MockMvcRequestBuilders.get("/api/share/shared-conversations/invalid-token-${UUID.randomUUID()}")
             )
-            .andExpect(status().isNotFound)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
             .andReturn()
     }
 
@@ -259,9 +258,9 @@ class SharedConversationControllerIT @Autowired constructor(
         // Execute: Try to access revoked share
         mockMvc
             .perform(
-                get("/api/share/shared-conversations/${savedShare.shareToken}")
+                MockMvcRequestBuilders.get("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -288,9 +287,9 @@ class SharedConversationControllerIT @Autowired constructor(
         // Execute: Try to access expired share
         mockMvc
             .perform(
-                get("/api/share/shared-conversations/${savedShare.shareToken}")
+                MockMvcRequestBuilders.get("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -328,12 +327,12 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 getAuth("/api/share/shared-conversations/conversation/${savedConversation.id}/shares")
             )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$.length()").value(2 as Any))
-            .andExpect(jsonPath("$[0].conversationId").value(savedConversation.id.toString()))
-            .andExpect(jsonPath("$[1].conversationId").value(savedConversation.id.toString()))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2 as Any))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].conversationId").value(savedConversation.id.toString()))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[1].conversationId").value(savedConversation.id.toString()))
             .andReturn()
     }
 
@@ -352,7 +351,7 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 getAuth("/api/share/shared-conversations/conversation/${savedConversation.id}/shares")
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -371,10 +370,10 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 getAuth("/api/share/shared-conversations/conversation/${savedConversation.id}/shares")
             )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$.length()").value(0 as Any))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$").isArray)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(0 as Any))
             .andReturn()
     }
 
@@ -403,16 +402,16 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 deleteAuth("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.shareToken").value(savedShare.shareToken))
-            .andExpect(jsonPath("$.isExpired").value(true as Any))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shareToken").value(savedShare.shareToken))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.isExpired").value(true as Any))
             .andReturn()
 
         // Verify: Share is marked as expired
         val revokedShare = conversationShareRepository.findByShareToken(savedShare.shareToken)
-        assertThat(revokedShare.isPresent).isTrue
-        assertThat(revokedShare.get().isExpired).isTrue
+        Assertions.assertThat(revokedShare.isPresent).isTrue
+        Assertions.assertThat(revokedShare.get().isExpired).isTrue
     }
 
     @Test
@@ -440,7 +439,7 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 deleteAuth("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isBadRequest)
+            .andExpect(MockMvcResultMatchers.status().isBadRequest)
             .andReturn()
     }
 
@@ -451,7 +450,7 @@ class SharedConversationControllerIT @Autowired constructor(
             .perform(
                 deleteAuth("/api/share/shared-conversations/non-existent-token")
             )
-            .andExpect(status().isNotFound)
+            .andExpect(MockMvcResultMatchers.status().isNotFound)
             .andReturn()
     }
 
@@ -476,8 +475,8 @@ class SharedConversationControllerIT @Autowired constructor(
                     shareRequest,
                 )
             )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.expiresAt").isNotEmpty)
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.expiresAt").isNotEmpty)
             .andReturn()
     }
 
@@ -524,11 +523,10 @@ class SharedConversationControllerIT @Autowired constructor(
         // Execute: Get shared conversation
         mockMvc
             .perform(
-                get("/api/share/shared-conversations/${savedShare.shareToken}")
+                MockMvcRequestBuilders.get("/api/share/shared-conversations/${savedShare.shareToken}")
             )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.messages.length()").value(2 as Any))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.messages.length()").value(2 as Any))
             .andReturn()
     }
 }
-
