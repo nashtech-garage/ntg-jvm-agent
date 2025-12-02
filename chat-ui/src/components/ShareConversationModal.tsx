@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-interface ShareModalProps {
+interface ShareConversationModalProps {
   conversationId: string;
   conversationTitle: string;
   isOpen: boolean;
@@ -12,7 +12,7 @@ export default function ShareConversationModal({
   conversationTitle,
   isOpen,
   onClose,
-}: ShareModalProps) {
+}: ShareConversationModalProps) {
   const [expiryDays, setExpiryDays] = useState(7);
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState('');

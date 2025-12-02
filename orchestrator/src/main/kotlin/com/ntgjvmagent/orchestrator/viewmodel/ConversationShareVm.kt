@@ -13,11 +13,6 @@ data class ShareConversationRequest(
     val expiryDays: Int = 7,
 )
 
-data class RevokeShareRequest(
-    @field:NotBlank(message = "Share token is required")
-    val shareToken: String,
-)
-
 // Response Models
 data class ConversationShareResponseVm(
     val id: UUID?,
