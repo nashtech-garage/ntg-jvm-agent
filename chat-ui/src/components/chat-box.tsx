@@ -33,6 +33,8 @@ export default function ChatBox({
   // Create preview when file changed
   useEffect(() => {
     if (!selectedFile) {
+      // TODO: Refactor this to avoid disabling the rule
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrls([]);
       selectedImages.current = [];
       return;

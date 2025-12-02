@@ -10,8 +10,8 @@ import {
   SetStateAction,
   useMemo,
 } from 'react';
-import { Conversation } from '@/app/models/conversation';
-import { ChatMessage } from '@/app/models/chat-message';
+import { Conversation } from '@/models/conversation';
+import { ChatMessage } from '@/models/chat-message';
 import { toast } from 'sonner';
 import { Agent } from '../models/agent';
 

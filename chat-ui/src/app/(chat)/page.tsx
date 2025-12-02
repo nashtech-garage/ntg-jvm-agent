@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import ChatBox from '../components/ChatBox';
-import ChatResult from '../components/ChatResult';
-import { ChatResponse } from '@/app/models/chat-response';
+import ChatBox from '@/components/chat-box';
+import ChatResult from '@/components/chat-result';
+import { ChatResponse } from '@/models/chat-response';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useChatContext } from '../contexts/ChatContext';
-import { FileSelectInfo } from '../models/file-select-info';
-import { customizeFetch } from '../utils/custom-fetch';
-import Header from '../components/Header';
-import AgentDropdown from '../components/AgentDropdown';
+import { useChatContext } from '@/contexts/ChatContext';
+import { FileSelectInfo } from '@/models/file-select-info';
+import { customizeFetch } from '@/utils/custom-fetch';
+import Header from '@/components/ui/header';
+import AgentDropdown from '@/components/agent-dropdown';
 
 export default function Page() {
   const {

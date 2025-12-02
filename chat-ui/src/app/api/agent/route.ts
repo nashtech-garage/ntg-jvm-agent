@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/app/utils/server-utils';
-import { Constants } from '@/app/utils/constant';
+import { getAccessToken, ORCHESTRATOR_URL } from '@/utils/server-utils';
+import { Constants } from '@/constants/constant';
 
 const agentUrl = `${ORCHESTRATOR_URL}/api/agents`;
 

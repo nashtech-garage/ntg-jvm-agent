@@ -1,12 +1,13 @@
-import { AUTH_SERVER_URL, setTokenIntoCookie } from '@/app/utils/server-utils';
 import { NextResponse } from 'next/server';
+import { SITE_CONFIG } from '@/constants/site-config';
+import { setTokenIntoCookie } from '@/utils/server-utils';
 
 export async function POST(req: Request) {
   const { code, redirect_uri } = await req.json();
 
-  const tokenUrl = `${AUTH_SERVER_URL}/oauth2/token`;
-  const clientId = process.env.CLIENT_ID;
-  const clientSecret = process.env.CLIENT_SECRET;
+  const tokenUrl = `${SITE_CONFIG.AUTH_SERVER_URL}/oauth2/token`;
+  const clientId = SITE_CONFIG.CLIENT_ID;
+  const clientSecret = SITE_CONFIG.CLIENT_SECRET;
 
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { AUTH_SERVER_URL, getAccessToken } from '@/app/utils/server-utils';
-import { Constants } from '@/app/utils/constant';
+import { AUTH_SERVER_URL, getAccessToken } from '@/utils/server-utils';
+import { Constants } from '@/constants/constant';
 
 export async function GET(req: Request) {
   const accessToken = await getAccessToken(req);

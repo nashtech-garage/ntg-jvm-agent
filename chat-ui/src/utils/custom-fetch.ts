@@ -1,6 +1,7 @@
 'use client';
 
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import logger from './logger';
 
 export type Options = RequestInit & {
   router?: AppRouterInstance;
@@ -20,7 +21,7 @@ export async function customizeFetch(url: string | URL | Request, options: Optio
 
     return response;
   } catch (error) {
-    console.error('Fetch failed:', error);
+    logger.error('Fetch failed:', error);
     throw error; // Re-throw so caller can handle it
   }
 }
