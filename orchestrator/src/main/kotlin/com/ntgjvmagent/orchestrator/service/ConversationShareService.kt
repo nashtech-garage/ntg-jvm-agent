@@ -10,8 +10,9 @@ import com.ntgjvmagent.orchestrator.repository.ConversationShareRepository
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationShareResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ShareConversationRequest
 import com.ntgjvmagent.orchestrator.viewmodel.SharedConversationViewVm
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.stereotype.Service
+import java.security.SecureRandom
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -23,7 +24,10 @@ class ConversationShareService(
 ) {
     companion object {
         private const val SHARE_TOKEN_LENGTH = 32
+        private const val SHARE_TOKEN_CHAR_INDEX_RANGE = 62
     }
+
+    private val secureRandom = SecureRandom()
 
     @Transactional
     fun shareConversation(
@@ -68,7 +72,7 @@ class ConversationShareService(
             shareToken = shareToken,
             isExpired = false,
             expiresAt = expiresAt,
-            createdAt = (savedShare.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
+            createdAt = savedShare.createdAt ?: OffsetDateTime.now(),
         )
     }
 
@@ -127,9 +131,9 @@ class ConversationShareService(
             }
 
         return SharedConversationViewVm(
-            id = conversation.id ?: UUID.randomUUID(),
+            id = conversation.id ?: throw IllegalStateException("Conversation ID cannot be null"),
             title = conversation.title,
-            createdAt = (conversation.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
+            createdAt = conversation.createdAt ?: OffsetDateTime.now(),
             sharedByUsername = share.sharedByUsername,
             messages = messages,
         )
@@ -162,11 +166,11 @@ class ConversationShareService(
             shareToken = share.shareToken,
             isExpired = share.isExpired,
             expiresAt = share.expiresAt,
-            createdAt = (share.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
+            createdAt = share.createdAt ?: OffsetDateTime.now(),
         )
 
     private fun generateShareToken(): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        return (1..SHARE_TOKEN_LENGTH).map { allowedChars.random() }.joinToString("")
+        return (1..SHARE_TOKEN_LENGTH).map { allowedChars[secureRandom.nextInt(SHARE_TOKEN_CHAR_INDEX_RANGE)] }.joinToString("")
     }
 }
