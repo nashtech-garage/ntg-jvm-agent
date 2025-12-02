@@ -24,14 +24,6 @@ data class ConversationShareResponseVm(
     val createdAt: OffsetDateTime,
 )
 
-data class ShareLinkResponseVm(
-    val id: UUID,
-    val shareToken: String,
-    val shareUrl: String,
-    val expiresAt: OffsetDateTime?,
-    val isExpired: Boolean,
-)
-
 data class SharedConversationViewVm(
     val id: UUID,
     val title: String,

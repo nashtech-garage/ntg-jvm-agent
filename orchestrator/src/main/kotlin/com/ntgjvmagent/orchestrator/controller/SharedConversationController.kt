@@ -8,7 +8,6 @@ import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -51,37 +50,5 @@ class SharedConversationController(
         val username = (authentication.principal as Jwt).subject
         val shareResponse = conversationShareService.shareConversation(conversationId, request, username)
         return ResponseEntity.ok(shareResponse)
-    }
-
-    /**
-     * List all shares for a specific conversation (requires authentication)
-     * @param conversationId ID of the conversation
-     * @param authentication Current user authentication
-     * @return List of shares for this conversation
-     */
-    @GetMapping("/conversation/{conversationId}/shares")
-    fun listConversationShares(
-        @PathVariable conversationId: UUID,
-        authentication: Authentication,
-    ): ResponseEntity<List<ConversationShareResponseVm>> {
-        val username = (authentication.principal as Jwt).subject
-        val shares = conversationShareService.listSharesByConversation(conversationId, username)
-        return ResponseEntity.ok(shares)
-    }
-
-    /**
-     * Revoke a shared conversation link (requires authentication)
-     * @param shareToken Token of the share to revoke
-     * @param authentication Current user authentication
-     * @return Updated share response with expired status
-     */
-    @DeleteMapping("/{shareToken}")
-    fun revokeShare(
-        @PathVariable shareToken: String,
-        authentication: Authentication,
-    ): ResponseEntity<ConversationShareResponseVm> {
-        val username = (authentication.principal as Jwt).subject
-        val revokedShare = conversationShareService.revokeShare(shareToken, username)
-        return ResponseEntity.ok(revokedShare)
     }
 }

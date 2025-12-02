@@ -77,26 +77,6 @@ class ConversationShareService(
     }
 
     @Transactional
-    fun revokeShare(
-        shareToken: String,
-        username: String,
-    ): ConversationShareResponseVm {
-        val share =
-            conversationShareRepo
-                .findByShareToken(shareToken)
-                .orElseThrow { ResourceNotFoundException("Share not found") }
-
-        if (share.sharedByUsername != username) {
-            throw BadRequestException("You don't have permission to revoke this share")
-        }
-
-        share.isExpired = true
-        val updatedShare = conversationShareRepo.save(share)
-
-        return toResponseVm(updatedShare)
-    }
-
-    @Transactional
     fun getSharedConversation(shareToken: String): SharedConversationViewVm {
         val share =
             conversationShareRepo
@@ -138,36 +118,6 @@ class ConversationShareService(
             messages = messages,
         )
     }
-
-    fun listSharesByConversation(
-        conversationId: UUID,
-        username: String,
-    ): List<ConversationShareResponseVm> {
-        // Verify user owns the conversation
-        val conversation =
-            conversationRepo
-                .findById(conversationId)
-                .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-
-        if (conversation.username != username) {
-            throw BadRequestException("You don't have permission to view shares for this conversation")
-        }
-
-        val shares = conversationShareRepo.findActiveSharesByConversationId(conversationId)
-        return shares.map { toResponseVm(it) }
-    }
-
-    private fun toResponseVm(share: ConversationShareEntity): ConversationShareResponseVm =
-        ConversationShareResponseVm(
-            id = share.id ?: UUID.randomUUID(),
-            conversationId = share.conversation.id ?: UUID.randomUUID(),
-            conversationTitle = share.conversation.title,
-            sharedByUsername = share.sharedByUsername,
-            shareToken = share.shareToken,
-            isExpired = share.isExpired,
-            expiresAt = share.expiresAt,
-            createdAt = (share.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
-        )
 
     private fun generateShareToken(): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
