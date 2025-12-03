@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/css';
 
 export const Input = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) => {
   return (

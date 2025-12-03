@@ -1,6 +1,6 @@
 'use client';
 
-import EditUserModal from '@/app/components/EditUserModal';
+import EditUserModal from '@/components/modal/edit-user-modal';
 import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
@@ -302,29 +302,20 @@ export default function UserManagement() {
             fetchUsers();
           }}
         />
+
+        {/* Edit User Modal */}
+        {selectedUser && (
+          <EditUserModal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            user={selectedUser}
+            onSubmit={(updatedUser: User) => {
+              setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+              setIsModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </>
-      {/* Edit User Modal */}
-      {selectedUser && (
-        <EditUserModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          user={selectedUser}
-          onSubmit={(updatedUser) => {
-            setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
-            setIsModalOpen(false);
-          }}
-        />
-      )}
-
-      <CreateUserModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onUserCreated={() => {
-          setPage(0);
-          fetchUsers();
-        }}
-      />
-    </div>
   );
 }
