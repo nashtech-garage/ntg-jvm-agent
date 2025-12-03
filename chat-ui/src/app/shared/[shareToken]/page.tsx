@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import ChatResult from '@/app/components/ChatResult';
+import ChatResult from '@/components/chat-result';
 import { ChatMessage } from '@/app/models/chat-message';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';

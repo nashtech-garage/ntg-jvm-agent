@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ORCHESTRATOR_URL } from '@/app/utils/server-utils';
+import { ORCHESTRATOR_URL } from '@/utils/server-utils';
 
 const baseUrl = `${ORCHESTRATOR_URL}/api/share/shared-conversations`;
 
