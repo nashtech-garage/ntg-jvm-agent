@@ -179,11 +179,6 @@
       <artifactId>hibernate-vector</artifactId>
       <version>6.6.33.Final</version>
     </dependency>
-    <dependency>
-      <groupId>io.hypersistence</groupId>
-      <artifactId>hypersistence-utils-hibernate-63</artifactId>
-      <version>3.8.1</version>
-    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
