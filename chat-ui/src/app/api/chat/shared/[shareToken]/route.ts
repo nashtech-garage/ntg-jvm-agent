@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { ORCHESTRATOR_URL } from '@/utils/server-utils';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
-const baseUrl = `${ORCHESTRATOR_URL}/api/share/shared-conversations`;
+const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/share/shared-conversations`;
 
 export async function GET(req: Request, { params }: { params: Promise<{ shareToken: string }> }) {
   const { shareToken } = await params;
