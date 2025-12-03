@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/share/shared-conversations")
+@RequestMapping("/api/share")
 class SharedConversationController(
     private val conversationShareService: ConversationShareService,
 ) {
@@ -26,7 +26,7 @@ class SharedConversationController(
      * @param shareToken Unique token for accessing the shared conversation
      * @return Shared conversation with messages
      */
-    @GetMapping("/{shareToken}")
+    @GetMapping("/shared-conversations/{shareToken}")
     fun getSharedConversation(
         @PathVariable shareToken: String,
     ): ResponseEntity<SharedConversationViewVm> {
@@ -41,7 +41,7 @@ class SharedConversationController(
      * @param authentication Current user authentication
      * @return Share response with share token and URL
      */
-    @PostMapping("/{conversationId}/share")
+    @PostMapping("/shared-conversations/{conversationId}/share")
     fun shareConversation(
         @PathVariable conversationId: UUID,
         @Valid @RequestBody request: ShareConversationRequest,
