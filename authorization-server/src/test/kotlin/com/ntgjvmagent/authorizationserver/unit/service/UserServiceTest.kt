@@ -30,7 +30,6 @@ import org.springframework.data.domain.PageRequest
 import java.util.Optional
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.mockito.Mockito.never
 
 

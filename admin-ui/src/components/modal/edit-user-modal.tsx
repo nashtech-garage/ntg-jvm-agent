@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
+import { toast } from 'react-hot-toast';
 import { User } from '../../models/user';
 
 interface EditUserModalProps {
@@ -54,8 +55,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
       onSubmit(updatedUser);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error('Update user failed:', errorMessage);
-      alert('Update user failed: ' + errorMessage);
+      toast.error('Update user failed: ' + errorMessage);
     }
   };
 

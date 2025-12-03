@@ -15,7 +15,6 @@ import com.ntgjvmagent.authorizationserver.entity.UserEntity
 import com.ntgjvmagent.authorizationserver.entity.UserRolesEntity
 import com.ntgjvmagent.authorizationserver.mapper.toCreateUserDto
 import com.ntgjvmagent.authorizationserver.mapper.toDto
-import com.ntgjvmagent.authorizationserver.mapper.toPageDto
 import com.ntgjvmagent.authorizationserver.mapper.toUserEntity
 import com.ntgjvmagent.authorizationserver.repository.RolesRepository
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
