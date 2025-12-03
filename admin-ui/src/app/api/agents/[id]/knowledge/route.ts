@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { getAccessToken } from '@/actions/session';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const token = (await cookies()).get('access_token')?.value;
+  const token = await getAccessToken();
   if (!token) return new NextResponse('Unauthorized', { status: 401 });
 
   const { id } = await params;
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 }
 
 async function handleMultipart(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const token = (await cookies()).get('access_token')?.value;
+  const token = await getAccessToken();
   if (!token) return new NextResponse('Unauthorized', { status: 401 });
 
   const { id } = await params;
@@ -67,7 +67,7 @@ async function handleMultipart(req: NextRequest, { params }: { params: Promise<{
 }
 
 async function handleJson(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const token = (await cookies()).get('access_token')?.value;
+  const token = await getAccessToken();
   if (!token) return new NextResponse('Unauthorized', { status: 401 });
 
   const { id } = await params;

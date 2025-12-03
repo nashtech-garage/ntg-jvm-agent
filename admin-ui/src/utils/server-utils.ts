@@ -1,12 +1,6 @@
-/**
- * Utility functions to be used in Server Component only
- */
-
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { getToken, type GetTokenParams, type JWT } from 'next-auth/jwt';
 import { TokenInfo } from '@/models/token';
-import { Constants } from '@/constants/constant';
-import { IS_PRODUCTION, SERVER_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from './logger';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
@@ -19,7 +13,7 @@ export function decodeToken(token: string) {
   }
 }
 
-export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
+async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
     const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
     const clientId = SERVER_CONFIG.CLIENT_ID;
@@ -58,43 +52,32 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
   }
 }
 
-export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
-  if (tokenInfo.access_token) {
-    res.cookies.set('access_token', tokenInfo.access_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: IS_PRODUCTION,
-      path: '/',
-      maxAge: tokenInfo.expires_in ?? 3600,
-    });
+export async function refreshAccessToken(token: JWT): Promise<JWT> {
+  if (!token.refreshToken) {
+    logger.error('No refresh token available');
+    return { ...token, error: 'RefreshTokenMissing' };
   }
 
-  // Keep refresh token on server-side by setting an httpOnly cookie
-  if (tokenInfo.refresh_token) {
-    res.cookies.set('refresh_token', tokenInfo.refresh_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: IS_PRODUCTION,
-      path: '/',
-      maxAge: Constants.THIRTY_DAYS_IN_SECONDS,
-    });
+  const refreshed = await getRefreshToken(token.refreshToken!);
+
+  if (!refreshed?.access_token) {
+    logger.error('Failed to refresh access token');
+    return { ...token, error: 'RefreshAccessTokenError' };
   }
 
-  return res;
+  return {
+    ...token,
+    accessToken: refreshed.access_token,
+    refreshToken: refreshed.refresh_token ?? token.refreshToken,
+    expiresAt: Date.now() + (refreshed.expires_in ?? 3600) * 1000,
+  };
 }
 
 /**
- * Get access token from custom header or cookie.
- *
- * @param req The inbound request
- *
- * @returns A Promise that resolve to an access token string
- * or undefined if no access token is set.
+ * Retrieve the NextAuth session token for a request (works in middleware/route handlers).
  */
-export async function getAccessToken(req: Request): Promise<string | undefined> {
-  const headerToken = req.headers.get('x-access-token');
-  if (headerToken) {
-    return headerToken;
-  }
-  return (await cookies()).get('access_token')?.value;
+export async function getSessionToken(
+  req: NonNullable<GetTokenParams['req']>
+): Promise<JWT | null> {
+  return getToken({ req, secret: SERVER_CONFIG.NEXTAUTH_SECRET });
 }

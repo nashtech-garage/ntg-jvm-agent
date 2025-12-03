@@ -1,10 +1,9 @@
-import { cookies } from 'next/headers';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { getAccessToken } from '@/actions/session';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = await getAccessToken();
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });
@@ -28,14 +27,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = await getAccessToken();
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // Parse request body from frontend
   const body = await req.json();
 
   const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}`, {
