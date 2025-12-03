@@ -13,8 +13,12 @@ CREATE TABLE IF NOT EXISTS conversation_share (
     expires_at              TIMESTAMPTZ,
     shared_message_ids      JSONB DEFAULT '[]'::JSONB,
     created_at              TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_by              UUID,
     updated_at              TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_conversation_share_conversation FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON DELETE CASCADE
+    updated_by              UUID,
+    CONSTRAINT fk_conversation_share_conversation FOREIGN KEY (conversation_id) REFERENCES conversation(id) ON DELETE CASCADE,
+    CONSTRAINT fk_conversation_share_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_conversation_share_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- === Indexes for query performance ===
