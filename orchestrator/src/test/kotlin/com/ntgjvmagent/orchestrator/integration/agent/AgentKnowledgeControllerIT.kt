@@ -1,9 +1,10 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.UrlKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
@@ -46,19 +47,22 @@ class AgentKnowledgeControllerIT
         @Test
         fun `should create a new agent knowledge`() {
             val req =
-                AgentKnowledgeRequestDto(
+                UrlKnowledgeRequestDto(
                     name = "Ophthalmology Dataset",
-                    sourceType = "URL",
-                    sourceUri = "https://example.com/ophthalmology",
-                    metadata = mapOf("category" to "medical", "language" to "en"),
-                    active = true,
+                    url = "https://example.com/ophthalmology",
                 )
 
             mockMvc
                 .perform(
-                    postAuth("/api/agents/${agent.id}/knowledge", req, roles = listOf("ROLE_ADMIN")),
+                    postAuth(
+                        "/api/agents/${agent.id}/knowledge",
+                        req,
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isCreated)
                 .andExpect(jsonPath("$.name").value("Ophthalmology Dataset"))
+                .andExpect(jsonPath("$.sourceUri").value("https://example.com/ophthalmology"))
+                .andExpect(jsonPath("$.sourceType").value("WEB_URL"))
                 .andExpect(jsonPath("$.active").value(true))
         }
 
@@ -68,7 +72,7 @@ class AgentKnowledgeControllerIT
                 AgentKnowledge(
                     agent = agent,
                     name = "Knowledge A",
-                    sourceType = "URL",
+                    sourceType = KnowledgeSourceType.WEB_URL,
                     sourceUri = "https://a.com",
                 ).apply { active = true },
             )
@@ -76,7 +80,7 @@ class AgentKnowledgeControllerIT
                 AgentKnowledge(
                     agent = agent,
                     name = "Knowledge B",
-                    sourceType = "URL",
+                    sourceType = KnowledgeSourceType.WEB_URL,
                     sourceUri = "https://b.com",
                 ).apply { active = false },
             )
@@ -96,14 +100,17 @@ class AgentKnowledgeControllerIT
                     AgentKnowledge(
                         agent = agent,
                         name = "Knowledge X",
-                        sourceType = "URL",
+                        sourceType = KnowledgeSourceType.WEB_URL,
                         sourceUri = "https://example.com/x",
                     ).apply { active = true },
                 )
 
             mockMvc
                 .perform(
-                    getAuth("/api/agents/${agent.id}/knowledge/${entity.id}", roles = listOf("ROLE_ADMIN")),
+                    getAuth(
+                        "/api/agents/${agent.id}/knowledge/${entity.id}",
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.id").value(entity.id.toString()))
                 .andExpect(jsonPath("$.name").value("Knowledge X"))
@@ -116,26 +123,28 @@ class AgentKnowledgeControllerIT
                     AgentKnowledge(
                         agent = agent,
                         name = "Old Knowledge",
-                        sourceType = "URL",
+                        sourceType = KnowledgeSourceType.WEB_URL,
                         sourceUri = "https://old.com",
                     ).apply { active = true },
                 )
 
             val updateReq =
-                AgentKnowledgeRequestDto(
+                UrlKnowledgeRequestDto(
                     name = "Updated Knowledge",
-                    sourceType = "URL",
-                    sourceUri = "https://new.com",
-                    metadata = mapOf("updated" to true),
-                    active = true,
+                    url = "https://new.com",
                 )
 
             mockMvc
                 .perform(
-                    putAuth("/api/agents/${agent.id}/knowledge/${entity.id}", updateReq, roles = listOf("ROLE_ADMIN")),
+                    putAuth(
+                        "/api/agents/${agent.id}/knowledge/${entity.id}",
+                        updateReq,
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.name").value("Updated Knowledge"))
                 .andExpect(jsonPath("$.sourceUri").value("https://new.com"))
+                .andExpect(jsonPath("$.sourceType").value("WEB_URL"))
         }
 
         @Test
@@ -145,24 +154,30 @@ class AgentKnowledgeControllerIT
                     AgentKnowledge(
                         agent = agent,
                         name = "Temp Knowledge",
-                        sourceType = "URL",
+                        sourceType = KnowledgeSourceType.WEB_URL,
                         sourceUri = "https://delete.me",
                     ).apply { active = true },
                 )
 
-            // Call DELETE API
+            // Delete
             mockMvc
                 .perform(
-                    deleteAuth("/api/agents/${agent.id}/knowledge/${entity.id}", roles = listOf("ROLE_ADMIN")),
+                    deleteAuth(
+                        "/api/agents/${agent.id}/knowledge/${entity.id}",
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isNoContent)
 
-            // Verify soft delete in DB (deleted_at not null)
+            // Verify DB deleted flag
             assertSoftDeleted(entityManager, AgentKnowledge::class.java, entity.id!!)
 
-            // Verify excluded from GET /api/agents/{agentId}/knowledge
+            // GET still returns but should show active=false
             mockMvc
                 .perform(
-                    getAuth("/api/agents/${agent.id}/knowledge/${entity.id}", roles = listOf("ROLE_ADMIN")),
+                    getAuth(
+                        "/api/agents/${agent.id}/knowledge/${entity.id}",
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.active").value(false))
         }
@@ -170,15 +185,18 @@ class AgentKnowledgeControllerIT
         @Test
         fun `should validate missing name`() {
             val invalidReq =
-                AgentKnowledgeRequestDto(
-                    name = "   ", // blank
-                    sourceType = "URL",
-                    sourceUri = "https://example.com",
+                UrlKnowledgeRequestDto(
+                    name = "   ", // invalid blank
+                    url = "https://example.com",
                 )
 
             mockMvc
                 .perform(
-                    postAuth("/api/agents/${agent.id}/knowledge", invalidReq, roles = listOf("ROLE_ADMIN")),
+                    postAuth(
+                        "/api/agents/${agent.id}/knowledge",
+                        invalidReq,
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
                 ).andExpect(status().isBadRequest)
         }
     }

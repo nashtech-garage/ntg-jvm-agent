@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
@@ -57,6 +57,12 @@ class AgentService(
             active = request.active
             provider = request.provider
             settings = request.settings
+            baseUrl = request.baseUrl
+            apiKey = request.apiKey
+            chatCompletionsPath = request.chatCompletionsPath
+            embeddingsPath = request.embeddingsPath
+            embeddingModel = request.embeddingModel
+            dimension = request.dimension
         }
         return AgentMapper.toResponse(repo.save(existing))
     }

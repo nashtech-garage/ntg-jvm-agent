@@ -12,59 +12,63 @@ class DocumentChunker(
     private val textExtractor: DocumentTextExtractor,
     private val profileDetector: ChunkerProfileDetector,
 ) {
-    // Initialize splitters dynamically from application properties
-    private val splitters: Map<String, TokenTextSplitter> =
-        chunkerProperties.profiles.mapValues { (_, p) ->
+    /**
+     * Raw profile configurations loaded from application.properties
+     */
+    private val profileConfigs = chunkerProperties.profiles
+
+    /**
+     * Default prebuilt splitters
+     */
+    private val defaultSplitters: Map<String, TokenTextSplitter> =
+        profileConfigs.mapValues { (_, cfg) ->
             TokenTextSplitter(
-                p.chunkSize,
-                p.minChunkSizeChars,
-                p.minChunkLengthToEmbed,
-                p.maxNumChunks,
-                p.keepSeparator,
+                cfg.chunkSize,
+                cfg.minChunkSizeChars,
+                cfg.minChunkLengthToEmbed,
+                cfg.maxNumChunks,
+                cfg.keepSeparator,
             )
         }
 
     /**
-     * Split a MultipartFile into token-aware chunks.
-     *
-     * @param file MultipartFile to process
-     * @param profileName Optional explicit profile override
+     * Split file into token-aware chunks with optional runtime overrides.
+     * @param file            MultipartFile to process
+     * @param profileOverride Explicit profile name (optional)
      */
     fun splitDocumentIntoChunks(
         file: MultipartFile,
-        profileName: String? = null,
-    ): List<Document> {
-        val result: List<Document> =
-            if (file.isEmpty) {
-                emptyList()
-            } else {
-                val fileName = file.originalFilename ?: "unknown"
-                val extension = fileName.substringAfterLast('.', "").lowercase()
-                val text = textExtractor.extract(file, extension)
+        profileOverride: String? = null,
+    ): List<Document> =
+        run {
+            if (file.isEmpty) return@run emptyList()
 
-                if (text.isBlank()) {
-                    emptyList()
-                } else {
-                    val chosenProfile = profileName ?: profileDetector.detect(text, extension)
-                    val splitter =
-                        splitters[chosenProfile]
-                            ?: error("Unknown splitter profile: $chosenProfile")
+            val fileName = file.originalFilename ?: "unknown"
+            val extension = fileName.substringAfterLast('.', "").lowercase()
 
-                    val metadata = mutableMapOf<String, Any>()
-                    if (fileName.isNotBlank()) metadata["source"] = fileName
-                    metadata["profile"] = chosenProfile
+            val text = textExtractor.extract(file, extension)
+            if (text.isBlank()) return@run emptyList()
 
-                    val document =
-                        Document
-                            .builder()
-                            .text(text)
-                            .metadata(metadata)
-                            .build()
+            val chosenProfile = profileOverride ?: profileDetector.detect(text, extension)
+            val splitter =
+                defaultSplitters[chosenProfile]
+                    ?: error("Unknown splitter profile: $chosenProfile")
 
-                    splitter.apply(listOf(document))
-                }
-            }
+            val metadata =
+                mutableMapOf<String, Any>(
+                    "source" to fileName,
+                    "extension" to extension,
+                    "fileSize" to file.size,
+                    "profile" to chosenProfile,
+                )
 
-        return result
-    }
+            val document =
+                Document
+                    .builder()
+                    .text(text)
+                    .metadata(metadata)
+                    .build()
+
+            splitter.apply(listOf(document))
+        }
 }

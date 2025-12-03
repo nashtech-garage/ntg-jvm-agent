@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.component
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.utils.Utils

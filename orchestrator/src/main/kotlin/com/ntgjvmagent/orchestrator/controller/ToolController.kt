@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
-import com.ntgjvmagent.orchestrator.dto.ToolResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.ToolResponseDto
 import com.ntgjvmagent.orchestrator.service.ToolService
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid

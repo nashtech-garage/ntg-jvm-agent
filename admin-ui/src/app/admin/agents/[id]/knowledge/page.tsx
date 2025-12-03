@@ -46,7 +46,7 @@ export default function KnowledgePage() {
       <div className="flex items-center justify-between">
         <Button
           disabled={!agent}
-          onClick={() => agent && router.push(`/agents/${agent.id}/knowledge/new`)}
+          onClick={() => agent && router.push(`/admin/agents/${agent.id}/knowledge/add`)}
         >
           <Plus className="h-4 w-4" />
           Add Knowledge

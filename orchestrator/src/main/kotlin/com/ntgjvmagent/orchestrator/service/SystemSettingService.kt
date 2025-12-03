@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.SystemSettingRequestDto
-import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.SystemSettingRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.SystemSettingRepository

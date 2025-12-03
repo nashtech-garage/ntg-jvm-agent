@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.SystemSettingRequestDto
-import com.ntgjvmagent.orchestrator.dto.SystemSettingResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.SystemSettingRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.SystemSettingResponseDto
 import com.ntgjvmagent.orchestrator.service.SystemSettingService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity

@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.unit.agent
 
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository

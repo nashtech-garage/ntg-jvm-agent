@@ -1,9 +1,10 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
+import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
@@ -19,7 +20,9 @@ class AgentKnowledgeService(
 ) {
     @Transactional(readOnly = true)
     fun getByAgent(agentId: UUID): List<AgentKnowledgeListResponseDto> =
-        repo.findAllByAgentId(agentId).map(AgentKnowledgeMapper::toListResponse)
+        repo
+            .findAllByAgentId(agentId)
+            .map(AgentKnowledgeMapper::toListResponse)
 
     @Transactional(readOnly = true)
     fun getOneForAgent(
@@ -39,8 +42,21 @@ class AgentKnowledgeService(
         request: AgentKnowledgeRequestDto,
     ): AgentKnowledgeResponseDto {
         val agent =
-            agentRepo
-                .findByIdOrNull(agentId)
+            agentRepo.findByIdOrNull(agentId)
+                ?: throw EntityNotFoundException("Agent not found: $agentId")
+
+        val entity = AgentKnowledgeMapper.toEntity(agent, request)
+
+        return AgentKnowledgeMapper.toResponse(repo.save(entity))
+    }
+
+    @Transactional
+    fun create(
+        agentId: UUID,
+        request: FileKnowledgeInternalRequest,
+    ): AgentKnowledgeResponseDto {
+        val agent =
+            agentRepo.findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
 
         val entity = AgentKnowledgeMapper.toEntity(agent, request)
@@ -55,19 +71,19 @@ class AgentKnowledgeService(
         request: AgentKnowledgeRequestDto,
     ): AgentKnowledgeResponseDto {
         val existing =
-            repo
-                .findByIdOrNull(knowledgeId)
+            repo.findByIdOrNull(knowledgeId)
                 ?: throw EntityNotFoundException("Knowledge not found: $knowledgeId")
 
-        // Agent cannot be changed → validate agentId
-        require(existing.agent.id == agentId) { "Agent cannot be changed for this knowledge item." }
+        // Prevent agent transfer
+        require(existing.agent.id == agentId) {
+            "Knowledge $knowledgeId does not belong to agent $agentId"
+        }
 
         existing.apply {
             name = request.name
             sourceType = request.sourceType
             sourceUri = request.sourceUri
             metadata = request.metadata
-            active = request.active
         }
 
         return AgentKnowledgeMapper.toResponse(repo.save(existing))
@@ -78,14 +94,15 @@ class AgentKnowledgeService(
         agentId: UUID,
         knowledgeId: UUID,
     ) {
-        val knowledge =
-            repo
-                .findByIdOrNull(knowledgeId)
+        val existing =
+            repo.findByIdOrNull(knowledgeId)
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
-        require(knowledge.agent.id == agentId) { "Knowledge $knowledgeId does not belong to agent $agentId" }
+        require(existing.agent.id == agentId) {
+            "Knowledge $knowledgeId does not belong to agent $agentId"
+        }
 
-        knowledge.markDeleted()
-        repo.save(knowledge)
+        existing.markDeleted()
+        repo.save(existing)
     }
 }

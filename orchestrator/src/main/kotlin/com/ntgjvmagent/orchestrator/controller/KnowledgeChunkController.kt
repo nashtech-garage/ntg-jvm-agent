@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkRequestDto
-import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.KnowledgeChunkRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
 import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -25,10 +26,13 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/agents/{agentId}/knowledge/{knowledgeId}/chunks")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
-@Tag(name = "Knowledge Chunks", description = "Manage text chunks and embeddings for knowledge sources of an agent")
+@Tag(
+    name = "Knowledge Chunks",
+    description = "Manage text chunks and embeddings for knowledge sources of an agent",
+)
 class KnowledgeChunkController(
     private val chunkService: KnowledgeChunkService,
-    private val knowledgeService: KnowledgeImportService,
+    private val knowledgeImportService: KnowledgeImportService,
 ) {
     @GetMapping
     @Operation(summary = "List all chunks for a knowledge source of an agent")
@@ -51,7 +55,13 @@ class KnowledgeChunkController(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
         @Valid @RequestBody req: KnowledgeChunkRequestDto,
-    ): KnowledgeChunkResponseDto = chunkService.addChunk(agentId, knowledgeId, req.content, req.metadata)
+    ): KnowledgeChunkResponseDto =
+        chunkService.addChunk(
+            agentId = agentId,
+            knowledgeId = knowledgeId,
+            content = req.content,
+            metadata = req.metadata,
+        )
 
     @PutMapping("/{chunkId}")
     @Operation(summary = "Update a chunk's content and metadata")
@@ -60,16 +70,23 @@ class KnowledgeChunkController(
         @PathVariable knowledgeId: UUID,
         @PathVariable chunkId: UUID,
         @Valid @RequestBody req: KnowledgeChunkRequestDto,
-    ): KnowledgeChunkResponseDto = chunkService.updateChunk(agentId, knowledgeId, chunkId, req.content, req.metadata)
+    ): KnowledgeChunkResponseDto =
+        chunkService.updateChunk(
+            agentId = agentId,
+            knowledgeId = knowledgeId,
+            chunkId = chunkId,
+            newContent = req.content,
+            newMetadata = req.metadata,
+        )
 
     @PostMapping("/import")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Import a document and split into chunks")
+    @Operation(summary = "Import a document file and split it into chunks")
     fun importFile(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
-        @RequestParam file: MultipartFile,
-    ): KnowledgeImportingResponseVm = knowledgeService.importDocument(agentId, knowledgeId, file)
+        @RequestPart("file") file: MultipartFile,
+    ): KnowledgeImportingResponseVm = knowledgeImportService.importDocument(agentId, knowledgeId, file)
 
     @GetMapping("/search")
     @Operation(summary = "Search similar chunks by text query")
@@ -78,5 +95,5 @@ class KnowledgeChunkController(
         @PathVariable knowledgeId: UUID,
         @RequestParam query: String,
         @RequestParam(defaultValue = "5") topK: Int,
-    ) = chunkService.searchSimilarChunks(agentId, knowledgeId, query, topK)
+    ): List<KnowledgeChunkResponseDto> = chunkService.searchSimilarChunks(agentId, knowledgeId, query, topK)
 }

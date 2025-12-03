@@ -1,10 +1,12 @@
 package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
+import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.utils.toRelativeString
 
 object AgentKnowledgeMapper {
@@ -16,6 +18,17 @@ object AgentKnowledgeMapper {
         name = request.name,
         sourceType = request.sourceType,
         sourceUri = request.sourceUri,
+        metadata = request.metadata,
+    )
+
+    fun toEntity(
+        agent: Agent,
+        request: FileKnowledgeInternalRequest,
+    ) = AgentKnowledge(
+        agent = agent,
+        name = request.name,
+        sourceType = KnowledgeSourceType.FILE,
+        sourceUri = null,
         metadata = request.metadata,
     )
 
