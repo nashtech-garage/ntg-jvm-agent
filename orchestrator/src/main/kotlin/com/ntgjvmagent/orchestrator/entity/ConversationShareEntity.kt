@@ -1,14 +1,14 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import org.hibernate.annotations.Type
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
 @Entity
@@ -25,7 +25,7 @@ data class ConversationShareEntity(
     var isExpired: Boolean = false,
     @Column(name = "expires_at")
     val expiresAt: OffsetDateTime? = null,
-    @Type(JsonBinaryType::class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "shared_message_ids", columnDefinition = "JSONB")
     val sharedMessageIds: List<String> = emptyList(), // JSONB array: ["uuid1", "uuid2", ...]
 ) : BaseEntity()
