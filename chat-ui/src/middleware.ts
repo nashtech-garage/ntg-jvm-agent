@@ -15,9 +15,11 @@ export async function middleware(req: NextRequest) {
   // middleware from redirecting API calls such as `/api/auth/logout`.
   const isAuthPage = ['/login', '/auth'].some((name) => pathName.startsWith(name));
   const isAuthApi = pathName.startsWith('/api/auth');
+  const isSharedPage = pathName.startsWith('/shared/');
+  const isSharedApi = pathName.startsWith('/api/chat/shared/');
 
-  // If not logged in and not on an auth page or auth API → redirect to /login
-  if (!hasAuthToken && !isAuthPage && !isAuthApi) {
+  // If not logged in and not on an auth page, auth API, or shared page → redirect to /login
+  if (!hasAuthToken && !isAuthPage && !isAuthApi && !isSharedPage && !isSharedApi) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
