@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.request
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import jakarta.validation.constraints.DecimalMax

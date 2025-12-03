@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentToolResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.mapper.AgentToolMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository

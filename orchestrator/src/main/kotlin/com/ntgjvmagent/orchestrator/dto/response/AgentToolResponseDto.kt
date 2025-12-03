@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.response
 
 import java.util.UUID
 

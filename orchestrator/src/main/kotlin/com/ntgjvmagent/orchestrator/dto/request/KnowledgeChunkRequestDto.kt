@@ -1,8 +1,8 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.request
 
 import jakarta.validation.constraints.NotBlank
 
 data class KnowledgeChunkRequestDto(
     @field:NotBlank val content: String,
-    val metadata: Map<String, Any>? = null,
+    val metadata: Map<String, Any?> = emptyMap(),
 )

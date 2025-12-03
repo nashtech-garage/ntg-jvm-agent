@@ -1,9 +1,10 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.InlineKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
@@ -54,9 +55,9 @@ class AgentKnowledgeServiceIT
                     AgentKnowledge(
                         agent = agent,
                         name = "Stealth Training",
-                        sourceType = "manual",
-                        sourceUri = "http://example.com/stealth",
-                        metadata = emptyMap(),
+                        sourceType = KnowledgeSourceType.INLINE,
+                        sourceUri = null,
+                        metadata = mapOf("content" to "Some stealth instructions"),
                     ).apply { active = true },
                 )
         }
@@ -78,48 +79,58 @@ class AgentKnowledgeServiceIT
         @Test
         fun `create should save new knowledge for agent`() {
             val request =
-                AgentKnowledgeRequestDto(
+                InlineKnowledgeRequestDto(
                     name = "Combat Training",
-                    sourceType = "manual",
-                    sourceUri = "http://example.com/combat",
-                    metadata = emptyMap(),
-                    active = true,
+                    inlineContent = "Hand-to-hand combat guide",
                 )
+
             val result = service.create(agent.id!!, request)
+
             assertEquals(request.name, result.name)
             assertTrue(repo.existsById(result.id))
+            assertEquals("Hand-to-hand combat guide", result.metadata["content"])
+            assertEquals(KnowledgeSourceType.INLINE, result.sourceType)
+            assertEquals(true, result.active)
         }
 
         @Test
         fun `update should modify existing knowledge for agent`() {
             val updateRequest =
-                AgentKnowledgeRequestDto(
+                InlineKnowledgeRequestDto(
                     name = "Stealth Mastery",
-                    sourceType = "manual",
-                    sourceUri = "http://example.com/stealth-master",
-                    metadata = mapOf("level" to "advanced"),
-                    active = false,
+                    inlineContent = "Advanced stealth techniques",
                 )
 
             val result = service.update(agent.id!!, knowledge.id!!, updateRequest)
+
             assertEquals("Stealth Mastery", result.name)
-            assertEquals(false, result.active)
+            assertEquals("Advanced stealth techniques", result.metadata["content"])
+            assertEquals(KnowledgeSourceType.INLINE, result.sourceType)
+            assertEquals(true, result.active) // update does NOT toggle active
         }
 
         @Test
         fun `softDelete should mark knowledge as deleted for agent`() {
             service.softDelete(agent.id!!, knowledge.id!!)
+
             val deleted = repo.findById(knowledge.id!!).get()
             assertTrue(deleted.deletedAt != null)
+            assertEquals(false, deleted.active)
         }
 
         @Test
         fun `softDelete should throw exception for non-existing knowledge for agent`() {
             val randomId = UUID.randomUUID()
+
             val exception =
                 assertThrows<EntityNotFoundException> {
                     service.softDelete(agent.id!!, randomId)
                 }
-            assertTrue(exception.message!!.contains("Knowledge $randomId not found for agent ${agent.id}"))
+
+            assertTrue(
+                exception.message!!.contains(
+                    "Knowledge $randomId not found for agent ${agent.id}",
+                ),
+            )
         }
     }

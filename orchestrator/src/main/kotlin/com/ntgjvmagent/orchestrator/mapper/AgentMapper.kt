@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.utils.toRelativeString
 import java.math.BigDecimal

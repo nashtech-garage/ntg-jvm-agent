@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
@@ -52,6 +53,9 @@ class KnowledgeChunkServiceIT
                     AgentKnowledge(
                         agent = agent,
                         name = "K1",
+                        sourceType = KnowledgeSourceType.INLINE,
+                        sourceUri = null,
+                        metadata = emptyMap(),
                     ).apply { active = true },
                 )
         }

@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
@@ -24,7 +24,7 @@ class KnowledgeChunkService(
         agentId: UUID,
         knowledgeId: UUID,
         content: String,
-        metadata: Map<String, Any>? = null,
+        metadata: Map<String, Any?> = emptyMap(),
         chunkOrder: Int? = null,
     ): KnowledgeChunkResponseDto {
         val knowledge =
@@ -59,7 +59,7 @@ class KnowledgeChunkService(
         knowledgeId: UUID,
         chunkId: UUID,
         newContent: String,
-        newMetadata: Map<String, Any>? = null,
+        newMetadata: Map<String, Any?> = emptyMap(),
     ): KnowledgeChunkResponseDto {
         val chunk =
             chunkRepo.findByIdOrNull(chunkId)
@@ -138,16 +138,14 @@ class KnowledgeChunkService(
         val activeKnowledgeIds = chunkRepo.findAllKnowledgeIdsActiveByAgent(agentId).map { it.toString() }
 
         return results
-            .filter { doc ->
-                val knowledgeId = doc.metadata["knowledge_id"]?.toString()
-                knowledgeId != null && activeKnowledgeIds.contains(knowledgeId)
-            }.take(topK)
+            .filter { doc -> doc.metadata["knowledge_id"]?.toString() in activeKnowledgeIds }
+            .take(topK)
             .map(KnowledgeChunkResponseDto::fromDocument)
     }
 
     private fun buildDocument(chunk: KnowledgeChunk): Document {
         val metadata =
-            (chunk.metadata ?: emptyMap()) +
+            chunk.metadata +
                 mapOf(
                     "chunk_id" to chunk.id.toString(),
                     "knowledge_id" to chunk.knowledge.id.toString(),

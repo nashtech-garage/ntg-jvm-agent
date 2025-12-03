@@ -1,7 +1,9 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.exception.BadRequestException
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -33,14 +35,27 @@ class AgentKnowledgeController(
     fun create(
         @PathVariable agentId: UUID,
         @Valid @RequestBody request: AgentKnowledgeRequestDto,
-    ): AgentKnowledgeResponseDto = agentKnowledgeService.create(agentId, request)
+    ): AgentKnowledgeResponseDto {
+        // Prevent misuse: FILE type is not allowed here
+        if (request.sourceType == KnowledgeSourceType.FILE) {
+            throw BadRequestException("FILE knowledge must be uploaded via multipart /import endpoint")
+        }
+
+        return agentKnowledgeService.create(agentId, request)
+    }
 
     @PutMapping("/{knowledgeId}")
     fun update(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
         @Valid @RequestBody request: AgentKnowledgeRequestDto,
-    ): AgentKnowledgeResponseDto = agentKnowledgeService.update(agentId, knowledgeId, request)
+    ): AgentKnowledgeResponseDto {
+        if (request.sourceType == KnowledgeSourceType.FILE) {
+            throw BadRequestException("FILE knowledge cannot be updated via JSON. Use /import endpoint")
+        }
+
+        return agentKnowledgeService.update(agentId, knowledgeId, request)
+    }
 
     @GetMapping("/{knowledgeId}")
     fun get(

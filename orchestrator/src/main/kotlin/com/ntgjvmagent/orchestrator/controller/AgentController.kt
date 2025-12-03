@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.service.AgentService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

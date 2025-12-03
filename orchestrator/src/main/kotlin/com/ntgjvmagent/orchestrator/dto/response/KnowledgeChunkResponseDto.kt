@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.response
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import org.springframework.ai.document.Document
@@ -7,7 +7,7 @@ import java.util.UUID
 data class KnowledgeChunkResponseDto(
     val id: UUID,
     val content: String,
-    val metadata: Map<String, Any>?,
+    val metadata: Map<String, Any?>,
 ) {
     companion object {
         fun from(entity: KnowledgeChunk) =

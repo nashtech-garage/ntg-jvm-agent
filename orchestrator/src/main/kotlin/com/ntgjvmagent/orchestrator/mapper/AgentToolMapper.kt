@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentToolResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.utils.toRelativeString
 
