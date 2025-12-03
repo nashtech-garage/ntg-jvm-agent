@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ChatResult from '@/components/chat-result';
-import { ChatMessage } from '@/app/models/chat-message';
+import { ChatMessage } from '@/models/chat-message';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';

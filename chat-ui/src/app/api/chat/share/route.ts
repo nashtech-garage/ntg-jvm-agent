@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken, ORCHESTRATOR_URL } from '@/utils/server-utils';
+import { getAccessToken } from '@/utils/server-utils';
+import { SERVER_CONFIG } from '@/constants/site-config';
 
-const baseUrl = `${ORCHESTRATOR_URL}/api/share/shared-conversations`;
+const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/share/shared-conversations`;
 
 export async function POST(req: Request) {
   const accessToken = await getAccessToken(req);
