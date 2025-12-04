@@ -99,6 +99,7 @@ export default function ChatBox({
               <button
                 onClick={() => handleRemovePreview(item)}
                 className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white transition hover:bg-black/70"
+                aria-label="Remove image"
               >
                 <CircleX size={14} />
               </button>
@@ -119,6 +120,7 @@ export default function ChatBox({
           onClick={() => fileInputRef.current?.click()}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 shadow-inner shadow-slate-200 transition hover:-translate-y-0.5 hover:border-sky-300 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:opacity-40"
           disabled={previewUrls.length === 3}
+          aria-label="Attach images (up to 3)"
         >
           <Images size={18} />
         </button>
@@ -143,6 +145,7 @@ export default function ChatBox({
           onClick={handleSend}
           disabled={!input.trim() || !agents.length}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200/70 transition hover:shadow-sky-300 disabled:opacity-60"
+          aria-label="Send message"
         >
           <Send size={18} />
         </button>

@@ -91,39 +91,37 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-100">
-      <main className="flex min-h-screen flex-col">
-        <Header>
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                NT Agent
-              </p>
-              <h2 className="text-xl font-semibold text-gray-900">Ask anything</h2>
-              <p className="text-sm text-gray-600">
-                Share details, attach context, and get concise answers.
-              </p>
+      <Header>
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+              NT Agent
+            </p>
+            <h2 className="text-xl font-semibold text-gray-900">Ask anything</h2>
+            <p className="text-sm text-gray-600">
+              Share details, attach context, and get concise answers.
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-emerald-600 shadow-sm sm:flex">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.2)]" />
+              Live
             </div>
-            <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <div className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-emerald-600 shadow-sm sm:flex">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.2)]" />
-                Live
-              </div>
-              <AgentDropdown />
+            <AgentDropdown />
+          </div>
+        </div>
+      </Header>
+
+      <main className="flex flex-1 min-h-0 flex-col bg-gray-100">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-4 px-6 pb-5 pt-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
+              <ChatResult results={chatMessages} isTyping={isTyping} />
             </div>
           </div>
-        </Header>
-
-        <div className="flex-1 bg-gray-100">
-          <div className="mx-auto flex h-full min-h-[calc(100vh-96px)] w-full max-w-6xl flex-col gap-4 px-6 pb-5 pt-4">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
-                <ChatResult results={chatMessages} isTyping={isTyping} />
-              </div>
-            </div>
-            <div className="rounded-xl border border-gray-200 bg-white">
-              <div className="px-4 pb-4 pt-3">
-                <ChatBox onAsk={handleAsk} />
-              </div>
+          <div className="rounded-xl border border-gray-200 bg-white">
+            <div className="px-4 pb-4 pt-3">
+              <ChatBox onAsk={handleAsk} />
             </div>
           </div>
         </div>

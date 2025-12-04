@@ -83,8 +83,11 @@ export default function ChatResult({
           )}
           {Constants.ANSWER_TYPE === r.type && (
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-gradient-to-br from-slate-100 to-white text-sm font-semibold text-sky-600 shadow-sm shadow-slate-200">
-                AI
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-gradient-to-br from-slate-100 to-white text-sm font-semibold text-sky-600 shadow-sm shadow-slate-200"
+                aria-label="AI Assistant"
+              >
+                <div aria-hidden="true">AI</div>
               </div>
               <div className="max-w-[80%] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-md shadow-slate-200/70">
                 <RichTextPresenter content={r.content} />
