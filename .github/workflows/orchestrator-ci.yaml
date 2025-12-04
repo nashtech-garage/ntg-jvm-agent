@@ -70,6 +70,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v6
         with:
-          context: ./orchestrator
+          context: .
+          file: ./orchestrator/Dockerfile
           push: true
           tags: ghcr.io/nashtech-garage/ntg-jvm-agent-orchestrator:latest
