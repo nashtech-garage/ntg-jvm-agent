@@ -57,7 +57,7 @@ export default function ToolsPage() {
     };
 
     fetchAll();
-  }, []);
+  }, [agent]);
 
   const filteredAvailableTools = availableTools.filter((tool: ToolInfo) => {
     const q = query.toLowerCase();
@@ -96,7 +96,7 @@ export default function ToolsPage() {
       // Refresh assigned tool table
       await refreshAssignTools();
     } catch (err) {
-      console.error('Failed to assign tool:', err);
+      logger.error('Failed to assign tool:', err);
     }
   };
 

@@ -84,6 +84,6 @@ export type ToolInfo = {
   name: string;
   type?: string;
   description: string;
-  config: Map<string, any>;
+  config: Map<string, object>;
   active: boolean;
 };
