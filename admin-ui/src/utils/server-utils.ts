@@ -2,6 +2,7 @@ import { getToken, type GetTokenParams, type JWT } from 'next-auth/jwt';
 import { TokenInfo } from '@/models/token';
 import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from './logger';
+import { LoginErrors } from '@/constants/constant';
 
 // Decodes the payload of a JWT token from base64 and parses it as JSON.
 export function decodeToken(token: string) {
@@ -55,14 +56,14 @@ async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> 
 export async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {
     logger.error('No refresh token available');
-    return { ...token, error: 'RefreshTokenMissing' };
+    return { ...token, error: LoginErrors.REFRESH_TOKEN_MISSING };
   }
 
   const refreshed = await getRefreshToken(token.refreshToken!);
 
   if (!refreshed?.access_token) {
     logger.error('Failed to refresh access token');
-    return { ...token, error: 'RefreshAccessTokenError' };
+    return { ...token, error: LoginErrors.REFRESH_TOKEN_ERROR };
   }
 
   return {

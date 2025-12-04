@@ -75,7 +75,13 @@ export const authOptions: NextAuthOptions = {
     signIn: PAGE_PATH.LOGIN,
     error: PAGE_PATH.LOGIN,
   },
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+    // 7 days for the session-token cookie
+    maxAge: 60 * 60 * 24 * 7,
+    // refresh the JWT every 1 hour
+    updateAge: 60 * 60,
+  },
   callbacks: {
     async signIn({ user, account }) {
       const decodedRoles =
@@ -112,6 +118,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined;
       session.refreshToken = token.refreshToken as string | undefined;
+      session.error = token.error as string | undefined;
       session.user = {
         ...session.user,
         id: token.sub || '',

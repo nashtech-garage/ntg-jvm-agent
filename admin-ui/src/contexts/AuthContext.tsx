@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  ReactNode,
+  useCallback,
+  useEffect,
+} from 'react';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import { TokenInfo, UserInfo } from '@/models/token';
 import { hasAdminRole as hasAdmin } from '@/utils/user';
@@ -8,6 +15,7 @@ import { signOut as signOutApp } from '@/services/auth';
 import { API_PATH, PAGE_PATH } from '@/constants/url';
 import { useRouter } from 'next/navigation';
 import logger from '@/utils/logger';
+import { LoginErrors } from '@/constants/constant';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -78,6 +86,17 @@ function AuthStateProvider({ children }: AuthProviderProps) {
       return false;
     }
   }, [router]);
+
+  useEffect(() => {
+    // Auto sign-out if session error
+    if (
+      session?.error === LoginErrors.REFRESH_TOKEN_ERROR ||
+      session?.error === LoginErrors.REFRESH_TOKEN_MISSING
+    ) {
+      logger.error('Session expired or refresh token invalid, signing user out');
+      void logOut();
+    }
+  }, [session?.error, logOut]);
 
   const contextValue = useMemo(
     () => ({
