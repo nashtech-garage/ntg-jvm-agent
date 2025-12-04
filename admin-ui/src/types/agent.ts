@@ -78,3 +78,12 @@ export type ToolListData = {
   lastModifiedWhen: string;
   enabled: boolean;
 };
+
+export type ToolInfo = {
+  id: string;
+  name: string;
+  type?: string;
+  description: string;
+  config: Map<string, any>;
+  active: boolean;
+};
