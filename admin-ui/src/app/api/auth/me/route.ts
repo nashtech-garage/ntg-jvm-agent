@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
-import { decodeToken, getAccessToken } from '@/utils/server-utils';
+import { getAccessToken } from '@/actions/session';
+import { decodeToken } from '@/utils/server-utils';
 import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from '@/utils/logger';
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const accessToken = await getAccessToken(req);
+    const accessToken = await getAccessToken();
 
     if (!accessToken) {
       return NextResponse.json({ error: 'No access token found' }, { status: 401 });
     }
 
-    // Fetch user info from the OAuth2 provider
     const userInfoResponse = await fetch(`${SERVER_CONFIG.AUTH_SERVER}/userinfo`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -21,11 +21,11 @@ export async function GET(req: Request) {
     if (!userInfoResponse.ok) {
       return NextResponse.json({ error: 'Failed to fetch user info' }, { status: 401 });
     }
+
     const userInfo = await userInfoResponse.json();
     const decodedToken = decodeToken(accessToken);
     userInfo.roles = decodedToken?.roles || [];
 
-    // Check admin role
     if (!userInfo.roles?.some((role: string) => role === 'ADMIN')) {
       return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 });
     }

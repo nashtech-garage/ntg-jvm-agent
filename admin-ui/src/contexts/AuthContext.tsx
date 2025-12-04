@@ -3,23 +3,27 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
-  useState,
-  ReactNode,
   useMemo,
+  ReactNode,
   useCallback,
+  useEffect,
 } from 'react';
-import { UserInfo, TokenInfo } from '@/models/token';
+import { SessionProvider, signOut, useSession } from 'next-auth/react';
+import { TokenInfo, UserInfo } from '@/models/token';
+import { hasAdminRole as hasAdmin } from '@/utils/user';
+import { signOut as signOutApp } from '@/services/auth';
+import { API_PATH, PAGE_PATH } from '@/constants/url';
+import { useRouter } from 'next/navigation';
 import logger from '@/utils/logger';
+import { LoginErrors } from '@/constants/constant';
 
 interface AuthContextType {
   user: UserInfo | null;
   token: TokenInfo | null;
-  login: (code: string, redirectUri: string) => Promise<boolean>;
-  logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
   hasAdminRole: boolean;
+  logOut: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,93 +40,83 @@ interface AuthProviderProps {
   readonly children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [token, setToken] = useState<TokenInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+function AuthStateProvider({ children }: AuthProviderProps) {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const rawUser = session?.user;
 
-  const isAuthenticated = !!user && !!token;
-  const hasAdminRole = user?.roles?.includes('ADMIN') || user?.roles?.includes('admin') || false;
+  const user: UserInfo | null = useMemo(() => {
+    if (!rawUser) {
+      return null;
+    }
+
+    return {
+      sub: rawUser.id ?? 'unknown',
+      name: rawUser.name ?? rawUser.preferred_username ?? rawUser.email ?? 'Unknown User',
+      email: rawUser.email ?? '',
+      roles: rawUser.roles ?? [],
+      preferred_username: rawUser.preferred_username,
+    };
+  }, [rawUser]);
+
+  const roles = useMemo(() => user?.roles ?? [], [user]);
+  const hasAdminRole = hasAdmin(roles);
+
+  const token: TokenInfo | null = useMemo(
+    () =>
+      session?.accessToken && session.accessToken.length > 0
+        ? {
+            access_token: session.accessToken,
+            ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
+          }
+        : null,
+    [session]
+  );
+
+  const logOut = useCallback(async () => {
+    try {
+      const result = await signOut({ redirect: false, callbackUrl: PAGE_PATH.LOGIN });
+      await signOutApp({ serverUri: API_PATH.SIGN_OUT });
+      if (result?.url) {
+        router.push(result.url);
+      }
+      return true;
+    } catch (error) {
+      logger.error('Logout failed:', error);
+      return false;
+    }
+  }, [router]);
 
   useEffect(() => {
-    // Check for existing token on mount
-    checkExistingAuth();
-  }, []);
-
-  const checkExistingAuth = async () => {
-    try {
-      setIsLoading(true);
-
-      // Try to get user info from stored token
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-        setToken(userData.token);
-      }
-    } catch (error) {
-      logger.error('Auth check failed:', error);
-    } finally {
-      setIsLoading(false);
+    // Auto sign-out if session error
+    if (
+      session?.error === LoginErrors.REFRESH_TOKEN_ERROR ||
+      session?.error === LoginErrors.REFRESH_TOKEN_MISSING
+    ) {
+      logger.error('Session expired or refresh token invalid, signing user out');
+      void logOut();
     }
-  };
-
-  const login = useCallback(async (code: string, redirectUri: string): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-
-      const response = await fetch('/api/auth/exchange', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ code, redirect_uri: redirectUri }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        setToken(data.token);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      logger.error('Login failed:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(() => {
-    fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    })
-      .catch((error) => {
-        logger.error('Logout failed:', error);
-      })
-      .finally(() => {
-        setUser(null);
-        setToken(null);
-      });
-  }, []);
+  }, [session?.error, logOut]);
 
   const contextValue = useMemo(
     () => ({
       user,
       token,
-      login,
-      logout,
-      isLoading,
-      isAuthenticated,
+      isLoading: status === 'loading',
+      isAuthenticated: status === 'authenticated' && !!user,
       hasAdminRole,
+      logOut,
     }),
-    [user, token, login, logout, isLoading, isAuthenticated, hasAdminRole]
+    [user, token, status, hasAdminRole, logOut]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  return (
+    <SessionProvider>
+      <AuthStateProvider>{children}</AuthStateProvider>
+    </SessionProvider>
+  );
 }
