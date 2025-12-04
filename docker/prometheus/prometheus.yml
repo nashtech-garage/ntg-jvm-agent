@@ -4,12 +4,12 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['prometheus:9090']
 
   - job_name: 'orchestrator'
     metrics_path: '/actuator/prometheus'
     basic_auth:
       username: 'prometheus'
-      password: '${PROMETHEUS_PASSWORD}'
+      password: 'password'
     static_configs:
-      - targets: [ 'host.docker.internal:9001' ]
+      - targets: [ 'orchestrator:9001' ]
