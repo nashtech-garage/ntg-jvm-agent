@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Service
 class UserServiceImpl(
@@ -30,9 +31,9 @@ class UserServiceImpl(
 
     private val logger: Logger = LoggerFactory.getLogger(UserService::class.java)
 
-    override fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto {
+    override fun getUsers(pageNumber: Int, pageSize: Int, currentUserId: UUID): UserPageDto {
         val pageable = PageRequest.of(pageNumber, pageSize)
-        val page = userRepository.findAll(pageable)
+        val page = userRepository.findAllExcept(currentUserId, pageable)
         logger.debug("Retrieved {} users out of {} total", page.numberOfElements, page.totalElements)
         return page.toPageDto()
     }
