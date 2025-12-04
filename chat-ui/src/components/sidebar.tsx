@@ -124,10 +124,12 @@ export default function Sidebar() {
       <div id="action-wrapper" className="px-2 mt-2">
         <button
           onClick={newChat}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-200 cursor-pointer"
+          className="group flex items-center gap-3 w-full rounded-xl border border-gray-200 bg-white/90 px-4 py-3 text-gray-800 shadow-sm shadow-gray-200/70 transition hover:border-gray-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
         >
-          <SquarePen size={16} />
-          {!collapsed && <span>New Chat</span>}
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition group-hover:bg-sky-50 group-hover:text-sky-700">
+            <SquarePen size={18} />
+          </span>
+          {!collapsed && <span className="text-sm font-semibold">New Chat</span>}
         </button>
       </div>
 
