@@ -88,33 +88,36 @@ export default function ChatBox({
   };
 
   return (
-    <div className="flex flex-col gap-2 p-4 bg-white">
-      {previewUrls && (
-        <div className="flex-1 flex">
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200">
+      {previewUrls.length > 0 && (
+        <div className="flex flex-wrap gap-3">
           {previewUrls.map((item) => (
-            <div key={item} className="ml-20">
+            <div
+              key={item}
+              className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm shadow-slate-200/70"
+            >
               <button
                 onClick={() => handleRemovePreview(item)}
-                className="bg-black/50 text-white rounded-full p-0"
+                className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white transition hover:bg-black/70"
               >
-                <CircleX />
+                <CircleX size={14} />
               </button>
               <Image
                 src={item}
                 width={200}
-                height={20}
+                height={120}
                 alt="preview"
-                className="max-h-40 rounded-md"
+                className="h-24 w-28 rounded-lg object-cover"
               />
             </div>
           ))}
         </div>
       )}
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-3">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="bg-green-200 text-gray-700 px-2 py-2 rounded-lg cursor-pointer disabled:opacity-50"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 shadow-inner shadow-slate-200 transition hover:-translate-y-0.5 hover:border-sky-300 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:opacity-40"
           disabled={previewUrls.length === 3}
         >
           <Images size={18} />
@@ -134,15 +137,19 @@ export default function ChatBox({
           placeholder="Type your message..."
           minRows={1}
           maxRows={8}
-          className="flex-1 resize-none rounded-lg border p-2 outline-none focus:ring focus:ring-blue-300"
+          className="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 shadow-inner shadow-slate-200 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200"
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || !agents.length}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200/70 transition hover:shadow-sky-300 disabled:opacity-60"
         >
           <Send size={18} />
         </button>
+      </div>
+      <div className="flex items-center justify-between px-1">
+        <p className="text-xs text-slate-500">Enter to send - Shift + Enter for new line</p>
+        {!agents.length && <p className="text-xs text-amber-600">No agent available yet</p>}
       </div>
     </div>
   );

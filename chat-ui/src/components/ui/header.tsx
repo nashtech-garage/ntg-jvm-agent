@@ -4,6 +4,8 @@ import React from 'react';
 
 export default function Header({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <header className="sticky top-0 z-50 bg-[white] border-b border-b-gray-300">{children}</header>
+    <header className="px-6 pt-4">
+      <div className="border-b border-gray-200 bg-gray-50">{children}</div>
+    </header>
   );
 }
