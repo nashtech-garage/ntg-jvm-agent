@@ -111,35 +111,56 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`bg-gray-100 text-black h-full flex flex-col transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-64'
+      className={`flex h-full flex-col border-r border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-800 shadow-sm transition-all duration-300 ${
+        collapsed ? 'w-16' : 'w-72'
       }`}
     >
-      {/* Collapse button */}
-      <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-gray-150 ml-3">
-        {collapsed ? <ChevronRight /> : <ChevronLeft />}
-      </button>
+      {/* Brand & collapse */}
+      <div className="flex items-center justify-between px-3 py-3">
+        {!collapsed && (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-sm font-semibold text-white shadow-md shadow-sky-200">
+              NT
+            </div>
+            <div className="leading-tight">
+              <h2 className="text-lg font-semibold text-slate-800">NT Agent</h2>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
 
       {/* Action wrapper */}
-      <div id="action-wrapper" className="px-2 mt-2">
-        <button
+      <div id="action-wrapper">
+        <div
           onClick={newChat}
-          className="group flex items-center gap-3 w-full rounded-xl border border-gray-200 bg-white/90 px-4 py-3 text-gray-800 shadow-sm shadow-gray-200/70 transition hover:border-gray-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+          className="group flex w-full items-center gap-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-800 shadow-sm shadow-sky-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition group-hover:bg-sky-50 group-hover:text-sky-700">
             <SquarePen size={18} />
           </span>
           {!collapsed && <span className="text-sm font-semibold">New Chat</span>}
-        </button>
+        </div>
       </div>
 
       {/* History list */}
       <div
         id="history-list"
-        className={`flex-1 overflow-y-auto mt-4 px-2 transition-all duration-300 ${
-          collapsed ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 space-y-2'
+        className={`mt-4 flex-1 overflow-y-auto px-3 transition-all duration-300 ${
+          collapsed ? 'pointer-events-none h-0 opacity-0' : 'opacity-100 space-y-3'
         }`}
       >
+        {!collapsed && (
+          <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Recent chats
+          </div>
+        )}
         {!collapsed &&
           conversations.map((item) => (
             <div
@@ -151,7 +172,7 @@ export default function Sidebar() {
             >
               {/* Rename input */}
               {renamingId === item.id ? (
-                <div className="px-2 py-2 rounded bg-gray-200">
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-100">
                   <input
                     autoFocus
                     type="text"
@@ -173,18 +194,20 @@ export default function Sidebar() {
                         setNewTitle('');
                       }
                     }}
-                    className="w-full bg-white px-2 py-1 rounded text-sm outline-none border border-gray-300"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-200 transition focus:border-sky-300 focus:ring-2"
                     placeholder="New name..."
                   />
                 </div>
               ) : (
                 <div
                   onClick={() => changeConversation(item.id)}
-                  className={`flex justify-between items-center px-2 py-2 rounded cursor-pointer relative group ${
-                    activeConversationId === item.id ? 'bg-gray-200' : 'hover:bg-gray-200'
+                  className={`group relative flex items-center justify-between rounded-xl border px-3 py-2.5 transition shadow-sm ${
+                    activeConversationId === item.id
+                      ? 'border-sky-200 bg-white shadow-sky-100'
+                      : 'border-transparent bg-white hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md'
                   }`}
                 >
-                  <span className="truncate text-sm">{item.title}</span>
+                  <span className="truncate text-sm font-medium text-slate-800">{item.title}</span>
 
                   {/* Dropdown button */}
                   <button
@@ -192,14 +215,15 @@ export default function Sidebar() {
                       e.stopPropagation();
                       setOpenDropdown(openDropdown === item.id ? null : item.id);
                     }}
-                    className="p-1 hover:bg-gray-300 rounded"
+                    className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                    aria-label="Conversation actions"
                   >
                     <MoreVertical size={16} />
                   </button>
 
                   {/* Dropdown menu */}
                   {openDropdown === item.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-max">
+                    <div className="absolute right-0 top-full z-50 mt-2 min-w-max overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-200/70">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -207,7 +231,7 @@ export default function Sidebar() {
                           setNewTitle(item.title);
                           setOpenDropdown(null);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-gray-600 cursor-pointer"
+                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
                       >
                         <SquarePen size={14} />
                         Rename
@@ -217,7 +241,7 @@ export default function Sidebar() {
                           e.stopPropagation();
                           removeConversation(item.id);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-red-600 cursor-pointer"
+                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50"
                       >
                         <Trash size={14} />
                         Delete
@@ -231,20 +255,20 @@ export default function Sidebar() {
       </div>
 
       {/* Account info & Logout button */}
-      <div className="border-t border-gray-700 gap-2 p-4">
+      <div className="border-t border-slate-200 bg-white/60 p-4 backdrop-blur-sm">
         <div
           className={`mb-4 transition-all duration-300 ${
             !collapsed ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
           }`}
         >
-          <div className="text-sm flex">
+          <div className="flex text-sm">
             Welcome:
-            <p className="ml-1 text-green-700">{userName}</p>
+            <p className="ml-1 font-semibold text-slate-800">{userName}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center content-center w-full px-3 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-white justify-center"
+          className="flex w-full items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-red-200 transition hover:-translate-y-0.5 hover:bg-red-600"
           title={collapsed ? 'Logout' : undefined}
         >
           <svg

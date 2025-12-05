@@ -94,9 +94,6 @@ export default function Page() {
       <Header>
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-              NT Agent
-            </p>
             <h2 className="text-xl font-semibold text-gray-900">Ask anything</h2>
             <p className="text-sm text-gray-600">
               Share details, attach context, and get concise answers.
