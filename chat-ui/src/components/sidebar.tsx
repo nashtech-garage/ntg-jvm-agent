@@ -7,9 +7,10 @@ import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
 import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
-import logger from '@/utils/logger';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Sidebar() {
+  const { signOut } = useAuth();
   const {
     conversations,
     activeConversationId,
@@ -100,13 +101,7 @@ export default function Sidebar() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.replace('/login');
-    } catch (error) {
-      logger.error('Logout failed:', error);
-      toast.error('Logout failed');
-    }
+    await signOut();
   };
 
   return (

@@ -10,6 +10,9 @@ import { cookies } from 'next/headers';
  */
 export async function getAccessToken(): Promise<string | null> {
   const session = await getServerSession(authOptions);
+  if (!!session?.error) {
+    return null;
+  }
   return session?.accessToken ?? null;
 }
 

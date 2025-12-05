@@ -85,10 +85,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Auto sign-out if session error
-    if (
-      session?.error === LoginErrors.REFRESH_TOKEN_ERROR ||
-      session?.error === LoginErrors.REFRESH_TOKEN_MISSING
-    ) {
+    if (!!session?.error) {
       logger.error('Session expired or refresh token invalid, signing user out');
       void logOut();
     }

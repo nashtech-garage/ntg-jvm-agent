@@ -13,7 +13,7 @@ export async function middleware(req: NextRequest) {
     const loginUrl = new URL(PAGE_PATH.LOGIN, req.url);
 
     // If not logged in and not on an auth page or auth API → redirect to /login
-    if (!token) {
+    if (!token || !!token.error) {
       logger.error('No valid session token found, redirecting to login page');
       return NextResponse.redirect(loginUrl);
     }
