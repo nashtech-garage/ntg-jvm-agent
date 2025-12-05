@@ -1,5 +1,4 @@
 import { SERVER_CONFIG } from '@/constants/site-config';
-import { API_PATH } from '@/constants/url';
 import logger from '@/utils/logger';
 
 type OAuthTokenResponse = Record<string, unknown> & {
