@@ -13,6 +13,7 @@ data class AgentRequestDto(
     @field:Size(max = 100, message = "Agent name must not exceed 100 characters")
     val name: String,
     val description: String? = null,
+    val avatar: String? = null,
     val active: Boolean = true,
     val provider: String,
     @field:NotBlank(message = "Base url must not be blank")

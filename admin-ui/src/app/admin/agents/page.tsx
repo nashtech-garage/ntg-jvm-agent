@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { fetcher } from '@/utils/fetcher';
 import { Plus, Search } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -65,6 +66,7 @@ export default function AgentTable() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="font-semibold w-12">Avatar</TableHead>
               <TableHead className="font-semibold">Name</TableHead>
               <TableHead className="font-semibold">Model</TableHead>
               <TableHead className="font-semibold">Last modified</TableHead>
@@ -77,7 +79,15 @@ export default function AgentTable() {
           <TableBody>
             {agents?.map((a: AgentListData) => (
               <TableRow key={a.id} className="hover:bg-muted/50 transition">
-                {/* ONLY NAME IS CLICKABLE */}
+                {/* Avatar Column */}
+                <TableCell>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={a.avatar} alt={a.name} />
+                    <AvatarFallback>{a.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
+                  </Avatar>
+                </TableCell>
+
+                {/* Name Column - CLICKABLE */}
                 <TableCell>
                   <Link
                     href={`/admin/agents/${a.id}`}

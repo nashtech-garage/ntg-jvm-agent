@@ -2,6 +2,7 @@ export type AgentDetail = {
   id: string;
   name: string;
   description?: string;
+  avatar?: string;
   active: boolean;
   provider: string;
   model: string;
@@ -22,6 +23,7 @@ export type AgentDetail = {
 export type AgentListData = {
   id: string;
   name: string;
+  avatar?: string;
   model: string;
   lastModifiedBy: string;
   lastModifiedWhen: string;
@@ -33,6 +35,7 @@ export type AgentListData = {
 export type AgentFormData = {
   name: string;
   description?: string;
+  avatar?: string;
   active: boolean;
   provider: string;
   model: string;
