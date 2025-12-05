@@ -78,3 +78,10 @@ export type ToolListData = {
   lastModifiedWhen: string;
   enabled: boolean;
 };
+
+export type AssignmentToolData = {
+  toolId: string;
+  toolName: string;
+  toolDescription: string;
+  isAssigned: boolean;
+};

@@ -1,5 +1,4 @@
 import { SERVER_CONFIG } from '@/constants/site-config';
-import { API_PATH } from '@/constants/url';
 import logger from '@/utils/logger';
 
 type OAuthTokenResponse = Record<string, unknown> & {
@@ -55,23 +54,4 @@ export async function exchangeAuthorizationCode({
   }
 
   return tokenResponse.json();
-}
-
-export async function signOut({
-  serverUri = API_PATH.SIGN_OUT,
-}: {
-  serverUri?: string;
-}): Promise<void> {
-  try {
-    const res = await fetch(serverUri, {
-      method: 'POST',
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      logger.error(`Logout API failed during signOut callback: HTTP ${res.status}`);
-    }
-  } catch (error) {
-    logger.error('Logout API call failed during signOut callback', error);
-  }
 }

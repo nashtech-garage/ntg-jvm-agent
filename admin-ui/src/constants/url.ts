@@ -6,5 +6,4 @@ export const PAGE_PATH = {
 
 export const API_PATH = {
   AUTH_CALLBACK: (providerId: string) => `/api/auth/callback/${providerId}`,
-  SIGN_OUT: '/api/auth/logout',
 } as const;
