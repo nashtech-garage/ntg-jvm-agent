@@ -138,7 +138,7 @@ export default function Sidebar() {
 
       {/* Action wrapper */}
       <div id="action-wrapper">
-        <div
+        <button
           onClick={newChat}
           className="group flex w-full items-center gap-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-800 shadow-sm shadow-sky-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
         >
@@ -146,7 +146,7 @@ export default function Sidebar() {
             <SquarePen size={18} />
           </span>
           {!collapsed && <span className="text-sm font-semibold">New Chat</span>}
-        </div>
+        </button>
       </div>
 
       {/* History list */}
