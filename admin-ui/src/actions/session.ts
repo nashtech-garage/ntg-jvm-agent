@@ -35,7 +35,7 @@ export async function clearSession() {
   const cookieStore = await cookies();
 
   try {
-    NEXT_AUTH_COOKIES.forEach(async (name) => {
+    NEXT_AUTH_COOKIES.forEach((name) => {
       cookieStore.delete(name);
     });
     logger.info('Cleared NextAuth session cookies');
