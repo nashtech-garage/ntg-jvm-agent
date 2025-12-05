@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
@@ -199,6 +200,7 @@ class ConversationService(
                     answerEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
                     medias = emptyList(),
+                    reaction = answerEntity.reaction,
                 ),
             )
         } else {
@@ -207,4 +209,19 @@ class ConversationService(
                 null,
             )
         }
+
+    @Transactional
+    fun reactMessage(
+        messageId: UUID,
+        reaction: MessageReaction,
+    ): ChatMessageResponseVm {
+        val message =
+            this.messageRepo
+                .findById(messageId)
+                .orElseThrow { ResourceNotFoundException("Message not found: $messageId") }
+
+        message.reaction = reaction
+        this.messageRepo.save(message)
+        return ChatMessageMapper.toResponse(message)
+    }
 }

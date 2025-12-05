@@ -4,6 +4,7 @@ export interface ChatMessage {
   medias: ChatMessageMedia[];
   createdAt: string;
   type: number; // 1: user, 2: bot
+  reaction: 'LIKE' | 'DISLIKE' | 'NONE';
 }
 
 export interface ChatMessageMedia {

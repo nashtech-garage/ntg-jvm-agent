@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
+import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
 import com.ntgjvmagent.orchestrator.service.ConversationService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
@@ -65,5 +66,14 @@ class ConversationController(
         val username = (authentication.principal as Jwt).subject
         val updatedConversation = conversationService.updateConversationTitle(conversationId, request.title, username)
         return ResponseEntity.ok(updatedConversation)
+    }
+
+    @PutMapping("/messages/{messageId}/reaction")
+    fun setReaction(
+        @PathVariable messageId: UUID,
+        @RequestBody reactionRequest: ReactionRequestDto,
+    ): ResponseEntity<ChatMessageResponseVm> {
+        val updated = conversationService.reactMessage(messageId, reactionRequest.reaction)
+        return ResponseEntity.ok(updated)
     }
 }
