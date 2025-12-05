@@ -200,6 +200,7 @@ class ConversationService(
                     answerEntity.createdAt!!,
                     type = Constant.ANSWER_TYPE,
                     medias = emptyList(),
+                    reaction = answerEntity.reaction,
                 ),
             )
         } else {
@@ -213,7 +214,7 @@ class ConversationService(
     fun reactMessage(
         messageId: UUID,
         reaction: MessageReaction,
-    ) {
+    ): ChatMessageResponseVm {
         val message =
             this.messageRepo
                 .findById(messageId)
@@ -221,5 +222,6 @@ class ConversationService(
 
         message.reaction = reaction
         this.messageRepo.save(message)
+        return ChatMessageMapper.toResponse(message)
     }
 }

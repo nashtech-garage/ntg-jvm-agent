@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
-import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
 import com.ntgjvmagent.orchestrator.service.ConversationService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
@@ -73,16 +72,8 @@ class ConversationController(
     fun setReaction(
         @PathVariable messageId: UUID,
         @RequestBody reactionRequest: ReactionRequestDto,
-    ): ResponseEntity<Unit> {
-        conversationService.reactMessage(messageId, reactionRequest.reaction)
-        return ResponseEntity.noContent().build()
-    }
-
-    @DeleteMapping("/messages/{messageId}/reaction")
-    fun removeReaction(
-        @PathVariable messageId: UUID,
-    ): ResponseEntity<Unit> {
-        conversationService.reactMessage(messageId, MessageReaction.NONE)
-        return ResponseEntity.noContent().build()
+    ): ResponseEntity<ChatMessageResponseVm> {
+        val updated = conversationService.reactMessage(messageId, reactionRequest.reaction)
+        return ResponseEntity.ok(updated)
     }
 }

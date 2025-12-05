@@ -30,5 +30,5 @@ data class ChatMessageEntity(
     )
     val messageMedias: MutableList<ChatMessageMediaEntity> = mutableListOf(),
     @Enumerated(EnumType.STRING)
-    var reaction: MessageReaction? = null,
+    var reaction: MessageReaction = MessageReaction.NONE,
 ) : BaseEntity()

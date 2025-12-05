@@ -11,6 +11,7 @@ import { FileSelectInfo } from '@/models/file-select-info';
 import { customizeFetch } from '@/utils/custom-fetch';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
+import logger from '@/utils/logger';
 
 export default function Page() {
   const {
@@ -66,6 +67,7 @@ export default function Page() {
       })),
       createdAt: new Date().toISOString(),
       type: 1,
+      reaction: 'NONE' as const,
     };
     /* Show question in screen immediately */
     setChatMessages([...chatMessages, question]);
@@ -87,6 +89,25 @@ export default function Page() {
       router.replace(`/c/${conversation.id}`);
     }
     setChatMessages((prev) => [...prev, answer]);
+  };
+
+  const handleReaction = async (messageId: string, nextReaction: 'LIKE' | 'DISLIKE' | 'NONE') => {
+    try {
+      const current = chatMessages.find((m) => m.id === messageId)?.reaction ?? null;
+      const newReaction = current === nextReaction ? 'NONE' : nextReaction;
+
+      setChatMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reaction: newReaction } : m))
+      );
+
+      await customizeFetch(`/api/chat/messages/${messageId}/reaction`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaction: newReaction }),
+      });
+    } catch (err) {
+      logger.error('Failed to react:', err);
+    }
   };
 
   return (
@@ -113,7 +134,7 @@ export default function Page() {
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-4 px-6 pb-5 pt-4">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
-              <ChatResult results={chatMessages} isTyping={isTyping} />
+              <ChatResult results={chatMessages} isTyping={isTyping} onReaction={handleReaction} />
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white">

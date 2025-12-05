@@ -6,13 +6,16 @@ import { ChatMessage } from '@/models/chat-message';
 import RichTextPresenter from '@/components/ui/rich-text-presenter';
 import TypingIndicator from '@/components/ui/typing-indicator';
 import { Constants } from '@/constants/constant';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
 export default function ChatResult({
   results,
   isTyping = false,
+  onReaction,
 }: Readonly<{
   results: ChatMessage[];
   isTyping: boolean;
+  onReaction: (messageId: string, reaction: 'LIKE' | 'DISLIKE' | 'NONE') => void;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -91,8 +94,23 @@ export default function ChatResult({
               </div>
               <div className="max-w-[80%] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-md shadow-slate-200/70">
                 <RichTextPresenter content={r.content} />
-                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  Responded - {formatTime(r.createdAt)}
+                <p className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  <span>Responded - {formatTime(r.createdAt)}</span>
+
+                  <span className="flex items-center gap-2">
+                    <button
+                      onClick={() => onReaction(r.id, 'LIKE')}
+                      className={`transition ${r.reaction === 'LIKE' ? 'text-sky-600' : 'hover:text-sky-600'}`}
+                    >
+                      <ThumbsUp size={16} strokeWidth={2} />
+                    </button>
+                    <button
+                      onClick={() => onReaction(r.id, 'DISLIKE')}
+                      className={`transition ${r.reaction === 'DISLIKE' ? 'text-rose-600' : 'hover:text-rose-600'}`}
+                    >
+                      <ThumbsDown size={16} strokeWidth={2} />
+                    </button>
+                  </span>
                 </p>
               </div>
             </div>
