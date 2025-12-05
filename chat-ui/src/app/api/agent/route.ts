@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/utils/server-utils';
 import { Constants } from '@/constants/constant';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { getAccessToken } from '@/actions/session';
 
 const agentUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`;
 
-export async function GET(req: Request) {
-  const accessToken = await getAccessToken(req);
+export async function GET() {
+  const accessToken = await getAccessToken();
   if (!accessToken) {
     return NextResponse.json(null, { status: 401 });
   }
