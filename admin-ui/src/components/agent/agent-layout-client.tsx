@@ -33,7 +33,7 @@ export default function AgentLayoutClient({ id, children }: Readonly<AgentLayout
     <AgentContext.Provider value={value}>
       <div className="h-screen grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-3 sticky top-0 z-10 bg-background border-b">
-          <AgentTabs agentId={id} agentName={agent.name} />
+          <AgentTabs agentId={id} agentName={agent.name} agentAvatar={agent.avatar} />
         </div>
 
         <div className="lg:col-span-2 h-[calc(100vh-48px)] pr-4 border-r space-y-6">{children}</div>

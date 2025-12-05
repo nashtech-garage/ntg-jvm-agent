@@ -8,9 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 export default function AgentTabs({
   agentId,
   agentName,
+  agentAvatar,
 }: Readonly<{
   agentId: string;
   agentName: string;
+  agentAvatar?: string;
 }>) {
   const pathname = usePathname();
 
@@ -27,7 +29,7 @@ export default function AgentTabs({
         {/* LEFT: Avatar + Name */}
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarImage src={agentAvatar} alt={agentName} />
             <AvatarFallback>{agentName?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
           </Avatar>
           <span className="font-semibold text-lg leading-none mr-5">{agentName}</span>

@@ -6,6 +6,7 @@ data class AgentResponseDto(
     val id: UUID,
     val name: String,
     val description: String?,
+    val avatar: String?,
     val active: Boolean,
     val provider: String,
     val baseUrl: String,
