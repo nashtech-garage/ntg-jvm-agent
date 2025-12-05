@@ -27,6 +27,12 @@ export async function customizeFetch(url: string | URL | Request, options: Optio
 }
 
 const checkStatus = async (response: Response, options: Options) => {
+  const contentType = response.headers.get('Content-Type') || '';
+
+  if (contentType.includes('text/event-stream')) {
+    return;
+  }
+
   if (response.ok) {
     const cloneResponse = response.clone();
     const json = await cloneResponse.json();
