@@ -13,7 +13,6 @@ import { TokenInfo, UserInfo } from '@/models/token';
 import { PAGE_PATH } from '@/constants/url';
 import { useRouter } from 'next/navigation';
 import logger from '@/utils/logger';
-import { LoginErrors } from '@/constants/constant';
 import { clearSession } from '@/actions/session';
 
 interface AuthContextType {
