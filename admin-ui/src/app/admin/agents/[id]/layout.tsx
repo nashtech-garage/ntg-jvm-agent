@@ -1,14 +1,12 @@
 import AgentLayoutClient from '@/components/agent/agent-layout-client';
 
-export default async function AgentDetailsLayout({
-  params,
-  children,
-}: Readonly<{
+interface AgentDetailsLayoutProps {
   params: Promise<{ id: string }>;
-  children: React.ReactNode | Promise<React.ReactNode>;
-}>) {
-  const resolvedParams = await params;
-  const resolvedChildren = await children;
+  children: React.ReactNode;
+}
 
-  return <AgentLayoutClient id={resolvedParams.id}>{resolvedChildren}</AgentLayoutClient>;
+export default async function AgentDetailsLayout({ params, children }: AgentDetailsLayoutProps) {
+  const resolvedParams = await params;
+
+  return <AgentLayoutClient id={resolvedParams.id}>{children}</AgentLayoutClient>;
 }

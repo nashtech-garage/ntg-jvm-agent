@@ -2,12 +2,13 @@
 
 import { useMemo, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { LoginErrors, LoginParams } from '@/constants/constant';
 import { PAGE_PATH } from '@/constants/url';
+import { useAuth } from '@/contexts/AuthContext';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
+  const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 

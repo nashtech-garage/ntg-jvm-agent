@@ -12,11 +12,11 @@ interface SidebarProps {
 
 export default function Sidebar({ user }: Readonly<SidebarProps>) {
   const pathname = usePathname();
-  const { logOut } = useAuth();
+  const { signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
 
   const handleLogout = async () => {
-    await logOut();
+    await signOut();
   };
 
   const navItems = [
