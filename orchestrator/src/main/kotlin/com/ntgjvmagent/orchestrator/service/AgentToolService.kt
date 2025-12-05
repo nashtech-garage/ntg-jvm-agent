@@ -56,4 +56,18 @@ class AgentToolService(
         agentToolRepository
             .findByAgentId(agentId)
             .map(AgentToolMapper::toResponse)
+
+    @Transactional
+    fun updateStatus(
+        agentId: UUID,
+        toolId: UUID,
+        status: Boolean,
+    ) {
+        val agentTool =
+            agentToolRepository.findByAgentIdAndToolId(agentId, toolId)
+                ?: throw EntityNotFoundException("Agent tool not found")
+
+        agentTool.active = status
+        agentToolRepository.save(agentTool)
+    }
 }

@@ -5,10 +5,9 @@ export default async function AgentDetailsLayout({
   children,
 }: Readonly<{
   params: Promise<{ id: string }>;
-  children: React.ReactNode | Promise<React.ReactNode>;
+  children: React.ReactNode;
 }>) {
   const resolvedParams = await params;
-  const resolvedChildren = await children;
 
-  return <AgentLayoutClient id={resolvedParams.id}>{resolvedChildren}</AgentLayoutClient>;
+  return <AgentLayoutClient id={resolvedParams.id}>{children}</AgentLayoutClient>;
 }

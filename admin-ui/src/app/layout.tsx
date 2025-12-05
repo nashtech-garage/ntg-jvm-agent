@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import '@/styles/globals.css';
+import { ToasterProvider } from '@/components/toaster-provider';
 
 export const metadata: Metadata = {
   title: 'NTG Admin Portal',
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <ToasterProvider />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

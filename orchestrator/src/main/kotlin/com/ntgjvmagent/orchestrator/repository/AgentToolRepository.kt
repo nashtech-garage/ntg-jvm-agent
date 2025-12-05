@@ -15,6 +15,11 @@ interface AgentToolRepository : JpaRepository<AgentTool, UUID> {
         toolId: UUID,
     ): Boolean
 
+    fun findByAgentIdAndToolId(
+        agentId: UUID,
+        toolId: UUID,
+    ): AgentTool?
+
     @Modifying
     fun deleteByAgentIdAndToolId(
         agentId: UUID,
