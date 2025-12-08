@@ -13,6 +13,6 @@ object AgentToolMapper {
             availableTo = entity.agent.name,
             lastModifiedBy = entity.updatedBy?.name ?: "Unknown",
             lastModifiedWhen = entity.updatedAt?.toRelativeString(),
-            enabled = true,
+            enabled = entity.active,
         )
 }
