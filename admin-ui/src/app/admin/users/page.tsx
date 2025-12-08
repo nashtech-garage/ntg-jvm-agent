@@ -7,6 +7,12 @@ import { Toaster, toast } from 'react-hot-toast';
 import logger from '@/utils/logger';
 import CommonConfirmModal from '@/components/modal/common-confirm-modal';
 
+type DeleteUserResponse = {
+  message?: string;
+  error?: string;
+  raw?: string;
+};
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +109,7 @@ export default function UserManagement() {
       });
 
       const text = await response.text();
-      let jsonResult: any = {};
+      let jsonResult: DeleteUserResponse = {};
       try {
         jsonResult = text ? JSON.parse(text) : {};
       } catch {
