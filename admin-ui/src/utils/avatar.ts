@@ -1,3 +1,3 @@
 export function getDefaultAgentAvatar(agentName: string): string {
-  return `A`;
+  return agentName?.charAt(0)?.toUpperCase() || 'A';
 }
