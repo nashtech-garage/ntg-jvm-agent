@@ -48,6 +48,8 @@ class UserServiceTest {
 
     @Test
     fun `getUsers return paginated users`() {
+        val currentUserId = UUID.randomUUID()
+
         val users = listOf(
             UserEntity(UUID.randomUUID(), "testuser1", "password1", true, "Test", "testuser@gmail.com"),
             UserEntity(UUID.randomUUID(), "admin", "adminpass", true, "Admin", "admin@gmail.com")
@@ -56,14 +58,15 @@ class UserServiceTest {
         val pageable = PageRequest.of(0, 2)
         val page: Page<UserEntity> = PageImpl(users, pageable, users.size.toLong())
 
-        `when`(userRepository.findAll(pageable)).thenReturn(page)
+        `when`(userRepository.findAllExcept(currentUserId, pageable)).thenReturn(page)
+        val result = userService.getUsers(0, 2, currentUserId)
 
-        val result = userService.getUsers(0, 2)
         assertEquals(1, result.totalPages)
         assertEquals(2, result.users.size)
-        verify(userRepository, times(1)).findAll(pageable)
 
+        verify(userRepository, times(1)).findAllExcept(currentUserId, pageable)
     }
+
 
     @Test
     fun `createUser should create user with temporary password and ROLE_USER`() {

@@ -126,8 +126,8 @@ services:
 
   orchestrator:
     build:
-      context: ./orchestrator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: orchestrator/Dockerfile
     image: ghcr.io/nashtech-garage/ntg-jvm-agent-orchestrator:latest
     container_name: orchestrator
     depends_on:
@@ -157,6 +157,14 @@ services:
       SPRING_AI_VECTORSTORE_PGVECTOR_EMBEDDING_DIMENSION: 1536
       AUTH_SERVER_URL: ${AUTH_SERVER}
       MCP_SERVER_URL: ${MCP_SERVER}
+
+      PROMETHEUS_USERNAME: ${PROMETHEUS_USERNAME:-prometheus}
+      PROMETHEUS_PASSWORD: ${PROMETHEUS_PASSWORD:-password}
+      PROMETHEUS_ROLE: ${PROMETHEUS_ROLE:-PROMETHEUS}
+
+      MANAGEMENT_TRACING_ENABLED: "true"
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-1.0}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: "http://tempo:4318/v1/traces"
     networks:
       - ntg-network
 
@@ -197,7 +205,8 @@ services:
       # 👇 Browser-visible URLs (for frontend)
       NEXT_PUBLIC_AUTH_SERVER: ${NEXT_PUBLIC_AUTH_SERVER}
       NEXT_PUBLIC_ORCHESTRATOR_SERVER: ${NEXT_PUBLIC_ORCHESTRATOR_SERVER}
-      NEXT_PUBLIC_REDIRECT_URI: ${ADMIN_UI_REDIRECT_URI}
+      NEXTAUTH_URL: ${ADMIN_UI_URI}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       AUTH_SERVER_INTERNAL_URL: ${AUTH_SERVER}
       ORCHESTRATOR_INTERNAL_URL: ${ORCHESTRATOR}
       NEXT_PUBLIC_CLIENT_ID: ${NEXT_PUBLIC_CLIENT_ID}

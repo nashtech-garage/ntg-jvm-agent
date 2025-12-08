@@ -5,6 +5,7 @@ import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
+import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +24,8 @@ import kotlin.test.assertTrue
 
 class AgentServiceTest {
     private val repo: AgentRepository = mockk(relaxed = true)
-    private val service = AgentService(repo)
+    private val dynamicModelService: DynamicModelService = mockk(relaxed = true)
+    private val service = AgentService(repo, dynamicModelService)
 
     @BeforeEach
     fun setup() {
@@ -103,6 +105,7 @@ class AgentServiceTest {
         assertEquals(1.0, result.temperature)
         verify { repo.findById(id) }
         verify { repo.save(existing) }
+        verify { dynamicModelService.invalidateCacheForAgent(id) }
     }
 
     @Test

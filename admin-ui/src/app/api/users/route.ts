@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { getAccessToken } from '@/actions/session';
 
 const baseUrl = `${SERVER_CONFIG.AUTH_SERVER}/api/users`;
 
 export async function GET(req: Request) {
-  const cookieStore = cookies();
-  const accessToken = (await cookieStore).get('access_token')?.value;
+  const accessToken = await getAccessToken();
 
   if (!accessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,8 +36,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const cookieStore = cookies();
-  const accessToken = (await cookieStore).get('access_token')?.value;
+  const accessToken = await getAccessToken();
 
   if (!accessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -72,8 +70,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const cookieStore = cookies();
-  const accessToken = (await cookieStore).get('access_token')?.value;
+  const accessToken = await getAccessToken();
 
   if (!accessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
