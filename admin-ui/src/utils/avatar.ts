@@ -18,4 +18,3 @@ export function getDefaultAgentAvatar(agentName: string): string {
   // Using UI Avatars service
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${randomColor}&color=fff&bold=true&size=200`;
 }
-
