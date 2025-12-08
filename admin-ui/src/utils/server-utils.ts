@@ -75,10 +75,15 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
 }
 
 /**
- * Retrieve the NextAuth session token for a request (works in middleware/route handlers).
+ * Retrieve the NextAuth session token for a request
+ * Works in middleware/route handlers
  */
 export async function getSessionToken(
   req: NonNullable<GetTokenParams['req']>
 ): Promise<JWT | null> {
-  return getToken({ req, secret: SERVER_CONFIG.NEXTAUTH_SECRET });
+  const session = await getToken({ req, secret: SERVER_CONFIG.NEXTAUTH_SECRET });
+  if (!!session?.error) {
+    return null;
+  }
+  return session;
 }

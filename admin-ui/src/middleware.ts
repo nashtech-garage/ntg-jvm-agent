@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
   const token = await getSessionToken(request);
   const loginUrl = new URL(PAGE_PATH.LOGIN, request.url);
 
-  if (!token || !!token.error) {
+  if (!token) {
     logger.error('Unauthorized access attempt to admin route: no session token found');
     return NextResponse.redirect(loginUrl);
   }
