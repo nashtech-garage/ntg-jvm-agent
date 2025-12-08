@@ -122,8 +122,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const cookieStore = cookies();
-  const accessToken = (await cookieStore).get('access_token')?.value;
+  const accessToken = await getAccessToken();
 
   if (!accessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
