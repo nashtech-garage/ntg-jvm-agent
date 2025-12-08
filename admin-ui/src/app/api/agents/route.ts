@@ -1,14 +1,20 @@
 import { SERVER_CONFIG } from '@/constants/site-config';
 import { getAccessToken } from '@/actions/session';
 
-export async function GET() {
+export async function GET(req: Request) {
   const token = await getAccessToken();
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`, {
+  const { searchParams } = new URL(req.url);
+  const queryString = searchParams.toString();
+  const backendUrl = queryString
+    ? `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents?${queryString}`
+    : `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`;
+
+  const backendRes = await fetch(backendUrl, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
