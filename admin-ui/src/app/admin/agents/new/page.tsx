@@ -9,14 +9,15 @@ export default function AgentCreatePage() {
   const router = useRouter();
 
   async function onSubmit(data: AgentFormData) {
-    // Set default avatar if not provided
-    if (!data.avatar) {
-      data.avatar = getDefaultAgentAvatar(data.name);
-    }
+    // Create new object to avoid direct mutation
+    const payload = {
+      ...data,
+      avatar: data.avatar || getDefaultAgentAvatar(data.name),
+    };
 
     const res = await fetch('/api/agents', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     if (res.ok) {
