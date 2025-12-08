@@ -123,3 +123,55 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: `Failed to update user: ${String(err)}` }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const cookieStore = cookies();
+  const accessToken = (await cookieStore).get('access_token')?.value;
+
+  if (!accessToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get('username');
+
+    if (!username) {
+      return NextResponse.json(
+        { error: 'username is required' },
+        { status: 400 }
+      );
+    }
+
+    const res = await fetch(`${baseUrl}/${encodeURIComponent(username)}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const text = await res.text();
+    let jsonResult: any = {};
+
+    try {
+      jsonResult = text ? JSON.parse(text) : {};
+    } catch {
+      jsonResult = text ? { raw: text } : {};
+    }
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: jsonResult.message || 'Failed to delete user' },
+        { status: res.status }
+      );
+    }
+
+    if (!text) {
+      return NextResponse.json({ message: 'User deleted successfully' });
+    }
+
+    return NextResponse.json(jsonResult);
+  } catch (err) {
+    return NextResponse.json({ error: `Failed to delete user: ${String(err)}` }, { status: 500 });
+  }
+}

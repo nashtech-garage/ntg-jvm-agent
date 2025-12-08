@@ -5,6 +5,7 @@ import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
 import { Toaster, toast } from 'react-hot-toast';
 import logger from '@/utils/logger';
+import CommonConfirmModal from '@/components/modal/common-confirm-modal';
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,6 +14,8 @@ export default function UserManagement() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -80,6 +83,52 @@ export default function UserManagement() {
 
   const handleActivate = async (username: string) => {
     await updateUserStatus(username, true);
+  };
+  const openDeleteModal = (username: string) => {
+    setUserToDelete(username);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const response = await fetch(`/api/users?username=${encodeURIComponent(userToDelete)}`, {
+        method: 'DELETE',
+      });
+
+      const text = await response.text();
+      let jsonResult: any = {};
+      try {
+        jsonResult = text ? JSON.parse(text) : {};
+      } catch {
+        jsonResult = text ? { raw: text } : {};
+      }
+
+      if (!response.ok) {
+        logger.error(
+          `Failed to delete user "${userToDelete}". Status: ${response.status}`,
+          jsonResult
+        );
+        toast.error(jsonResult.error || `Failed to delete user "${userToDelete}".`);
+        return;
+      }
+
+      setUsers((prev) => prev.filter((u) => u.username !== userToDelete));
+
+      const message = jsonResult.message || `User "${userToDelete}" has been deleted successfully.`;
+      toast.success(message);
+    } catch (error) {
+      logger.error('Error deleting user:', error);
+      toast.error(`Failed to delete user "${userToDelete}".`);
+    } finally {
+      closeDeleteModal();
+    }
   };
 
   if (loading) {
@@ -253,7 +302,10 @@ export default function UserManagement() {
                       <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                         Edit
                       </button>
-                      <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                      <button
+                        onClick={() => openDeleteModal(user.username)}
+                        className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium"
+                      >
                         Delete
                       </button>
                     </td>
@@ -292,6 +344,20 @@ export default function UserManagement() {
             setPage(0);
             fetchUsers();
           }}
+        />
+        <CommonConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete User"
+          message={
+            userToDelete
+              ? `Are you sure you want to delete user "${userToDelete}"? This action cannot be undone.`
+              : 'Are you sure you want to delete this user?'
+          }
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={closeDeleteModal}
         />
       </div>
     </>

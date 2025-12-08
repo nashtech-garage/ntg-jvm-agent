@@ -14,4 +14,6 @@ interface UserService {
     fun deactivateUser(username: String): UserDto
 
     fun activateUser(username: String): UserDto
+
+    fun deleteUser(username: String)
 }
