@@ -133,10 +133,7 @@ export async function DELETE(req: Request) {
     const username = searchParams.get('username');
 
     if (!username) {
-      return NextResponse.json(
-        { error: 'username is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'username is required' }, { status: 400 });
     }
 
     const res = await fetch(`${baseUrl}/${encodeURIComponent(username)}`, {
