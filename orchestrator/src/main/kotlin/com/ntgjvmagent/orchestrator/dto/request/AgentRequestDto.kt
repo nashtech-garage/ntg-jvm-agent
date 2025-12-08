@@ -13,6 +13,7 @@ data class AgentRequestDto(
     @field:Size(max = 100, message = "Agent name must not exceed 100 characters")
     val name: String,
     val description: String? = null,
+    @field:Size(max = 5_000_000, message = "Avatar must not exceed 5MB")
     val avatar: String? = null,
     val active: Boolean = true,
     val provider: String,
