@@ -6,11 +6,11 @@ import logger from './utils/logger';
 
 const handleAuthenticatedRedirect = async (req: NextRequest) => {
   const pathName = req.nextUrl.pathname;
-  const isLoginPage = [PAGE_PATH.LOGIN.toString()].includes(pathName);
+  const isLoginPage = pathName === PAGE_PATH.LOGIN;
   const isAuthPage = [PAGE_PATH.LOGIN, API_PATH.AUTH].some((name) => pathName.startsWith(name));
   const token = await getSessionToken(req);
 
-  if (isLoginPage && !!token) {
+  if (isLoginPage && token) {
     const homeUrl = new URL(PAGE_PATH.HOME, req.url);
     // If logged in and on an auth page redirect to home page
     logger.info('Session token found, redirecting to home page');
@@ -21,7 +21,7 @@ const handleAuthenticatedRedirect = async (req: NextRequest) => {
     const loginUrl = new URL(PAGE_PATH.LOGIN, req.url);
 
     // If not logged in and not on an auth page or auth API redirect to /login
-    if (!token || !!token.error) {
+    if (!token || token.error) {
       logger.error('No valid session token found, redirecting to login page');
       return NextResponse.redirect(loginUrl);
     }

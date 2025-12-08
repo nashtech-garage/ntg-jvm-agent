@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
  */
 export async function getAccessToken(): Promise<string | null> {
   const session = await getServerSession(authOptions);
-  if (!!session?.error) {
+  if (session?.error) {
     return null;
   }
   return session?.accessToken ?? null;
@@ -43,8 +43,8 @@ export async function clearSession() {
     });
     logger.info('Cleared NextAuth session cookies');
     return { success: true };
-  } catch (error: Error | unknown) {
-    logger.error('Error when clear NextAuth session cookies', error);
+  } catch (error: unknown) {
+    logger.error('Error when clearing NextAuth session cookies', error);
     return { success: false, error: (error as Error).message };
   }
 }

@@ -82,7 +82,7 @@ export async function getSessionToken(
   req: NonNullable<GetTokenParams['req']>
 ): Promise<JWT | null> {
   const session = await getToken({ req, secret: SERVER_CONFIG.NEXTAUTH_SECRET });
-  if (!!session?.error) {
+  if (session?.error) {
     return null;
   }
   return session;
