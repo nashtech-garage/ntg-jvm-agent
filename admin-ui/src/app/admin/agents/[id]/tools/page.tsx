@@ -29,7 +29,20 @@ export default function ToolsPage() {
   const [assignmentTools, setAssignmentTools] = useState<AssignmentToolData[]>([]);
 
   useEffect(() => {
-    fetchAssignmentTool();
+    if (!agent) return;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/agents/${agent.id}/agent-tools`);
+        const data = await res.json();
+        setAssignmentTools(data);
+      } catch (error) {
+        logger.error(`Error fetching user information: ${error}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
   }, [agent]);
 
   const filteredAvailableTools = assignmentTools.filter((tool: AssignmentToolData) => {
@@ -78,10 +91,9 @@ export default function ToolsPage() {
       if (!agent) return;
       const res = await fetch(`/api/agents/${agent.id}/agent-tools`);
       setAssignmentTools(await res.json());
-
-      setIsLoading(false);
     } catch (error) {
       logger.error(`Error fetching user information or conversations: ${error}`);
+    } finally {
       setIsLoading(false);
     }
   };
