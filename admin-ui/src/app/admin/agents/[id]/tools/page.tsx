@@ -78,23 +78,8 @@ export default function ToolsPage() {
           return tool;
         })
       );
-
-      // Refresh assigned tool table
-      await fetchAssignmentTool();
     } catch (err) {
       logger.error('Failed to assign tool:', err);
-    }
-  };
-
-  const fetchAssignmentTool = async () => {
-    try {
-      if (!agent) return;
-      const res = await fetch(`/api/agents/${agent.id}/agent-tools`);
-      setAssignmentTools(await res.json());
-    } catch (error) {
-      logger.error(`Error fetching user information or conversations: ${error}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
