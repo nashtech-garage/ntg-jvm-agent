@@ -10,11 +10,9 @@ import React, {
 } from 'react';
 import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
 import { TokenInfo, UserInfo } from '@/models/token';
-import { hasAdminRole as hasAdmin } from '@/utils/user';
 import { PAGE_PATH } from '@/constants/url';
 import { useRouter } from 'next/navigation';
 import logger from '@/utils/logger';
-import { LoginErrors } from '@/constants/constant';
 import { clearSession } from '@/actions/session';
 
 interface AuthContextType {
@@ -22,7 +20,6 @@ interface AuthContextType {
   token: TokenInfo | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  hasAdminRole: boolean;
   signOut: () => Promise<boolean>;
   signIn: typeof signIn;
 }
@@ -59,9 +56,6 @@ function AuthStateProvider({ children }: AuthProviderProps) {
       preferred_username: rawUser.preferred_username,
     };
   }, [rawUser]);
-
-  const roles = useMemo(() => user?.roles ?? [], [user]);
-  const hasAdminRole = hasAdmin(roles);
 
   const token: TokenInfo | null = useMemo(
     () =>
@@ -102,11 +96,10 @@ function AuthStateProvider({ children }: AuthProviderProps) {
       token,
       isLoading: status === 'loading',
       isAuthenticated: status === 'authenticated' && !!user,
-      hasAdminRole,
       signOut: logOut,
       signIn,
     }),
-    [user, token, status, hasAdminRole, logOut]
+    [user, token, status, logOut]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

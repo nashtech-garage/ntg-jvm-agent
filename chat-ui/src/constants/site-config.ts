@@ -7,6 +7,12 @@ export const SERVER_CONFIG = {
   ORCHESTRATOR_SERVER: process.env.ORCHESTRATOR_INTERNAL_URL,
   CLIENT_ID: process.env.CLIENT_ID,
   CLIENT_SECRET: process.env.CLIENT_SECRET,
+  // DON'T CHANGE NAME: NEXTAUTH_URL as-is—NextAuth looks specifically for that exact env var to build its callback/redirect URLs
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  /* Reference: https://next-auth.js.org/configuration/options#nextauth_secret
+    Required secret for NextAuth encryption/signing in all environments
+   */
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
 } as const;
 
 export const PUBLIC_CONFIG = {

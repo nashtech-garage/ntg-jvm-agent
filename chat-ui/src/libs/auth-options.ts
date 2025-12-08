@@ -2,7 +2,7 @@ import { type NextAuthOptions } from 'next-auth';
 import { PUBLIC_CONFIG, SERVER_CONFIG } from '@/constants/site-config';
 import { decodeToken, refreshAccessToken } from '@/utils/server-utils';
 import logger from '@/utils/logger';
-import { hasAdminRole, normalizeRoles } from '@/utils/user';
+import { normalizeRoles } from '@/utils/user';
 import { exchangeAuthorizationCode } from '@/services/auth';
 import { API_PATH, PAGE_PATH } from '@/constants/url';
 
@@ -84,16 +84,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      const decodedRoles =
-        decodeToken(account?.id_token ?? account?.access_token ?? '')?.roles ?? [];
-
-      const roles = user.roles ?? decodedRoles ?? [];
-
-      if (!hasAdminRole(roles)) {
-        logger.error('Sign-in blocked: user lacks admin role', roles);
-        return `${PAGE_PATH.FORBIDDEN}`;
-      }
-
+      logger.info(`User ${user.id} is signing in with provider ${account?.provider}`);
       return true;
     },
     // Runs on sign-in and before getSession/useSession/getServerSession/getToken to update JWT (including refresh)
