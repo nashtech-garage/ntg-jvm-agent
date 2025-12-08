@@ -98,7 +98,12 @@ export default function Page() {
           </Header>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <ChatResult results={chatMessages} isTyping={isTyping} agentAvatar={selectedAgent?.avatar} agentName={selectedAgent?.name} />
+          <ChatResult
+            results={chatMessages}
+            isTyping={isTyping}
+            agentAvatar={selectedAgent?.avatar}
+            agentName={selectedAgent?.name}
+          />
         </div>
         <ChatBox onAsk={handleAsk} />
       </main>
