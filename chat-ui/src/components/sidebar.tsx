@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Trash, SquarePen, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash, SquarePen, MoreVertical, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
 import { toast } from 'sonner';
 import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
 import { useAuth } from '@/contexts/AuthContext';
+import ShareConversationModal from './ShareConversationModal';
 
 export default function Sidebar() {
   const { signOut } = useAuth();
@@ -23,6 +24,9 @@ export default function Sidebar() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareConversationId, setShareConversationId] = useState<string | null>(null);
+  const [shareConversationTitle, setShareConversationTitle] = useState<string>('');
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
 
@@ -92,6 +96,13 @@ export default function Sidebar() {
     }
     setOpenDropdown(null);
     toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
+  };
+
+  const shareConversation = (id: string, title: string) => {
+    setShareConversationId(id);
+    setShareConversationTitle(title);
+    setShowShareModal(true);
+    setOpenDropdown(null);
   };
 
   const newChat = () => {
@@ -234,6 +245,16 @@ export default function Sidebar() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          shareConversation(item.id, item.title);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-blue-600 cursor-pointer"
+                      >
+                        <Share2 size={14} />
+                        Share
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           removeConversation(item.id);
                         }}
                         className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50"
@@ -290,6 +311,20 @@ export default function Sidebar() {
           </span>
         </button>
       </div>
+
+      {/* Share Modal */}
+      {shareConversationId && (
+        <ShareConversationModal
+          conversationId={shareConversationId}
+          conversationTitle={shareConversationTitle}
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareConversationId(null);
+            setShareConversationTitle('');
+          }}
+        />
+      )}
     </div>
   );
 }

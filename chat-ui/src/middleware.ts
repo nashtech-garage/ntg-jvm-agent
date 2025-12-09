@@ -8,6 +8,8 @@ const handleAuthenticatedRedirect = async (req: NextRequest) => {
   const pathName = req.nextUrl.pathname;
   const isLoginPage = pathName === PAGE_PATH.LOGIN;
   const isAuthPage = [PAGE_PATH.LOGIN, API_PATH.AUTH].some((name) => pathName.startsWith(name));
+  const isSharedConversation = pathName.startsWith('/shared/');
+  const isSharedConversationAPI = pathName.startsWith('/api/chat/shared/');
   const token = await getSessionToken(req);
 
   if (isLoginPage && token) {
@@ -17,10 +19,10 @@ const handleAuthenticatedRedirect = async (req: NextRequest) => {
     return NextResponse.redirect(homeUrl);
   }
 
-  if (!isAuthPage) {
+  if (!isAuthPage && !isSharedConversation && !isSharedConversationAPI) {
     const loginUrl = new URL(PAGE_PATH.LOGIN, req.url);
 
-    // If not logged in and not on an auth page or auth API redirect to /login
+    // If not logged in and not on an auth page or shared conversation, redirect to /login
     if (!token || token.error) {
       logger.error('No valid session token found, redirecting to login page');
       return NextResponse.redirect(loginUrl);
