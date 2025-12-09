@@ -32,12 +32,14 @@ import { AgentFormParams } from '@/types/agent';
 
 import type * as monaco from 'monaco-editor';
 import dynamic from 'next/dynamic';
+import AvatarUpload from './avatar-upload';
 const Monaco = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 // Zod schema for full Agent
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  avatar: z.string().optional(),
   active: z.boolean(),
   provider: z.string().min(1, 'Provider is required'),
   model: z.string().min(1, 'Model is required'),
@@ -63,6 +65,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
     defaultValues: initialValues || {
       name: '',
       description: '',
+      avatar: undefined,
       active: true,
       provider: '',
       model: '',
@@ -105,6 +108,19 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
 
                 {/* ------------------- GENERAL ------------------- */}
                 <TabsContent value="general" className="space-y-4 pt-4">
+                  <div className="flex justify-center mb-6">
+                    <FormField
+                      control={form.control}
+                      name="avatar"
+                      render={({ field }) => (
+                        <AvatarUpload
+                          currentAvatar={field.value}
+                          agentName={form.getValues('name')}
+                          onAvatarChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
                   <TextField<AgentFormValues> form={form} name="name" label="Name" />
                   <FormField
                     control={form.control}

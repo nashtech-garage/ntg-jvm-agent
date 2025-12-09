@@ -8,14 +8,14 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
-import { SessionProvider, signOut, useSession } from 'next-auth/react';
+import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
 import { TokenInfo, UserInfo } from '@/models/token';
 import { hasAdminRole as hasAdmin } from '@/utils/user';
-import { signOut as signOutApp } from '@/services/auth';
-import { API_PATH, PAGE_PATH } from '@/constants/url';
+import { PAGE_PATH } from '@/constants/url';
 import { useRouter } from 'next/navigation';
 import logger from '@/utils/logger';
 import { LoginErrors } from '@/constants/constant';
+import { clearSession } from '@/actions/session';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -23,7 +23,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   hasAdminRole: boolean;
-  logOut: () => Promise<boolean>;
+  signOut: () => Promise<boolean>;
+  signIn: typeof signIn;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,7 +77,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
   const logOut = useCallback(async () => {
     try {
       const result = await signOut({ redirect: false, callbackUrl: PAGE_PATH.LOGIN });
-      await signOutApp({ serverUri: API_PATH.SIGN_OUT });
+      await clearSession();
       if (result?.url) {
         router.push(result.url);
       }
@@ -89,10 +90,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Auto sign-out if session error
-    if (
-      session?.error === LoginErrors.REFRESH_TOKEN_ERROR ||
-      session?.error === LoginErrors.REFRESH_TOKEN_MISSING
-    ) {
+    if (session?.error) {
       logger.error('Session expired or refresh token invalid, signing user out');
       void logOut();
     }
@@ -105,7 +103,8 @@ function AuthStateProvider({ children }: AuthProviderProps) {
       isLoading: status === 'loading',
       isAuthenticated: status === 'authenticated' && !!user,
       hasAdminRole,
-      logOut,
+      signOut: logOut,
+      signIn,
     }),
     [user, token, status, hasAdminRole, logOut]
   );

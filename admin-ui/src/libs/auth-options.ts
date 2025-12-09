@@ -97,6 +97,7 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     // Runs on sign-in and before getSession/useSession/getServerSession/getToken to update JWT (including refresh)
+    // Account is result of request token (exchangeAuthorizationCode)
     async jwt({ token, account, user }) {
       if (account) {
         token.accessToken = account.access_token;
@@ -109,7 +110,7 @@ export const authOptions: NextAuthOptions = {
       const tokenIsExpired = token.expiresAt ? Date.now() > token.expiresAt - 60_000 : false;
 
       if (tokenIsExpired) {
-        return refreshAccessToken(token);
+        return await refreshAccessToken(token);
       }
 
       return token;

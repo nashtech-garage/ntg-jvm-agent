@@ -57,6 +57,7 @@ class AgentService(
             name = request.name
             model = request.model
             description = request.description
+            avatar = request.avatar
             temperature = request.temperature.toBigDecimal()
             maxTokens = request.maxTokens
             topP = request.topP.toBigDecimal()

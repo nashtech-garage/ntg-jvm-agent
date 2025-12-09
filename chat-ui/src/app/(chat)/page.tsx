@@ -11,6 +11,7 @@ import { FileSelectInfo } from '@/models/file-select-info';
 import { customizeFetch } from '@/utils/custom-fetch';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
+import logger from '@/utils/logger';
 
 export default function Page() {
   const {
@@ -27,14 +28,16 @@ export default function Page() {
   const askQuestion = async (
     question: string,
     conversationId: string | null,
-    files: FileSelectInfo[]
+    files: FileSelectInfo[],
+    onToken: (token: string) => void,
+    onComplete: (finalResult: ChatResponse) => void
   ): Promise<ChatResponse | Error> => {
     const formData = new FormData();
     formData.append('question', question);
     if (conversationId) {
       formData.append('conversationId', conversationId);
     }
-    if (files && files.length) {
+    if (files?.length) {
       for (const file of files) {
         formData.append('files', file.file);
       }
@@ -47,11 +50,93 @@ export default function Page() {
       method: 'POST',
       body: formData,
     });
-    const jsonResult = await res.json();
-    if (!res.ok) {
-      return new Error(jsonResult.error);
+
+    if (!res.body) {
+      let errorMessage = `Request failed with status ${res.status}`;
+      try {
+        const errorText = await res.text();
+        if (errorText) {
+          errorMessage += `: ${errorText}`;
+        }
+      } catch (err) {
+        logger.error('Failed to parse error response body', err);
+      }
+      toast.error(errorMessage);
+      return new Error(errorMessage);
     }
-    return jsonResult;
+
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      buffer += value;
+
+      const events = buffer.split('\n\n');
+
+      buffer = events.pop() || '';
+
+      for (const event of events) {
+        const lines = event.split('\n');
+        let eventName = '';
+        const dataLines: string[] = [];
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            eventName = line.replace('event:', '').trim();
+          } else if (line.startsWith('data:')) {
+            dataLines.push(line.slice(5));
+          }
+        }
+
+        const data = dataLines.join('\n');
+
+        if (eventName === 'message') {
+          onToken(data);
+        }
+
+        if (eventName === 'complete') {
+          const finalJson = JSON.parse(data);
+          onComplete(finalJson);
+          return finalJson;
+        }
+
+        if (eventName === 'error') {
+          toast.error(data || 'Unexpected server error');
+          return new Error(data);
+        }
+      }
+    }
+
+    return new Error('Stream ended without complete event');
+  };
+
+  const handleTokenUpdate = (token: string) => {
+    setChatMessages((prev) =>
+      prev.map((msg) => (msg.id === 'streaming' ? { ...msg, content: msg.content + token } : msg))
+    );
+  };
+
+  const handleFinalResponse = (finalResponse: ChatResponse) => {
+    const { conversation, message } = finalResponse;
+
+    // Update active conversation
+    if (!activeConversationId) {
+      setActiveConversationId(conversation.id);
+      setConversations((prev) => [conversation, ...prev]);
+      router.replace(`/c/${conversation.id}`);
+    }
+
+    if (message) {
+      setChatMessages((prev) => prev.map((msg) => (msg.id === 'streaming' ? message : msg)));
+    } else {
+      setChatMessages((prev) => prev.filter((msg) => msg.id !== 'streaming'));
+    }
+
+    setIsTyping(false);
   };
 
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
@@ -70,23 +155,29 @@ export default function Page() {
     /* Show question in screen immediately */
     setChatMessages([...chatMessages, question]);
 
-    /* Call to Orchestrator */
-    const result = await askQuestion(q, activeConversationId, files);
+    const tempMessage = {
+      id: 'streaming',
+      content: '',
+      medias: [],
+      createdAt: new Date().toISOString(),
+      type: 2,
+    };
 
-    setIsTyping(false);
+    setChatMessages((prev) => [...prev, tempMessage]);
+
+    /* Call to Orchestrator */
+    const result = await askQuestion(
+      q,
+      activeConversationId,
+      files,
+      handleTokenUpdate,
+      handleFinalResponse
+    );
     if (result instanceof Error) {
       toast.error(result.message);
-      return;
+      setIsTyping(false);
+      setChatMessages((prev) => prev.filter((msg) => msg.id !== 'streaming'));
     }
-
-    const { conversation, message: answer } = result;
-
-    if (!activeConversationId) {
-      setActiveConversationId(conversation.id);
-      setConversations((prev) => [conversation, ...prev]);
-      router.replace(`/c/${conversation.id}`);
-    }
-    setChatMessages((prev) => [...prev, answer]);
   };
 
   return (
@@ -113,7 +204,12 @@ export default function Page() {
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-4 px-6 pb-5 pt-4">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
-              <ChatResult results={chatMessages} isTyping={isTyping} />
+              <ChatResult
+                results={chatMessages}
+                isTyping={isTyping}
+                agentAvatar={selectedAgent?.avatar}
+                agentName={selectedAgent?.name}
+              />
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white">

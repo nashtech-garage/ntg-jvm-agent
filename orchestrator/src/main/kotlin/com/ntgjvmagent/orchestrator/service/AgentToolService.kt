@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.response.AgentToolResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.ToolWithAssignmentResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.mapper.AgentToolMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
@@ -56,4 +57,23 @@ class AgentToolService(
         agentToolRepository
             .findByAgentId(agentId)
             .map(AgentToolMapper::toResponse)
+
+    @Transactional(readOnly = true)
+    fun getToolsWithAssignmentStatus(agentId: UUID): List<ToolWithAssignmentResponseDto> =
+        agentToolRepository
+            .findToolsWithAssignment(agentId)
+
+    @Transactional
+    fun updateStatus(
+        agentId: UUID,
+        toolId: UUID,
+        status: Boolean,
+    ) {
+        val agentTool =
+            agentToolRepository.findByAgentIdAndToolId(agentId, toolId)
+                ?: throw EntityNotFoundException("Agent tool not found")
+
+        agentTool.active = status
+        agentToolRepository.save(agentTool)
+    }
 }

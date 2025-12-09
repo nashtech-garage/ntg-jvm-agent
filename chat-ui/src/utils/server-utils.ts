@@ -1,15 +1,30 @@
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 import { TokenInfo } from '@/models/token';
-import { Constants } from '@/constants/constant';
-import { IS_PRODUCTION, SERVER_CONFIG } from '@/constants/site-config';
+import { SERVER_CONFIG } from '@/constants/site-config';
 import logger from './logger';
+import { getToken, GetTokenParams, JWT } from 'next-auth/jwt';
+import { LoginErrors } from '@/constants/constant';
 
-export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
+// Decodes the payload of a JWT token from base64 and parses it as JSON.
+export function decodeToken(token: string) {
+  try {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+  } catch (error) {
+    logger.error('Failed to decode token:', error);
+    return null;
+  }
+}
+
+async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
     const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;
     const clientId = SERVER_CONFIG.CLIENT_ID;
     const clientSecret = SERVER_CONFIG.CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      logger.error('Missing required environment variables: CLIENT_ID and/or CLIENT_SECRET');
+      return null;
+    }
+
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const body = new URLSearchParams();
@@ -26,7 +41,8 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
     });
 
     if (!res.ok) {
-      logger.error(`Token refresh failed: ${res.status}`, await res.text());
+      const errorBody = await res.text();
+      logger.error(`Token refresh failed: HTTP ${res.status} - ${errorBody}`);
       return null;
     }
 
@@ -37,47 +53,37 @@ export async function getRefreshToken(refreshToken: string): Promise<TokenInfo |
   }
 }
 
-export function setTokenIntoCookie(tokenInfo: TokenInfo, res: NextResponse) {
-  if (tokenInfo.access_token) {
-    res.cookies.set('access_token', tokenInfo.access_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: IS_PRODUCTION,
-      path: '/',
-      maxAge: tokenInfo.expires_in ?? 3600,
-    });
+export async function refreshAccessToken(token: JWT): Promise<JWT> {
+  if (!token.refreshToken) {
+    logger.error('No refresh token available');
+    return { ...token, error: LoginErrors.REFRESH_TOKEN_MISSING };
   }
 
-  // Keep refresh token on server-side using setting httpOnly cookie
-  if (tokenInfo.refresh_token) {
-    res.cookies.set('refresh_token', tokenInfo.refresh_token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: IS_PRODUCTION,
-      path: '/',
-      maxAge: Constants.THIRTY_DAYS_IN_SECONDS,
-    });
+  const refreshed = await getRefreshToken(token.refreshToken!);
+
+  if (!refreshed?.access_token) {
+    logger.error('Failed to refresh access token');
+    return { ...token, error: LoginErrors.REFRESH_TOKEN_ERROR };
   }
 
-  return res;
+  return {
+    ...token,
+    accessToken: refreshed.access_token,
+    refreshToken: refreshed.refresh_token ?? token.refreshToken,
+    expiresAt: Date.now() + (refreshed.expires_in ?? 3600) * 1000,
+  };
 }
 
 /**
- * Get access token from both cookie and custom header
- *
- * @param {Request} req
- *
- * @return {Promise<string|undefined>}
+ * Retrieve the NextAuth session token for a request
+ * Works in middleware/route handlers
  */
-export async function getAccessToken(req: Request): Promise<string | undefined> {
-  const headerToken = req.headers.get('x-access-token');
-  const cookieToken = (await cookies()).get('access_token')?.value;
-  return headerToken || cookieToken;
-}
-
-export function deleteCookies(response: NextResponse): NextResponse {
-  response.cookies.delete('access_token');
-  response.cookies.delete('refresh_token');
-  response.cookies.delete('JSESSIONID');
-  return response;
+export async function getSessionToken(
+  req: NonNullable<GetTokenParams['req']>
+): Promise<JWT | null> {
+  const session = await getToken({ req, secret: SERVER_CONFIG.NEXTAUTH_SECRET });
+  if (session?.error) {
+    return null;
+  }
+  return session;
 }

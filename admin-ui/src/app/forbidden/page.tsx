@@ -4,11 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ForbiddenPage() {
-  const { logOut } = useAuth();
+  const { signOut } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logOut();
+    await signOut();
   };
 
   return (

@@ -1,5 +1,5 @@
 'use client';
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import {
   Table,
@@ -32,6 +32,7 @@ export function AgentsTable({ agents, isLoading }: AgentsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="font-semibold">Avatar</TableHead>
             <TableHead className="font-semibold">Name</TableHead>
             <TableHead className="font-semibold">Model</TableHead>
             <TableHead className="font-semibold">Last modified</TableHead>
@@ -44,6 +45,13 @@ export function AgentsTable({ agents, isLoading }: AgentsTableProps) {
         <TableBody>
           {agents?.map((a: AgentListData) => (
             <TableRow key={a.id} className="hover:bg-muted/50 transition">
+                {/* Avatar Column */}
+                <TableCell>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={a.avatar} alt={a.name} />
+                    <AvatarFallback>{a.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
+                  </Avatar>
+                </TableCell>
               <TableCell>
                 <Link
                   href={PAGE_PATH.AGENT_DETAIL(a.id)}

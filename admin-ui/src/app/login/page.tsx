@@ -2,12 +2,13 @@
 
 import { useMemo, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { LoginErrors, LoginParams } from '@/constants/constant';
 import { PAGE_PATH } from '@/constants/url';
+import { useAuth } from '@/contexts/AuthContext';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
+  const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
 
@@ -74,7 +75,7 @@ function LoginPageContent() {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"

@@ -35,7 +35,7 @@ export default function AgentOverviewPage() {
           {/* Name with avatar */}
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarImage src={agent?.avatar} alt={agent?.name} />
               <AvatarFallback>{agent?.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
