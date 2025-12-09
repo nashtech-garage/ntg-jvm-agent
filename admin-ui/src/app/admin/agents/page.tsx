@@ -17,10 +17,7 @@ export default function AgentTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const apiUrl = useMemo(
-    () => API_PATH.AGENTS_SEARCH(searchQuery),
-    [searchQuery]
-  );
+  const apiUrl = useMemo(() => API_PATH.AGENTS_SEARCH(searchQuery), [searchQuery]);
 
   const {
     data: agents,

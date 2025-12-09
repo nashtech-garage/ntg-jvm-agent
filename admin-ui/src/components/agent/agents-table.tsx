@@ -45,13 +45,13 @@ export function AgentsTable({ agents, isLoading }: AgentsTableProps) {
         <TableBody>
           {agents?.map((a: AgentListData) => (
             <TableRow key={a.id} className="hover:bg-muted/50 transition">
-                {/* Avatar Column */}
-                <TableCell>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={a.avatar} alt={a.name} />
-                    <AvatarFallback>{a.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
-                  </Avatar>
-                </TableCell>
+              {/* Avatar Column */}
+              <TableCell>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={a.avatar} alt={a.name} />
+                  <AvatarFallback>{a.name?.charAt(0)?.toUpperCase() || 'A'}</AvatarFallback>
+                </Avatar>
+              </TableCell>
               <TableCell>
                 <Link
                   href={PAGE_PATH.AGENT_DETAIL(a.id)}
