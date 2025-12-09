@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/utils/server-utils';
+import { getAccessToken } from '@/actions/session';
+
 import { SERVER_CONFIG } from '@/constants/site-config';
 
 const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/share/shared-conversations`;
 
 export async function POST(req: Request) {
-  const accessToken = await getAccessToken(req);
+  const accessToken = await getAccessToken();
   if (!accessToken) {
     return NextResponse.json(null, { status: 401 });
   }

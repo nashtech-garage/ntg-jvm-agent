@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
 import { useAuth } from '@/contexts/AuthContext';
-import logger from '@/utils/logger';
 import ShareConversationModal from './ShareConversationModal';
 
 export default function Sidebar() {
