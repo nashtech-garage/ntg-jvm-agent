@@ -38,7 +38,7 @@ const CommonConfirmModal: React.FC<CommonConfirmModalProps> = ({
   if (!isOpen) return null;
 
   const confirmButtonClass =
-    variant === 'danger'
+    variant === 'primary'
       ? 'bg-emerald-600 text-white hover:bg-emerald-700'
       : 'bg-primary text-primary-foreground hover:bg-primary/90';
 

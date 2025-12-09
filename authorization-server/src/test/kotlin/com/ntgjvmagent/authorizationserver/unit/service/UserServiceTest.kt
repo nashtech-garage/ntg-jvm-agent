@@ -249,12 +249,12 @@ class UserServiceTest {
     }
 
     @Test
-    fun `deleteUser should throw exception when user does not exist`() {
+    fun `deleteUser should throw IllegalArgumentException when user does not exist`() {
         val username = "non_existing_user"
 
         `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
 
-        val exception = assertThrows(RuntimeException::class.java) {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
             userService.deleteUser(username)
         }
 
