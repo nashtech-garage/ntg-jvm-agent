@@ -42,12 +42,15 @@ export const POST = withAuthenticatedAPI(async (req, accessToken) => {
       body: formData,
     });
 
-    const jsonResult = await res.json();
-    if (!res.ok) {
-      return NextResponse.json({ error: jsonResult.message }, { status: res.status });
-    }
-
-    return NextResponse.json(jsonResult);
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        'Content-Type': res.headers.get('Content-Type') || 'text/plain',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'Content-Encoding': 'identity',
+      },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: `${Constants.FAILED_TO_ASK_QUESTION} ${String(err)}` },

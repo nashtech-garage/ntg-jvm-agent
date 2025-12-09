@@ -22,18 +22,23 @@ export default function AgentDropdown() {
 
   useEffect(() => {
     const handle = (ev: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) setOpen(false);
+      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
 
+  useEffect(() => {
     const fetchAgents = async () => {
       try {
         const res = await fetch('/api/agent');
-        const fetchedAgents = await res.json();
-        if (fetchedAgents.length) {
-          setAgents(fetchedAgents);
-          setSelected(fetchedAgents[0]);
-          setSelectedAgent(fetchedAgents[0]);
+        const agents = await res.json();
+        if (agents.length) {
+          setAgents(agents);
+          setSelected(agents[0]);
+          setSelectedAgent(agents[0]);
         }
       } catch (error) {
         toast.error(`Error fetching agents: ${error}`);
@@ -43,7 +48,6 @@ export default function AgentDropdown() {
     if (!agents.length) {
       fetchAgents();
     }
-    return () => document.removeEventListener('mousedown', handle);
   }, [agents.length, setAgents, setSelectedAgent]);
 
   return (

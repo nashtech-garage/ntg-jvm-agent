@@ -8,13 +8,17 @@ import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor
 import org.springframework.ai.chat.prompt.Prompt
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor
+import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter
+import org.springframework.ai.rag.generation.augmentation.QueryAugmenter
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever
 import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.vectorstore.SearchRequest
+import org.springframework.ai.vectorstore.filter.Filter
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
+import reactor.core.publisher.Flux
 import java.util.UUID
 
 @Service
@@ -32,61 +36,59 @@ class ChatModelService(
         request: ChatRequestVm,
         history: List<String> = emptyList(),
         summary: String = "",
-    ): String? {
+    ): Flux<String> {
         val combinedPrompt =
             buildString {
-                appendLine(
-                    Constant.SEARCH_TOOL_INSTRUCTION.trimIndent(),
-                )
-                history.forEach { item ->
-                    appendLine(item)
-                    if (summary.isNotBlank()) {
-                        appendLine("Conversation summary so far:")
-                        appendLine(summary)
-                        appendLine()
-                    }
+                if (summary.isNotBlank()) {
+                    appendLine("Conversation summary so far:")
+                    appendLine(summary)
+                    appendLine()
+                }
 
-                    if (history.isNotEmpty()) {
-                        appendLine("Chat history:")
-                        history.forEach { item ->
-                            appendLine(item)
-                        }
-                        appendLine()
+                appendLine("User question: ${request.question}")
+
+                if (history.isNotEmpty()) {
+                    appendLine("Chat history:")
+                    history.forEach { item ->
+                        appendLine(item)
                     }
+                    appendLine()
                 }
             }
 
         val model = dynamicModelService.getChatModel(request.agentId)
         val chatClient = ChatClient.builder(model).build()
-        val qaAdvisor = createQaAdvisorForAgent(request.agentId)
+        val ragAdvisor = createRAGAdvisorForAgent(request.agentId)
 
         var promptBuilder = chatClient.prompt()
-        if (qaAdvisor != null) {
-            promptBuilder = promptBuilder.advisors(qaAdvisor)
+        if (ragAdvisor != null) {
+            promptBuilder = promptBuilder.advisors(ragAdvisor)
         }
-        val response =
-            promptBuilder
-                .toolCallbacks(createToolForAgent(request.agentId))
-                .user { u ->
-                    u.text(combinedPrompt)
-                    request.files
-                        ?.filter { !it.isEmpty }
-                        ?.forEach { file ->
-                            runCatching {
-                                val mime =
-                                    MimeTypeUtils.parseMimeType(
-                                        file.contentType ?: Constant.PNG_CONTENT_TYPE,
-                                    )
-                                val resource = InputStreamResource(file.inputStream)
-                                u.media(mime, resource)
-                            }.onFailure { ex ->
-                                logger.warn("Failed to read file ${file.originalFilename}: ${ex.message}")
-                            }
+        return promptBuilder
+            .system(
+                """
+                ${Constant.SYSTEM_PROMPT}
+                ${Constant.SEARCH_TOOL_INSTRUCTION}
+                """.trimIndent(),
+            ).toolCallbacks(createToolForAgent(request.agentId))
+            .user { u ->
+                u.text(combinedPrompt)
+                request.files
+                    ?.filter { !it.isEmpty }
+                    ?.forEach { file ->
+                        runCatching {
+                            val mime =
+                                MimeTypeUtils.parseMimeType(
+                                    file.contentType ?: Constant.PNG_CONTENT_TYPE,
+                                )
+                            val resource = InputStreamResource(file.inputStream)
+                            u.media(mime, resource)
+                        }.onFailure { ex ->
+                            logger.warn("Failed to read file ${file.originalFilename}: ${ex.message}")
                         }
-                }.call()
-                .content()
-
-        return response
+                    }
+            }.stream()
+            .content()
     }
 
     fun createSummarize(
@@ -106,7 +108,7 @@ class ChatModelService(
         return response.result.output.text
     }
 
-    fun createQaAdvisorForAgent(agentId: UUID): QuestionAnswerAdvisor? {
+    fun createRAGAdvisorForAgent(agentId: UUID): RetrievalAugmentationAdvisor? {
         val knowledgeIds: List<String> =
             agentKnowledgeRepo
                 .findAllByAgentIdAndActiveTrue(
@@ -116,22 +118,35 @@ class ChatModelService(
         if (knowledgeIds.isEmpty()) {
             return null
         }
-        val idsArray =
-            knowledgeIds.joinToString(
-                prefix = "[",
-                postfix = "]",
-                separator = ",",
-            ) { "\"$it\"" }
 
-        val searchRequest =
-            SearchRequest
+        val key = Filter.Key("knowledge_id")
+        val value = Filter.Value(knowledgeIds)
+
+        val filterExpression =
+            Filter.Expression(
+                Filter.ExpressionType.IN,
+                key,
+                value,
+            )
+
+        val documentRetriever =
+            VectorStoreDocumentRetriever
                 .builder()
+                .vectorStore(vectorStoreService.getVectorStore(agentId))
                 .topK(Constant.TOP_K)
-                .filterExpression("knowledge_id IN $idsArray")
+                .filterExpression(filterExpression)
                 .build()
-        return QuestionAnswerAdvisor
-            .builder(vectorStoreService.getVectorStore(agentId))
-            .searchRequest(searchRequest)
+
+        val queryAugmenter: QueryAugmenter =
+            ContextualQueryAugmenter
+                .builder()
+                .allowEmptyContext(true)
+                .build()
+
+        return RetrievalAugmentationAdvisor
+            .builder()
+            .documentRetriever(documentRetriever)
+            .queryAugmenter(queryAugmenter)
             .build()
     }
 
