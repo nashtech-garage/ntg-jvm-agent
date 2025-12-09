@@ -13,6 +13,7 @@ object AgentMapper {
             name = request.name,
             model = request.model,
             description = request.description,
+            avatar = request.avatar,
             temperature = request.temperature.toBigDecimalOrDefault(Agent.DEFAULT_TEMPERATURE),
             maxTokens = request.maxTokens,
             topP = request.topP.toBigDecimalOrDefault(Agent.DEFAULT_TOP_P),
@@ -33,6 +34,7 @@ object AgentMapper {
             id = agent.id!!,
             name = agent.name,
             description = agent.description,
+            avatar = agent.avatar,
             active = agent.active,
             provider = agent.provider,
             baseUrl = agent.baseUrl,
@@ -54,6 +56,7 @@ object AgentMapper {
         AgentListResponseDto(
             id = agent.id!!,
             name = agent.name,
+            avatar = agent.avatar,
             model = agent.model,
             lastModifiedBy = agent.updatedBy?.name ?: "Unknown",
             lastModifiedWhen = agent.updatedAt?.toRelativeString(),

@@ -113,7 +113,12 @@ export default function Page() {
         <div className="mx-auto flex h-full w-full max-w-6xl flex-1 flex-col gap-4 px-6 pb-5 pt-4">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="flex-1 overflow-y-auto px-5 pb-5 pt-4">
-              <ChatResult results={chatMessages} isTyping={isTyping} />
+              <ChatResult
+                results={chatMessages}
+                isTyping={isTyping}
+                agentAvatar={selectedAgent?.avatar}
+                agentName={selectedAgent?.name}
+              />
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white">

@@ -10,9 +10,13 @@ import { Constants } from '@/constants/constant';
 export default function ChatResult({
   results,
   isTyping = false,
+  agentAvatar,
+  agentName,
 }: Readonly<{
   results: ChatMessage[];
   isTyping: boolean;
+  agentAvatar?: string;
+  agentName?: string;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,6 +105,17 @@ export default function ChatResult({
       ))}
       {isTyping && (
         <div className="flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 shadow-sm shadow-slate-200">
+          {agentAvatar ? (
+            <img
+              src={agentAvatar}
+              alt={agentName || 'Agent'}
+              className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="h-6 w-6 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+              {agentName?.charAt(0)?.toUpperCase() || 'A'}
+            </div>
+          )}
           <TypingIndicator />
           <span className="text-xs text-slate-500">Thinking...</span>
         </div>

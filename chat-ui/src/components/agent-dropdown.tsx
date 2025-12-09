@@ -52,7 +52,17 @@ export default function AgentDropdown() {
         onClick={toggle}
         className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm shadow-slate-200 transition hover:border-sky-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
       >
-        <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.2)]" />
+        {selected?.avatar ? (
+          <img
+            src={selected.avatar}
+            alt={selected.name}
+            className="h-5 w-5 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-5 w-5 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white">
+            {selected?.name?.charAt(0)?.toUpperCase() || 'A'}
+          </div>
+        )}
         <div className="flex items-center">{selected ? selected.name : 'Select agent'}</div>
 
         <span className={`transition-transform ${open ? 'rotate-180' : 'rotate-0'}`}>
@@ -66,8 +76,19 @@ export default function AgentDropdown() {
             <div
               key={agent.id}
               onClick={() => handleSelect(agent)}
-              className="flex items-start gap-3 rounded-lg px-3 py-3 text-sm text-slate-800 transition hover:bg-slate-50"
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-800 transition hover:bg-slate-50"
             >
+              {agent.avatar ? (
+                <img
+                  src={agent.avatar}
+                  alt={agent.name}
+                  className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                  {agent.name?.charAt(0)?.toUpperCase() || 'A'}
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-semibold">{agent.name}</span>
               </div>

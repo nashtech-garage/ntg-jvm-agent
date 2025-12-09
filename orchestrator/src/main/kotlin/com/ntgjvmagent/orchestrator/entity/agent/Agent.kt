@@ -20,6 +20,8 @@ data class Agent(
     var name: String,
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
+    @Column(columnDefinition = "TEXT")
+    var avatar: String? = null, // Base64 encoded avatar image or URL
     @Column(length = 50)
     var provider: String, // e.g. "openai", "anthropic", "local"
     @Column(name = "base_url", length = 150, nullable = false)
