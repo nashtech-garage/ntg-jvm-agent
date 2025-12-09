@@ -2,21 +2,14 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import useSWR from 'swr';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { fetcher } from '@/utils/fetcher';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { AgentListData } from '@/types/agent';
+import { API_PATH, PAGE_PATH } from '@/constants/url';
+import { AgentsTable } from '@/components/agent/agents-table';
 
 export default function AgentTable() {
   const router = useRouter();
@@ -24,7 +17,7 @@ export default function AgentTable() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const apiUrl = useMemo(
-    () => (searchQuery ? `/api/agents?name=${encodeURIComponent(searchQuery)}` : '/api/agents'),
+    () => API_PATH.AGENTS_SEARCH(searchQuery),
     [searchQuery]
   );
 
@@ -69,7 +62,7 @@ export default function AgentTable() {
       <div className="flex items-center justify-between">
         {/* Left Buttons */}
         <div className="flex items-center gap-2">
-          <Button onClick={() => router.push(`/admin/agents/new`)}>
+          <Button onClick={() => router.push(PAGE_PATH.AGENT_NEW)}>
             <Plus className="h-4 w-4" />
             New Agent
           </Button>
@@ -97,52 +90,7 @@ export default function AgentTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-sm border">
-        {showTableLoading ? (
-          <div className="p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Loading agents...</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Model</TableHead>
-                <TableHead className="font-semibold">Last modified</TableHead>
-                <TableHead className="font-semibold">Last published</TableHead>
-                <TableHead className="font-semibold">Owner</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {agents?.map((a: AgentListData) => (
-                <TableRow key={a.id} className="hover:bg-muted/50 transition">
-                  {/* ONLY NAME IS CLICKABLE */}
-                  <TableCell>
-                    <Link
-                      href={`/admin/agents/${a.id}`}
-                      className="hover:text-blue-600 hover:underline"
-                    >
-                      {a.name}
-                    </Link>
-                  </TableCell>
-
-                  <TableCell>{a.model}</TableCell>
-                  <TableCell>
-                    <span className="font-semibold">{a.lastModifiedBy}</span>{' '}
-                    <span className="text-xs text-muted-foreground">{a.lastModifiedWhen}</span>
-                  </TableCell>
-                  <TableCell>{a.lastPublishedWhen}</TableCell>
-                  <TableCell>{a.owner}</TableCell>
-                  <TableCell>{a.status}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+      <AgentsTable agents={agents} isLoading={showTableLoading} />
     </div>
   );
 }

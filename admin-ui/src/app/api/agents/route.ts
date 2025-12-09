@@ -1,4 +1,5 @@
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { BACKEND_PATH } from '@/constants/url';
 import { getAccessToken } from '@/actions/session';
 
 export async function GET(req: Request) {
@@ -9,10 +10,9 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const queryString = searchParams.toString();
-  const backendUrl = queryString
-    ? `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents?${queryString}`
-    : `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`;
+  const searchQuery = searchParams.get('name') || '';
+  const backendPath = BACKEND_PATH.AGENTS_SEARCH(searchQuery);
+  const backendUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}${backendPath}`;
 
   const backendRes = await fetch(backendUrl, {
     method: 'GET',
