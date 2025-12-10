@@ -125,7 +125,7 @@ export async function DELETE(req: Request) {
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(null, { status: 401 });
   }
 
   try {

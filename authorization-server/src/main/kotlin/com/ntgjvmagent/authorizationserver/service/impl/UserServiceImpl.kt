@@ -82,7 +82,6 @@ class UserServiceImpl(
         return saved.toDto()
     }
 
-    @Transactional
     override fun deleteUser(username: String) {
         val user = getUserByUserName(username)
         val deletedUser = user.copy(

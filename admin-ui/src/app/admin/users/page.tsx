@@ -6,6 +6,7 @@ import { User, UserPageDto } from '@/models/user';
 import { Toaster, toast } from 'react-hot-toast';
 import logger from '@/utils/logger';
 import CommonConfirmModal from '@/components/modal/common-confirm-modal';
+import { API_URLS } from '@/constants/constant';
 
 type DeleteUserResponse = {
   message?: string;
@@ -104,7 +105,8 @@ export default function UserManagement() {
     if (!userToDelete) return;
 
     try {
-      const response = await fetch(`/api/users?username=${encodeURIComponent(userToDelete)}`, {
+      const query = new URLSearchParams({ username: userToDelete }).toString();
+      const response = await fetch(`${API_URLS.USERS}?${query}`, {
         method: 'DELETE',
       });
 
