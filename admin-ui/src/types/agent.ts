@@ -66,6 +66,7 @@ export type KnowledgeListData = {
   id: string;
   name: string;
   type: string;
+  sourceUri?: string;
   availableTo: string;
   lastModifiedBy: string;
   lastModifiedWhen: string;

@@ -1,0 +1,6 @@
+<configuration>
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <!-- DO NOT use Loki in tests -->
+  </root>
+</configuration>

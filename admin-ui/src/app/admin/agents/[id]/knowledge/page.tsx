@@ -44,13 +44,9 @@ export default function KnowledgePage() {
     data = [],
     isLoading,
     mutate,
-  } = useSWR(
-    agent ? `/api/agents/${agent.id}/knowledge` : null,
-    fetcher,
-    {
-      refreshInterval: 2000, // auto-refresh to update status live
-    }
-  );
+  } = useSWR(agent ? `/api/agents/${agent.id}/knowledge` : null, fetcher, {
+    refreshInterval: 2000, // auto-refresh to update status live
+  });
 
   const filtered = data.filter((item: KnowledgeListData) => {
     const q = query.trim().toLowerCase();
@@ -147,7 +143,7 @@ export default function KnowledgePage() {
                         </DropdownMenuItem>
 
                         {/* View Details */}
-                        <DropdownMenuItem onClick={() => viewDetails(item.id)}>
+                        <DropdownMenuItem onClick={() => viewDetails(router, item.id)}>
                           <Activity className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
@@ -170,7 +166,7 @@ export default function KnowledgePage() {
 
                         {/* API */}
                         {item.type === 'API' && (
-                          <DropdownMenuItem onClick={() => testApi(item.id)}>
+                          <DropdownMenuItem onClick={() => testApi(router, item.id)}>
                             <Activity className="h-4 w-4 mr-2" />
                             Test API
                           </DropdownMenuItem>
@@ -178,7 +174,7 @@ export default function KnowledgePage() {
 
                         {/* DATABASE */}
                         {item.type === 'DATABASE' && (
-                          <DropdownMenuItem onClick={() => testDb(item.id)}>
+                          <DropdownMenuItem onClick={() => testDb(router, item.id)}>
                             <Database className="h-4 w-4 mr-2" />
                             Test DB Connection
                           </DropdownMenuItem>
@@ -187,7 +183,7 @@ export default function KnowledgePage() {
                         {/* DELETE */}
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => deleteKnowledge(item.id)}
+                          onClick={() => deleteKnowledge(router, item.id)}
                         >
                           Delete
                         </DropdownMenuItem>
@@ -204,38 +200,37 @@ export default function KnowledgePage() {
   );
 }
 
-export function openUrl(url?: string) {
+function openUrl(url?: string) {
   if (!url) return;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-export function downloadFile(id?: string) {
-  if (!id) return;
-  window.open(`/api/knowledge/${id}/download`, '_blank');
+function downloadFile(knowledgeId?: string) {
+  if (!knowledgeId) return;
+  window.open(`/api/knowledge/${knowledgeId}/download`, '_blank');
 }
 
-export function testApi(id?: string) {
-  if (!id) return;
-  router.push(`/admin/knowledge/${id}/test-api`);
+function testApi(router: ReturnType<typeof useRouter>, knowledgeId?: string) {
+  if (!knowledgeId) return;
+  router.push(`/admin/knowledge/${knowledgeId}/test-api`);
 }
 
-export function testDb(id?: string) {
-  if (!id) return;
-  router.push(`/admin/knowledge/${id}/test-db`);
+function testDb(router: ReturnType<typeof useRouter>, knowledgeId?: string) {
+  if (!knowledgeId) return;
+  router.push(`/admin/knowledge/${knowledgeId}/test-db`);
 }
 
-export function viewDetails(id?: string) {
-  if (!id) return;
-  router.push(`/admin/knowledge/${id}`);
+function viewDetails(router: ReturnType<typeof useRouter>, knowledgeId?: string) {
+  if (!knowledgeId) return;
+  router.push(`/admin/knowledge/${knowledgeId}`);
 }
 
-export function deleteKnowledge(id?: string) {
-  if (!id) return;
-  router.push(`/admin/knowledge/${id}/delete`);
+function deleteKnowledge(router: ReturnType<typeof useRouter>, knowledgeId?: string) {
+  if (!knowledgeId) return;
+  router.push(`/admin/knowledge/${knowledgeId}/delete`);
 }
 
-// Status badge component
-export function StatusBadge({ status }: Readonly<{ status: string }>) {
+function StatusBadge({ status }: Readonly<{ status: string }>) {
   const colors: Record<string, string> = {
     PENDING: 'bg-gray-100 text-gray-700',
     INGESTING: 'bg-yellow-100 text-yellow-800',
