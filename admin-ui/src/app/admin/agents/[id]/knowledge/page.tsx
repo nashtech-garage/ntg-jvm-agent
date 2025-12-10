@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { Plus, Search } from 'lucide-react';
@@ -16,29 +16,38 @@ import {
 } from '@/components/ui/table';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, KnowledgeListData } from '@/types/agent';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { API_PATH } from '@/constants/url';
+import { fetcher } from '@/utils/fetcher';
 
 export default function KnowledgePage() {
   const { agent } = useAgent() as {
     agent: AgentDetail | null;
   };
   const router = useRouter();
-  const [query, setQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const { data = [], isLoading } = useSWR(
-    agent ? `/api/agents/${agent.id}/knowledge` : null,
-    fetcher
-  );
+  const apiUrl = useMemo(() => {
+    if (!agent) return null;
+    return API_PATH.AGENT_KNOWLEDGE_SEARCH(agent.id, searchQuery);
+  }, [agent, searchQuery]);
 
-  const filtered = data.filter((item: KnowledgeListData) => {
-    const q = query.trim().toLowerCase();
-
-    // If blank → return all items
-    if (!q) return true;
-
-    return item.name?.toLowerCase().includes(q);
+  const { data = [], isLoading } = useSWR(apiUrl, fetcher, {
+    keepPreviousData: true,
   });
+
+  const handleSearch = useCallback(() => {
+    setSearchQuery(searchTerm);
+  }, [searchTerm]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    },
+    [handleSearch]
+  );
 
   return (
     <div className="space-y-6">
@@ -53,21 +62,28 @@ export default function KnowledgePage() {
         </Button>
 
         <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <button
+            onClick={handleSearch}
+            className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
           <Input
             placeholder="Search knowledge..."
             className="pl-8"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
       </div>
 
       {isLoading && <p>Loading...</p>}
-      {!isLoading && filtered.length === 0 && <p>No knowledge items found.</p>}
+      {!isLoading && data.length === 0 && <p>No knowledge items found.</p>}
 
       {/* Table */}
-      {!isLoading && filtered.length > 0 && (
+      {!isLoading && data.length > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
@@ -80,16 +96,16 @@ export default function KnowledgePage() {
           </TableHeader>
 
           <TableBody>
-            {filtered.map((k: KnowledgeListData) => (
-              <TableRow key={k.id}>
-                <TableCell>{k.name}</TableCell>
-                <TableCell>{k.type}</TableCell>
-                <TableCell>{k.availableTo}</TableCell>
+            {data.map((item: KnowledgeListData) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.type}</TableCell>
+                <TableCell>{item.availableTo}</TableCell>
                 <TableCell>
-                  <span className="font-semibold">{k.lastModifiedBy}</span>{' '}
-                  <span className="text-xs text-muted-foreground">{k.lastModifiedWhen}</span>
+                  <span className="font-semibold">{item.lastModifiedBy}</span>{' '}
+                  <span className="text-xs text-muted-foreground">{item.lastModifiedWhen}</span>
                 </TableCell>
-                <TableCell>{k.status}</TableCell>
+                <TableCell>{item.status}</TableCell>
               </TableRow>
             ))}
           </TableBody>
