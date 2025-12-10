@@ -117,7 +117,7 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`flex h-full flex-col border-r border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-800 shadow-sm transition-all duration-300 ${
+      className={`flex h-full flex-col border-r border-border bg-gradient-to-b from-surface via-surface-muted to-surface-soft text-foreground shadow-sm transition-all duration-300 ${
         collapsed ? 'w-16' : 'w-72'
       }`}
     >
@@ -125,17 +125,17 @@ export default function Sidebar() {
       <div className="flex items-center justify-between px-3 py-3">
         {!collapsed && (
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-sm font-semibold text-white shadow-md shadow-sky-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-strong text-sm font-semibold text-primary-foreground shadow-md shadow-[0_10px_26px_color-mix(in_oklab,var(--color-primary)_35%,transparent)]">
               NT
             </div>
             <div className="leading-tight">
-              <h2 className="text-lg font-semibold text-slate-800">NT Agent</h2>
+              <h2 className="text-lg font-semibold text-foreground">NT Agent</h2>
             </div>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-muted shadow-sm transition hover:-translate-y-0.5 hover:border-primary-border hover:text-primary-strong"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -146,9 +146,9 @@ export default function Sidebar() {
       <div id="action-wrapper">
         <button
           onClick={newChat}
-          className="group flex w-full items-center gap-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-800 shadow-sm shadow-sky-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
+          className="group flex w-full items-center gap-3 rounded-xl border border-primary-border bg-primary-soft px-4 py-3 text-primary-strong shadow-sm shadow-[0_10px_22px_color-mix(in_oklab,var(--color-primary)_22%,transparent)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-border"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition group-hover:bg-sky-50 group-hover:text-sky-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-muted text-muted transition group-hover:bg-primary-soft group-hover:text-primary-strong">
             <SquarePen size={18} />
           </span>
           {!collapsed && <span className="text-sm font-semibold">New Chat</span>}
@@ -163,7 +163,7 @@ export default function Sidebar() {
         }`}
       >
         {!collapsed && (
-          <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <div className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Recent chats
           </div>
         )}
@@ -178,7 +178,7 @@ export default function Sidebar() {
             >
               {/* Rename input */}
               {renamingId === item.id ? (
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm shadow-slate-100">
+                <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-sm shadow-[0_8px_18px_color-mix(in_oklab,var(--color-border)_60%,transparent)]">
                   <input
                     autoFocus
                     type="text"
@@ -200,7 +200,7 @@ export default function Sidebar() {
                         setNewTitle('');
                       }
                     }}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-sky-200 transition focus:border-sky-300 focus:ring-2"
+                    className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm text-foreground outline-none ring-primary-border transition focus:border-primary-border focus:ring-2"
                     placeholder="New name..."
                   />
                 </div>
@@ -209,11 +209,11 @@ export default function Sidebar() {
                   onClick={() => changeConversation(item.id)}
                   className={`group relative flex items-center justify-between rounded-xl border px-3 py-2.5 transition shadow-sm ${
                     activeConversationId === item.id
-                      ? 'border-sky-200 bg-white shadow-sky-100'
-                      : 'border-transparent bg-white hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md'
+                      ? 'border-primary-border bg-primary-soft shadow-[0_8px_18px_color-mix(in_oklab,var(--color-primary)_20%,transparent)]'
+                      : 'border-transparent bg-surface hover:border-border hover:shadow-[0_10px_22px_color-mix(in_oklab,var(--color-border)_45%,transparent)]'
                   }`}
                 >
-                  <span className="truncate text-sm font-medium text-slate-800">{item.title}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{item.title}</span>
 
                   {/* Dropdown button */}
                   <button
@@ -221,7 +221,7 @@ export default function Sidebar() {
                       e.stopPropagation();
                       setOpenDropdown(openDropdown === item.id ? null : item.id);
                     }}
-                    className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                    className="rounded-lg p-1 text-muted-foreground transition hover:bg-surface-muted hover:text-foreground"
                     aria-label="Conversation actions"
                   >
                     <MoreVertical size={16} />
@@ -229,7 +229,7 @@ export default function Sidebar() {
 
                   {/* Dropdown menu */}
                   {openDropdown === item.id && (
-                    <div className="absolute right-0 top-full z-50 mt-2 min-w-max overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-200/70">
+                    <div className="absolute right-0 top-full z-50 mt-2 min-w-max overflow-hidden rounded-lg border border-border bg-surface shadow-lg shadow-[0_14px_32px_color-mix(in_oklab,var(--color-border)_70%,transparent)]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -237,7 +237,7 @@ export default function Sidebar() {
                           setNewTitle(item.title);
                           setOpenDropdown(null);
                         }}
-                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-muted transition hover:bg-surface-muted"
                       >
                         <SquarePen size={14} />
                         Rename
@@ -247,7 +247,7 @@ export default function Sidebar() {
                           e.stopPropagation();
                           shareConversation(item.id, item.title);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2 text-blue-600 cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-surface-muted flex items-center gap-2 text-primary-strong cursor-pointer"
                       >
                         <Share2 size={14} />
                         Share
@@ -257,7 +257,7 @@ export default function Sidebar() {
                           e.stopPropagation();
                           removeConversation(item.id);
                         }}
-                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                        className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-danger transition hover:bg-danger-soft"
                       >
                         <Trash size={14} />
                         Delete
@@ -271,7 +271,7 @@ export default function Sidebar() {
       </div>
 
       {/* Account info & Logout button */}
-      <div className="border-t border-slate-200 bg-white/60 p-4 backdrop-blur-sm">
+      <div className="border-t border-border bg-surface/60 p-4 backdrop-blur-sm">
         <div
           className={`mb-4 transition-all duration-300 ${
             !collapsed ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
@@ -279,12 +279,12 @@ export default function Sidebar() {
         >
           <div className="flex text-sm">
             Welcome:
-            <p className="ml-1 font-semibold text-slate-800">{userName}</p>
+            <p className="ml-1 font-semibold text-foreground">{userName}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex w-full items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-red-200 transition hover:-translate-y-0.5 hover:bg-red-600"
+          className="flex w-full items-center justify-center rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-inverse transition hover:bg-danger-strong"
           title={collapsed ? 'Logout' : undefined}
         >
           <svg
