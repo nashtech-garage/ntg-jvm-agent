@@ -25,41 +25,77 @@ class KnowledgeImportService(
         knowledgeId: UUID,
         file: MultipartFile,
     ): KnowledgeImportingResponseVm {
-        val fileName = file.originalFilename
-        logger.info("Importing document for agent {}: {}, file type: {}", agentId, fileName, file.contentType)
+        val fileName = file.originalFilename ?: "uploaded-file"
+        val contentType = file.contentType ?: "application/octet-stream"
 
-        // Check that knowledge exists for this agent
+        logger.info(
+            "Importing FILE for agent={}, knowledge={}, name={}, contentType={}, size={} bytes",
+            agentId,
+            knowledgeId,
+            fileName,
+            contentType,
+            file.size,
+        )
+
+        // Validate parent knowledge row
         if (!knowledgeRepo.existsByIdAndAgentId(knowledgeId, agentId)) {
             throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
         }
 
-        // Split file into chunks
-        val documents = documentChunker.splitDocumentIntoChunks(file)
-        if (documents.isEmpty()) {
-            throw BadRequestException("File is empty or contains no readable text")
+        // reject files with no name / no extension (safety)
+        if (fileName.isBlank()) {
+            throw BadRequestException("File name is missing")
         }
 
-        // Determine starting chunk_order for this knowledge
-        var currentOrder = chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId)
+        // ------------------------------
+        // Chunk the document
+        // ------------------------------
+        val documents =
+            documentChunker.splitDocumentIntoChunks(file)
 
-        // Create DB chunks and add to vector store
-        documents.forEach { doc ->
+        if (documents.isEmpty()) {
+            throw BadRequestException("File contains no readable text: $fileName")
+        }
+
+        // Determine next chunk order (important for multi-file)
+        var currentOrder =
+            chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId)
+
+        // ------------------------------
+        // Create chunks (DB + vector store)
+        // ------------------------------
+        documents.forEachIndexed { index, doc ->
+
+            // Enrich metadata with file info for better traceability
+            val enrichedMetadata: Map<String, Any> =
+                doc.metadata +
+                    mapOf(
+                        "fileName" to fileName,
+                        "fileOrder" to index,
+                        "importTimestamp" to System.currentTimeMillis(),
+                    )
+
             chunkService.addChunk(
                 agentId = agentId,
                 knowledgeId = knowledgeId,
                 chunkOrder = currentOrder,
-                content = doc.text!!,
-                metadata = doc.metadata,
+                content = doc.text ?: "",
+                metadata = enrichedMetadata,
             )
             currentOrder++
         }
 
-        val numberOfSegments = documents.size
-        logger.info("Document imported for agent {}: {}, segments: {}", agentId, fileName, numberOfSegments)
+        logger.info(
+            "Imported FILE for agent={}, knowledge={}, file={}, segments={}",
+            agentId,
+            knowledgeId,
+            fileName,
+            documents.size,
+        )
 
         return KnowledgeImportingResponseVm(
-            originalFilename = fileName!!,
-            numberOfSegment = numberOfSegments,
+            originalFilename = fileName,
+            numberOfSegment = documents.size,
         )
     }
 }

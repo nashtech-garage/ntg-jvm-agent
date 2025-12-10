@@ -1,9 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ForbiddenPage() {
+  const { signOut } = useAuth();
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -31,11 +37,7 @@ export default function ForbiddenPage() {
           </p>
           <div className="mt-8 space-y-4">
             <button
-              onClick={async () => {
-                await fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-                  router.push('/login');
-                });
-              }}
+              onClick={handleLogout}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Sign In with Different Account

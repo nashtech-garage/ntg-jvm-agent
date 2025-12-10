@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.ToolRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository

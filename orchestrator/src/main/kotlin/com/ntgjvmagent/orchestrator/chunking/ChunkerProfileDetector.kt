@@ -5,20 +5,18 @@ import org.springframework.stereotype.Component
 @Component
 class ChunkerProfileDetector {
     companion object {
-        const val TIGHT_THRESHOLD = 2_000
-        const val DEFAULT_THRESHOLD = 10_000
+        const val SMALL_TEXT_THRESHOLD = 2_000
+        const val MEDIUM_TEXT_THRESHOLD = 10_000
         const val CSV_SAMPLE_LINES = 5
     }
 
-    private val extensionToProfile =
+    // Map file extensions → splitter profiles
+    private val extensionToProfile: Map<String, String> =
         mapOf(
+            // Markdown-like formats
             "txt" to "markdown",
             "md" to "markdown",
-            "pdf" to "loose",
-            "docx" to "loose",
-            "json" to "tight",
-            "csv" to "tight",
-            "xml" to "tight",
+            // Code files
             "java" to "code",
             "kt" to "code",
             "js" to "code",
@@ -27,42 +25,64 @@ class ChunkerProfileDetector {
             "cpp" to "code",
             "c" to "code",
             "go" to "code",
+            // Data formats → semantic (meaning-based)
+            "json" to "semantic",
+            "csv" to "semantic",
+            "xml" to "semantic",
+            // PDFs & DOCX often require larger chunking → semantic
+            "pdf" to "semantic",
+            "docx" to "semantic",
         )
 
+    /**
+     * Detect profile based on extension first, fallback to text analysis.
+     */
     fun detect(
         text: String,
         ext: String?,
-    ): String {
-        ext?.lowercase()?.let { extension ->
-            return extensionToProfile[extension] ?: "default"
-        }
-        return detectFromText(text)
-    }
+    ): String = extensionToProfile[ext?.lowercase()] ?: detectFromText(text)
 
+    /**
+     * Detect profile based on textual patterns.
+     */
     fun detectFromText(text: String): String {
         val trimmed = text.trimStart()
+
         return when {
-            looksLikeJson(trimmed) -> "tight"
-            looksLikeXml(trimmed) -> "tight"
-            looksLikeCsv(trimmed) -> "tight"
             looksLikeMarkdown(trimmed) -> "markdown"
             looksLikeCode(trimmed) -> "code"
-            text.length < TIGHT_THRESHOLD -> "tight"
-            text.length < DEFAULT_THRESHOLD -> "default"
-            else -> "loose"
+            looksLikeCsv(trimmed) -> "semantic"
+            looksLikeJson(trimmed) -> "semantic"
+            looksLikeXml(trimmed) -> "semantic"
+
+            // Very short text → treat as semantic (safe)
+            trimmed.length < SMALL_TEXT_THRESHOLD -> "semantic"
+
+            // Medium text → sentence-based splitting is usually ideal
+            trimmed.length < MEDIUM_TEXT_THRESHOLD -> "sentence"
+
+            // Large documents (PDFs, reports) → semantic splitting
+            else -> "semantic"
         }
     }
 
-    private fun looksLikeJson(text: String) =
-        (text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))
+    // ---- Helpers -------------------------------------------------------------
 
-    private fun looksLikeXml(text: String) = text.startsWith("<") && text.endsWith(">") && text.contains("</")
+    private fun looksLikeJson(text: String) =
+        (text.startsWith("{") && text.endsWith("}")) ||
+            (text.startsWith("[") && text.endsWith("]"))
+
+    private fun looksLikeXml(text: String) = text.startsWith("<") && text.contains("</")
 
     private fun looksLikeCsv(text: String) =
-        text.contains(",") && text.lines().take(CSV_SAMPLE_LINES).all { it.contains(",") }
+        text.contains(",") &&
+            text.lines().take(CSV_SAMPLE_LINES).all { it.contains(",") }
 
     private fun looksLikeMarkdown(text: String) =
-        text.contains("# ") || text.contains("```") || text.contains("* ") || text.contains("- ")
+        text.contains("# ") ||
+            text.contains("```") ||
+            text.contains("* ") ||
+            text.contains("- ")
 
     private fun looksLikeCode(text: String) =
         text.contains("class ") ||

@@ -31,6 +31,7 @@ import java.util.Optional
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.mockito.Mockito.never
+import org.mockito.Mockito.verifyNoMoreInteractions
 
 
 @ExtendWith(MockitoExtension::class)
@@ -59,6 +60,8 @@ class UserServiceTest {
 
     @Test
     fun `getUsers return paginated users`() {
+        val currentUserId = UUID.randomUUID()
+
         val users = listOf(
             UserEntity(UUID.randomUUID(), "testuser1", "password1", true, "Test", "testuser@gmail.com"),
             UserEntity(UUID.randomUUID(), "admin", "adminpass", true, "Admin", "admin@gmail.com")
@@ -67,11 +70,13 @@ class UserServiceTest {
         val pageable = PageRequest.of(0, 2)
         val page: Page<UserEntity> = PageImpl(users, pageable, users.size.toLong())
 
-        `when`(userRepository.findAll(pageable)).thenReturn(page)
+        `when`(userRepository.findAllExcept(currentUserId, pageable)).thenReturn(page)
+        val result = userService.getUsers(0, 2, currentUserId)
 
-        val result = userService.getUsers(0, 2)
         assertEquals(1, result.totalPages)
         assertEquals(2, result.users.size)
+
+        verify(userRepository, times(1)).findAllExcept(currentUserId, pageable)
         verify(userRepository, times(1)).findAll(pageable)
     }
 
@@ -367,5 +372,44 @@ class UserServiceTest {
         verify(userRepository, never()).save(any())
     }
 
+    @Test
+    fun `deleteUser should set deletedAt and soft delete user`() {
+        val username = "testuser"
+        val userId = UUID.randomUUID()
+        val existingUser = UserEntity(
+            id = userId,
+            username = username,
+            password = "password",
+            enabled = true,
+            name = "Test User",
+            email = "test@example.com",
+        )
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.of(existingUser))
+
+        userService.deleteUser(username)
+
+        val captor = ArgumentCaptor.forClass(UserEntity::class.java)
+        verify(userRepository, times(1)).delete(captor.capture())
+
+        val deletedUser = captor.value
+        assertEquals(username, deletedUser.username)
+        assertTrue(deletedUser.deletedAt != null)
+    }
+
+    @Test
+    fun `deleteUser should throw IllegalArgumentException when user does not exist`() {
+        val username = "non_existing_user"
+
+        `when`(userRepository.findUserByUserName(username)).thenReturn(Optional.empty())
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            userService.deleteUser(username)
+        }
+
+        assertEquals("User '$username' not found", exception.message)
+        verify(userRepository, times(1)).findUserByUserName(username)
+        verifyNoMoreInteractions(userRepository)
+    }
 
 }

@@ -22,18 +22,23 @@ export default function AgentDropdown() {
 
   useEffect(() => {
     const handle = (ev: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) setOpen(false);
+      if (boxRef.current && !boxRef.current.contains(ev.target as Node)) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
 
+  useEffect(() => {
     const fetchAgents = async () => {
       try {
         const res = await fetch('/api/agent');
-        const fetchedAgents = await res.json();
-        if (fetchedAgents.length) {
-          setAgents(fetchedAgents);
-          setSelected(fetchedAgents[0]);
-          setSelectedAgent(fetchedAgents[0]);
+        const agents = await res.json();
+        if (agents.length) {
+          setAgents(agents);
+          setSelected(agents[0]);
+          setSelectedAgent(agents[0]);
         }
       } catch (error) {
         toast.error(`Error fetching agents: ${error}`);
@@ -43,32 +48,53 @@ export default function AgentDropdown() {
     if (!agents.length) {
       fetchAgents();
     }
-    return () => document.removeEventListener('mousedown', handle);
   }, [agents.length, setAgents, setSelectedAgent]);
 
   return (
     <div ref={boxRef} className="relative inline-block">
       <button
         onClick={toggle}
-        className="flex items-center py-2 pl-4 bg-[white] text-black rounded-xl hover:bg-[#00000012] transition min-w-4 justify-between cursor-pointer"
+        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm shadow-slate-200 transition hover:border-sky-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
       >
-        {selected && <div className="flex items-center mr-1">{selected.name}</div>}
+        {selected?.avatar ? (
+          <img
+            src={selected.avatar}
+            alt={selected.name}
+            className="h-5 w-5 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-5 w-5 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white">
+            {selected?.name?.charAt(0)?.toUpperCase() || 'A'}
+          </div>
+        )}
+        <div className="flex items-center">{selected ? selected.name : 'Select agent'}</div>
 
         <span className={`transition-transform ${open ? 'rotate-180' : 'rotate-0'}`}>
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="h-4 w-4 text-slate-500" />
         </span>
       </button>
 
       {open && (
-        <div className="absolute mt-2 w-60 bg-[white] border border-[gray] rounded-xl shadow-2xl p-2 z-50">
+        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-200">
           {agents.map((agent) => (
             <div
               key={agent.id}
               onClick={() => handleSelect(agent)}
-              className="flex items-start gap-3 px-3 py-3 rounded-lg cursor-pointer hover:bg-[#00000012] transition"
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-800 transition hover:bg-slate-50"
             >
+              {agent.avatar ? (
+                <img
+                  src={agent.avatar}
+                  alt={agent.name}
+                  className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                  {agent.name?.charAt(0)?.toUpperCase() || 'A'}
+                </div>
+              )}
               <div className="flex flex-col">
-                <span className="text-black font-medium">{agent.name}</span>
+                <span className="font-semibold">{agent.name}</span>
               </div>
             </div>
           ))}

@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentToolResponseDto
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.utils.toRelativeString
 
@@ -13,6 +13,6 @@ object AgentToolMapper {
             availableTo = entity.agent.name,
             lastModifiedBy = entity.updatedBy?.name ?: "Unknown",
             lastModifiedWhen = entity.updatedAt?.toRelativeString(),
-            enabled = true,
+            enabled = entity.active,
         )
 }

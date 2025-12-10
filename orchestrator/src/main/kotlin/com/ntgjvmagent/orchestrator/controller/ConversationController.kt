@@ -3,12 +3,12 @@ package com.ntgjvmagent.orchestrator.controller
 import com.ntgjvmagent.orchestrator.service.ConversationService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
-import com.ntgjvmagent.orchestrator.viewmodel.ChatResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationUpdateRequestVm
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.http.codec.ServerSentEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import reactor.core.publisher.Flux
 import java.util.UUID
 
 @RestController
@@ -27,13 +28,16 @@ import java.util.UUID
 class ConversationController(
     private val conversationService: ConversationService,
 ) {
-    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PostMapping(
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
+        produces = [MediaType.TEXT_EVENT_STREAM_VALUE],
+    )
     fun createConversation(
         @Valid @ModelAttribute req: ChatRequestVm,
         authentication: Authentication,
-    ): ResponseEntity<ChatResponseVm> {
+    ): Flux<ServerSentEvent<Any>> {
         val username = (authentication.principal as Jwt).subject
-        return ResponseEntity.ok(conversationService.createConversation(req, username))
+        return conversationService.streamConversation(req, username)
     }
 
     @GetMapping("/user")
@@ -51,7 +55,7 @@ class ConversationController(
     @DeleteMapping("/{conversationId}")
     fun deleteConversation(
         @PathVariable conversationId: UUID,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         conversationService.deleteConversation(conversationId)
         return ResponseEntity.noContent().build()
     }

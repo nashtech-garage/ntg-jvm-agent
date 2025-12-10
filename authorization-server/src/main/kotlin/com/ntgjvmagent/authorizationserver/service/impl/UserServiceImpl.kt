@@ -27,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
+import java.time.OffsetDateTime
 
 @Service
 class UserServiceImpl(
@@ -37,9 +38,9 @@ class UserServiceImpl(
 
     private val logger: Logger = LoggerFactory.getLogger(UserService::class.java)
 
-    override fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto {
+    override fun getUsers(pageNumber: Int, pageSize: Int, currentUserId: UUID): UserPageDto {
         val pageable = PageRequest.of(pageNumber, pageSize)
-        val page = userRepository.findAll(pageable)
+        val page = userRepository.findAllExcept(currentUserId, pageable)
         logger.debug("Retrieved {} users out of {} total", page.numberOfElements, page.totalElements)
         return page.toPageDto()
     }
@@ -119,6 +120,17 @@ class UserServiceImpl(
         val saved = userRepository.save(updatedUser)
         logger.info("User '{}' deactivated successfully", username)
         return saved.toDto()
+    }
+
+    override fun deleteUser(username: String) {
+        val user = getUserByUserName(username)
+        val deletedUser = user.copy(
+            enabled = false,
+            deletedAt = OffsetDateTime.now()
+        )
+        userRepository.save(deletedUser)
+        userRepository.delete(deletedUser)
+        logger.info("User '{}' deleted successfully", username)
     }
 
     fun getUserByUserName(username: String): UserEntity {

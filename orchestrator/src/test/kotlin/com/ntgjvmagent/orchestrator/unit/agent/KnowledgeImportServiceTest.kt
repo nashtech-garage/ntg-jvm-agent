@@ -4,7 +4,7 @@ import com.ntgjvmagent.orchestrator.chunking.ChunkerProfileDetector
 import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
 import com.ntgjvmagent.orchestrator.config.ChunkerProperties
-import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
@@ -57,14 +57,14 @@ class KnowledgeImportServiceTest {
             KnowledgeChunkResponseDto(
                 id = UUID.randomUUID(),
                 content = arg<String>(2),
-                metadata = arg<Map<String, Any>?>(3),
+                metadata = arg<Map<String, Any?>>(3),
             )
         }
 
         // Chunker with simple deterministic profiles
         val chunkerProperties =
             ChunkerProperties().apply {
-                profiles["default"] =
+                profiles["semantic"] =
                     ChunkerProperties.ChunkerProfile().apply {
                         chunkSize = 50
                         minChunkSizeChars = 10
@@ -72,10 +72,9 @@ class KnowledgeImportServiceTest {
                         maxNumChunks = 200
                         keepSeparator = true
                     }
-                profiles["markdown"] = profiles["default"]!!
-                profiles["loose"] = profiles["default"]!!
-                profiles["tight"] = profiles["default"]!!
-                profiles["code"] = profiles["default"]!!
+                profiles["markdown"] = profiles["semantic"]!!
+                profiles["sentence"] = profiles["semantic"]!!
+                profiles["code"] = profiles["semantic"]!!
             }
 
         documentChunker =
@@ -143,7 +142,7 @@ class KnowledgeImportServiceTest {
                 service.importDocument(agentId, knowledgeId, file)
             }
 
-        assert(exception.message!!.contains("empty or contains no readable text"))
+        assert(exception.message!!.contains("contains no readable text"))
     }
 
     @Test

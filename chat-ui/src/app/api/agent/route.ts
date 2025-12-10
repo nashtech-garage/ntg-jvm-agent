@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/utils/server-utils';
 import { Constants } from '@/constants/constant';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { withAuthenticatedAPI } from '@/utils/withAuthen';
 
 const agentUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`;
 
-export async function GET(req: Request) {
-  const accessToken = await getAccessToken(req);
-  if (!accessToken) {
-    return NextResponse.json(null, { status: 401 });
-  }
+export const GET = withAuthenticatedAPI(async (_req, accessToken) => {
   try {
     const res = await fetch(`${agentUrl}/active`, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -27,4 +23,4 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+});

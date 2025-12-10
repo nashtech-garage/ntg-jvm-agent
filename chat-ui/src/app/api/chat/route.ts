@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getAccessToken } from '@/utils/server-utils';
 import { Constants } from '@/constants/constant';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { withAuthenticatedAPI } from '@/utils/withAuthen';
 
 const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/conversations`;
 
-export async function GET(req: Request) {
-  const accessToken = await getAccessToken(req);
-  if (!accessToken) {
-    return NextResponse.json(null, { status: 401 });
-  }
-
+export const GET = withAuthenticatedAPI(async (req, accessToken) => {
   const { searchParams } = new URL(req.url);
   const conversationId = searchParams.get('conversationId');
   let targetUrl = `${baseUrl}/user`;
@@ -34,14 +29,9 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(req: Request) {
-  const accessToken = await getAccessToken(req);
-  if (!accessToken) {
-    return NextResponse.json(null, { status: 401 });
-  }
-
+export const POST = withAuthenticatedAPI(async (req, accessToken) => {
   try {
     const formData = await req.formData();
     const res = await fetch(baseUrl, {
@@ -52,26 +42,24 @@ export async function POST(req: Request) {
       body: formData,
     });
 
-    const jsonResult = await res.json();
-    if (!res.ok) {
-      return NextResponse.json({ error: jsonResult.message }, { status: res.status });
-    }
-
-    return NextResponse.json(jsonResult);
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        'Content-Type': res.headers.get('Content-Type') || 'text/plain',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'Content-Encoding': 'identity',
+      },
+    });
   } catch (err) {
     return NextResponse.json(
       { error: `${Constants.FAILED_TO_ASK_QUESTION} ${String(err)}` },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(req: Request) {
-  const accessToken = await getAccessToken(req);
-  if (!accessToken) {
-    return NextResponse.json(null, { status: 401 });
-  }
-
+export const PUT = withAuthenticatedAPI(async (req, accessToken) => {
   const { searchParams } = new URL(req.url);
   const conversationId = searchParams.get('conversationId');
 
@@ -98,14 +86,9 @@ export async function PUT(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(req: Request) {
-  const accessToken = await getAccessToken(req);
-  if (!accessToken) {
-    return NextResponse.json(null, { status: 401 });
-  }
-
+export const DELETE = withAuthenticatedAPI(async (req, accessToken) => {
   const { searchParams } = new URL(req.url);
   const conversationId = searchParams.get('conversationId');
 
@@ -129,4 +112,4 @@ export async function DELETE(req: Request) {
       { status: 500 }
     );
   }
-}
+});

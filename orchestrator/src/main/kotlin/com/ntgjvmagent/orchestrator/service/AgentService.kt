@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.AgentListResponseDto
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
-import com.ntgjvmagent.orchestrator.dto.AgentResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentListResponseDto
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
@@ -15,6 +15,7 @@ import java.util.UUID
 @Service
 class AgentService(
     private val repo: AgentRepository,
+    private val dynamicModelService: DynamicModelService,
 ) {
     @Transactional(readOnly = true)
     fun getAll(): List<AgentListResponseDto> = repo.findAll().map(AgentMapper::toListResponse)
@@ -49,6 +50,7 @@ class AgentService(
             name = request.name
             model = request.model
             description = request.description
+            avatar = request.avatar
             temperature = request.temperature.toBigDecimal()
             maxTokens = request.maxTokens
             topP = request.topP.toBigDecimal()
@@ -57,7 +59,14 @@ class AgentService(
             active = request.active
             provider = request.provider
             settings = request.settings
+            apiKey = request.apiKey
+            baseUrl = request.baseUrl
+            chatCompletionsPath = request.chatCompletionsPath
+            embeddingModel = request.embeddingModel
+            dimension = request.dimension
+            embeddingsPath = request.embeddingsPath
         }
+        dynamicModelService.invalidateCacheForAgent(id)
         return AgentMapper.toResponse(repo.save(existing))
     }
 

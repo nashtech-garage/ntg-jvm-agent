@@ -1,9 +1,8 @@
-import { cookies } from 'next/headers';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { getAccessToken } from '@/actions/session';
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = await getAccessToken();
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });
@@ -26,14 +25,12 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = await getAccessToken();
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // Parse request body from frontend
   const body = await req.json();
 
   const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents`, {

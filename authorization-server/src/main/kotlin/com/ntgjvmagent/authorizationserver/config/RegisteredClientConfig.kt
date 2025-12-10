@@ -36,8 +36,8 @@ class RegisteredClientConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:3000/auth/callback") // Chat UI
-                .redirectUri("http://localhost:3001/auth/callback") // Admin UI
+                .redirectUri("http://localhost:3000/api/auth/callback/auth-server") // Chat UI
+                .redirectUri("http://localhost:3001/api/auth/callback/auth-server") // Admin UI
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .scope("chatbot.read")

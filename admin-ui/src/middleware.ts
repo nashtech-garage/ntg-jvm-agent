@@ -1,40 +1,27 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getRefreshToken, setTokenIntoCookie } from '@/utils/server-utils';
+import { NextResponse, type NextRequest } from 'next/server';
+import { getSessionToken } from '@/utils/server-utils';
+import { PAGE_PATH } from '@/constants/url';
+import { hasAdminRole } from '@/utils/user';
+import logger from '@/utils/logger';
 
 export async function middleware(request: NextRequest) {
-  // Check if user is accessing admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Check for authentication token in cookies
-    const accessToken = request.cookies.get('access_token');
-    const refreshToken = request.cookies.get('refresh_token');
+  if (!request.nextUrl.pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
 
-    if (!accessToken) {
-      if (refreshToken) {
-        const tokenInfo = await getRefreshToken(refreshToken.value);
-        if (tokenInfo) {
-          const res = NextResponse.next();
-          /*
-            Because cookies set in NextResponse are only stored on the browser after the current response is completed,
-            the new cookie is not available to the same request where it was issued. This means that on the first request,
-            the middleware sets the cookie but the API route still sees the old (null) cookie.
-            Only on the next request does the browser send back the updated cookie.
-            To make the new token immediately usable within the same request,
-            we need to also pass it through a custom header (e.g. x-access-token).
-          */
-          res.headers.set('x-access-token', tokenInfo.access_token);
-          setTokenIntoCookie(tokenInfo, res);
-          return res;
-        }
-      }
-      // Redirect to login if no token
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  const token = await getSessionToken(request);
+  const loginUrl = new URL(PAGE_PATH.LOGIN, request.url);
 
-    // Token validation and role checking is handled in the AuthContext
-    // and admin layout components for better UX
+  if (!token) {
+    logger.error('Unauthorized access attempt to admin route: no session token found');
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const hasAdmin = hasAdminRole(token.roles ?? []);
+
+  if (!hasAdmin) {
+    logger.error('Unauthorized access attempt to admin route: insufficient privileges');
+    return NextResponse.redirect(PAGE_PATH.FORBIDDEN);
   }
 
   return NextResponse.next();

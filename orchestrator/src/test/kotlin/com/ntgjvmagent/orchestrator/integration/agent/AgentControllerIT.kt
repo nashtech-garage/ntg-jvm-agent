@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.ntgjvmagent.orchestrator.dto.AgentRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName

@@ -1,9 +1,10 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.ntgjvmagent.orchestrator.dto.KnowledgeChunkRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
@@ -20,9 +21,11 @@ import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
 import kotlin.test.Test
 
+@Transactional
 class KnowledgeChunkControllerIT
     @Autowired
     constructor(
@@ -56,55 +59,69 @@ class KnowledgeChunkControllerIT
                     ),
                 )
 
+            // Must specify sourceType and metadata (defaults are emptyMap)
             knowledge =
                 knowledgeRepo.save(
                     AgentKnowledge(
                         agent = agent,
                         name = "K1",
+                        sourceType = KnowledgeSourceType.INLINE,
+                        sourceUri = null,
+                        metadata = emptyMap(),
                     ).apply { active = true },
                 )
         }
 
-        private fun createKnowledgeChunkRequest(content: String = "Test content") =
+        private fun createChunkReq(content: String = "Test content") =
             KnowledgeChunkRequestDto(
                 content = content,
                 metadata = mapOf("source" to "unit-test"),
             )
 
+        // ----------------------------------------------------------------------
+        // CREATE CHUNK
+        // ----------------------------------------------------------------------
         @Test
         fun `createChunk endpoint should return 201 and persist embedding`() {
-            val request = createKnowledgeChunkRequest("Test chunk")
+            val req = createChunkReq("Test chunk")
 
             mockMvc
                 .perform(
                     postAuth(
                         "/api/agents/${agent.id}/knowledge/${knowledge.id}/chunks",
-                        request,
+                        req,
                         roles = listOf("ROLE_ADMIN"),
                     ),
                 ).andExpect(status().isCreated)
+                .andExpect(jsonPath("$.content").value("Test chunk"))
+                .andExpect(jsonPath("$.metadata.source").value("unit-test"))
 
             val persisted = chunkRepo.findAll()
             assertEquals(1, persisted.size)
             assertEquals("Test chunk", persisted[0].content)
         }
 
+        // ----------------------------------------------------------------------
+        // FULL FLOW
+        // ----------------------------------------------------------------------
         @Test
         fun `full KnowledgeChunkController flow with txt and pdf imports`() {
+            // Must specify proper fields for FILE knowledge
             val knowledge =
                 knowledgeRepo.save(
                     AgentKnowledge(
                         agent = agent,
                         name = "Test Knowledge",
-                        sourceType = "pdf",
+                        sourceType = KnowledgeSourceType.FILE,
                         sourceUri = "unit-test://file.pdf",
                         metadata = mapOf("createdBy" to "integration-test"),
-                    ),
+                    ).apply { active = true },
                 )
+
             val knowledgeId = knowledge.id!!
 
             // ------------------ CREATE CHUNK ------------------
-            val createReq = createKnowledgeChunkRequest("Hello World")
+            val createReq = createChunkReq("Hello World")
             val chunkId =
                 mockMvc
                     .perform(
@@ -121,7 +138,7 @@ class KnowledgeChunkControllerIT
                     .let { objectMapper.readTree(it.contentAsString).get("id").asText() }
 
             // ------------------ UPDATE CHUNK ------------------
-            val updateReq = createKnowledgeChunkRequest("Updated content")
+            val updateReq = createChunkReq("Updated content")
             mockMvc
                 .perform(
                     putAuth(
@@ -134,8 +151,12 @@ class KnowledgeChunkControllerIT
 
             // ------------------ LIST CHUNKS ------------------
             mockMvc
-                .perform(getAuth("/api/agents/${agent.id}/knowledge/$knowledgeId/chunks", roles = listOf("ROLE_ADMIN")))
-                .andExpect(status().isOk)
+                .perform(
+                    getAuth(
+                        "/api/agents/${agent.id}/knowledge/$knowledgeId/chunks",
+                        roles = listOf("ROLE_ADMIN"),
+                    ),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").value(1))
 
             // ------------------ COUNT CHUNKS ------------------
@@ -149,19 +170,20 @@ class KnowledgeChunkControllerIT
                 .andExpect(content().string("1"))
 
             // ------------------ IMPORT TXT FILE ------------------
-            val longTxtContent =
+            val longText =
                 buildString {
                     repeat(10) { append("This is sentence $it for testing chunking. ") }
                 }
+
             val txtFile =
                 MockMultipartFile(
-                    "file",
+                    "file", // MUST match @RequestPart("file")
                     "test.txt",
                     MediaType.TEXT_PLAIN_VALUE,
-                    longTxtContent.toByteArray(),
+                    longText.toByteArray(),
                 )
 
-            val txtResponse =
+            val txtResp =
                 mockMvc
                     .perform(
                         multipartAuth(
@@ -175,9 +197,9 @@ class KnowledgeChunkControllerIT
                     .andReturn()
                     .response
 
-            val txtChunksCount =
-                objectMapper.readTree(txtResponse.contentAsString).get("numberOfSegment").asInt()
-            assertTrue(txtChunksCount >= 1, "Expected at least one chunk for txt")
+            val txtChunkCount =
+                objectMapper.readTree(txtResp.contentAsString).get("numberOfSegment").asInt()
+            assertTrue(txtChunkCount >= 1)
 
             // ------------------ IMPORT PDF FILE ------------------
             val pdfBytes =
@@ -205,7 +227,7 @@ class KnowledgeChunkControllerIT
                     pdfBytes,
                 )
 
-            val pdfResponse =
+            val pdfResp =
                 mockMvc
                     .perform(
                         multipartAuth(
@@ -219,9 +241,9 @@ class KnowledgeChunkControllerIT
                     .andReturn()
                     .response
 
-            val pdfChunksCount =
-                objectMapper.readTree(pdfResponse.contentAsString).get("numberOfSegment").asInt()
-            assertTrue(pdfChunksCount >= 1, "Expected at least one chunk for PDF")
+            val pdfChunkCount =
+                objectMapper.readTree(pdfResp.contentAsString).get("numberOfSegment").asInt()
+            assertTrue(pdfChunkCount >= 1)
 
             // ------------------ SEARCH CHUNKS ------------------
             mockMvc

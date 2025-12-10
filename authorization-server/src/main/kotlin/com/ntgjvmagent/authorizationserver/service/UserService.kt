@@ -9,7 +9,8 @@ import com.ntgjvmagent.authorizationserver.dto.UserPageDto
 import java.util.UUID
 
 interface UserService {
-    fun getUsers(pageNumber: Int, pageSize: Int): UserPageDto
+
+    fun getUsers(pageNumber: Int, pageSize: Int, currentUserId: UUID): UserPageDto
 
     fun updateUser(id: UUID, request: UpdateUserRequestDto): UpdateUserResponseDto
 
@@ -18,4 +19,6 @@ interface UserService {
     fun deactivateUser(username: String): UserDto
 
     fun activateUser(username: String): UserDto
+
+    fun deleteUser(username: String)
 }

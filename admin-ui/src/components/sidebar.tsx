@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { UserInfo } from '@/models/token';
-import logger from '@/utils/logger';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   user: UserInfo;
@@ -12,16 +12,11 @@ interface SidebarProps {
 
 export default function Sidebar({ user }: Readonly<SidebarProps>) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-    } catch (error) {
-      logger.error('Logout failed:', error);
-    }
+    await signOut();
   };
 
   const navItems = [
@@ -218,7 +213,8 @@ export default function Sidebar({ user }: Readonly<SidebarProps>) {
           }`}
         >
           <div className="text-sm text-gray-300">Logged in as:</div>
-          <div className="font-medium truncate">{user.name || user.email}</div>
+          <div className="font-medium truncate">{user.name}</div>
+          <div className="font-medium truncate">{user.sub}</div>
           <div className="text-xs text-gray-400 truncate">{user.email}</div>
           <div className="text-xs text-blue-400">Roles: {user.roles.join(', ')}</div>
         </div>
