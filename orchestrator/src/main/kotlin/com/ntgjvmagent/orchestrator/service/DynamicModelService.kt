@@ -19,56 +19,50 @@ import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class DynamicModelService(
     private val toolCallingManager: ToolCallingManager,
-    private val retryTemplate: RetryTemplate,
+    private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
     private val agentRepo: AgentRepository,
 ) {
-    private val cache = mutableMapOf<UUID, Pair<ChatModel, EmbeddingModel>>()
+    /** THREAD-SAFE CACHE **/
+    private val cache = ConcurrentHashMap<UUID, Pair<ChatModel, EmbeddingModel>>()
 
-    fun getChatModel(agentId: UUID): ChatModel = cache.getOrPut(agentId) { createModels(agentId) }.first
+    fun getChatModel(agentId: UUID): ChatModel = cache.computeIfAbsent(agentId) { createModels(agentId) }.first
 
-    fun getEmbeddingModel(agentId: UUID): EmbeddingModel = cache.getOrPut(agentId) { createModels(agentId) }.second
+    fun getEmbeddingModel(agentId: UUID): EmbeddingModel =
+        cache.computeIfAbsent(agentId) { createModels(agentId) }.second
 
     fun invalidateCacheForAgent(agentId: UUID) {
-        cache[agentId] = createModels(agentId)
+        cache.remove(agentId)
     }
 
+    /** Build both chat + embedding models **/
     private fun createModels(agentId: UUID): Pair<ChatModel, EmbeddingModel> {
         val config = agentRepo.findById(agentId).orElseThrow()
-        val chatModel =
-            createChatModel(
-                config.baseUrl,
-                config.apiKey,
-                config.model,
-                config.chatCompletionsPath,
-                config.embeddingsPath,
-            )
-        val embeddingModel =
-            createEmbeddingModel(
-                config.baseUrl,
-                config.apiKey,
-                config.chatCompletionsPath,
-                config.embeddingsPath,
-                config.embeddingModel,
-                config.dimension,
+
+        val api =
+            createOpenAiApi(
+                baseUrl = config.baseUrl,
+                apiKey = config.apiKey,
+                chatCompletionsPath = config.chatCompletionsPath,
+                embeddingsPath = config.embeddingsPath,
             )
 
-        return chatModel to embeddingModel
+        val chat = createChatModel(api, config.model)
+        val embed = createEmbeddingModel(api, config.embeddingModel, config.dimension)
+
+        return chat to embed
     }
 
+    /** Chat model - NO SPRING RETRY **/
     private fun createChatModel(
-        baseUrl: String,
-        apiKey: String,
+        api: OpenAiApi,
         modelName: String,
-        chatCompletionsPath: String,
-        embeddingsPath: String,
     ): ChatModel {
-        val openAiApi = createOpenAiApi(baseUrl, apiKey, chatCompletionsPath, embeddingsPath)
-
         val options =
             OpenAiChatOptions
                 .builder()
@@ -76,32 +70,33 @@ class DynamicModelService(
                 .build()
 
         return OpenAiChatModel(
-            openAiApi,
+            api,
             options,
             toolCallingManager,
-            retryTemplate,
+            noRetryTemplate,
             observationRegistry,
         )
     }
 
+    /** Embedding model - NO SPRING RETRY **/
     private fun createEmbeddingModel(
-        baseUrl: String,
-        apiKey: String,
-        chatCompletionsPath: String,
-        embeddingsPath: String,
-        embeddingModel: String,
+        api: OpenAiApi,
+        modelName: String,
         dimension: Int,
     ): EmbeddingModel {
-        val api = createOpenAiApi(baseUrl, apiKey, chatCompletionsPath, embeddingsPath)
+        val options =
+            OpenAiEmbeddingOptions
+                .builder()
+                .model(modelName)
+                .dimensions(dimension)
+                .build()
 
         return OpenAiEmbeddingModel(
             api,
             MetadataMode.EMBED,
-            OpenAiEmbeddingOptions
-                .builder()
-                .model(embeddingModel)
-                .dimensions(dimension)
-                .build(),
+            options,
+            noRetryTemplate,
+            observationRegistry,
         )
     }
 

@@ -119,7 +119,7 @@ class ChatModelService(
             return null
         }
 
-        val key = Filter.Key("knowledge_id")
+        val key = Filter.Key("knowledgeId")
         val value = Filter.Value(knowledgeIds)
 
         val filterExpression =

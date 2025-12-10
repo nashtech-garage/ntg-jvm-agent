@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity
 
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -23,4 +23,4 @@ data class ConversationEntity(
         orphanRemoval = true,
     )
     val messages: MutableList<ChatMessageEntity> = mutableListOf(),
-) : BaseEntity()
+) : UserAuditedEntity()

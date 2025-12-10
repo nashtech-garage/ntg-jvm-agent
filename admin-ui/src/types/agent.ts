@@ -69,7 +69,7 @@ export type KnowledgeListData = {
   availableTo: string;
   lastModifiedBy: string;
   lastModifiedWhen: string;
-  status: string;
+  status: 'PENDING' | 'INGESTING' | 'EMBEDDING_PENDING' | 'READY' | 'FAILED' | 'OUTDATED';
 };
 
 export type ToolListData = {

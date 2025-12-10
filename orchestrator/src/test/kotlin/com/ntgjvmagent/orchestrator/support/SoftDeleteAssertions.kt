@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.support
 
 import jakarta.persistence.EntityManager
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -21,13 +21,13 @@ object SoftDeleteAssertions {
             entityManager
                 .createQuery(
                     "SELECT e.deletedAt FROM ${entityClass.simpleName} e WHERE e.id = :id",
-                    OffsetDateTime::class.java,
+                    Instant::class.java,
                 ).setParameter("id", id)
                 .singleResult
 
         assertNotNull(result, "Expected 'deletedAt' to be set for soft-deleted record")
         assertTrue(
-            !result.isAfter(OffsetDateTime.now().plusSeconds(1)),
+            !result.isAfter(Instant.now().plusSeconds(1)),
             "deletedAt should not be in the future",
         )
     }

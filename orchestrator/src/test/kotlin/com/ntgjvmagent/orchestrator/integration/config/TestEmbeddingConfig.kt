@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.integration.config
 
-import com.ntgjvmagent.orchestrator.config.VectorEmbeddingProperties
+import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import io.micrometer.observation.ObservationRegistry
 import io.mockk.mockk
@@ -23,9 +23,7 @@ import java.util.UUID
  * Uses the same embedding dimension as production.
  */
 @TestConfiguration
-class TestEmbeddingConfig(
-    private val properties: VectorEmbeddingProperties,
-) {
+class TestEmbeddingConfig {
     @Bean
     @Primary
     fun toolCallingManager(): ToolCallingManager = mockk(relaxed = true)
@@ -34,7 +32,7 @@ class TestEmbeddingConfig(
     @Primary
     fun fakeEmbeddingModel(): EmbeddingModel =
         object : EmbeddingModel {
-            private val dims = properties.embeddingDimension
+            private val dims = 1536
 
             override fun embed(text: String): FloatArray = FloatArray(dims) { 0.0f }
 
@@ -68,10 +66,27 @@ class TestEmbeddingConfig(
         toolCallingManager: ToolCallingManager,
     ) : DynamicModelService(
             toolCallingManager = toolCallingManager,
-            retryTemplate = RetryTemplate(),
+            noRetryTemplate = RetryTemplate(),
             observationRegistry = ObservationRegistry.create(),
             agentRepo = mockk(relaxed = true),
         ) {
         override fun getEmbeddingModel(agentId: UUID): EmbeddingModel = fakeEmbeddingModel
+    }
+
+    @Bean
+    fun fakeEmbeddingService(): EmbeddingService {
+        return object : EmbeddingService(mockk(), mockk(), mockk()) {
+            override fun embed(
+                agentId: UUID,
+                text: String,
+            ): FloatArray {
+                return FloatArray(768) { 0.1f } // deterministic fake embedding
+            }
+
+            override fun embedBatch(
+                agentId: UUID,
+                texts: List<String>,
+            ): List<FloatArray> = texts.map { FloatArray(768) { 0.1f } }
+        }
     }
 }

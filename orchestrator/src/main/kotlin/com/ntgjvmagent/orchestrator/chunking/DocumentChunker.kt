@@ -18,9 +18,9 @@ class DocumentChunker(
     private val profileConfigs = chunkerProperties.profiles
 
     /**
-     * Default prebuilt splitters
+     * Prebuilt splitters
      */
-    private val defaultSplitters: Map<String, TokenTextSplitter> =
+    private val splitters: Map<String, TokenTextSplitter> =
         profileConfigs.mapValues { (_, cfg) ->
             TokenTextSplitter(
                 cfg.chunkSize,
@@ -31,44 +31,101 @@ class DocumentChunker(
             )
         }
 
-    /**
-     * Split file into token-aware chunks with optional runtime overrides.
-     * @param file            MultipartFile to process
-     * @param profileOverride Explicit profile name (optional)
-     */
-    fun splitDocumentIntoChunks(
+    private fun selectProfile(
+        text: String,
+        extension: String?,
+        override: String?,
+    ): String {
+        val profile = override ?: profileDetector.detect(text, extension)
+        return profile
+    }
+
+    /** --------------------------------------------------------
+     *  CHUNK RAW TEXT (Web URL, API, DB, Sitemap, Inline)
+     * ---------------------------------------------------------*/
+    fun chunkText(
+        text: String,
+        metadata: Map<String, Any?> = emptyMap(),
+        profileOverride: String? = null,
+        extension: String? = null,
+    ): List<Document> {
+        var result: List<Document> = emptyList()
+
+        val cleaned = normalizeText(text)
+
+        if (cleaned.isBlank()) return result
+
+        val profile = selectProfile(cleaned, extension, profileOverride)
+        val splitter = splitters[profile] ?: error("Unknown splitter profile: $profile")
+
+        val rootDoc =
+            Document
+                .builder()
+                .text(cleaned)
+                .metadata(metadata + ("profile" to profile))
+                .build()
+
+        val rawChunks = splitter.apply(listOf(rootDoc)).toList()
+
+        val finalChunks =
+            rawChunks.map { chunk ->
+                Document
+                    .builder()
+                    .id(chunk.id)
+                    .text(chunk.text)
+                    .metadata(chunk.metadata)
+                    .build()
+            }
+
+        result = finalChunks
+
+        return result
+    }
+
+    /** --------------------------------------------------------
+     *  CHUNK FILE (PDF, DOCX, TXT, CSV, etc.)
+     * ---------------------------------------------------------*/
+    fun chunkFile(
         file: MultipartFile,
         profileOverride: String? = null,
-    ): List<Document> =
-        run {
-            if (file.isEmpty) return@run emptyList()
+    ): List<Document> {
+        var result: List<Document> = emptyList()
 
-            val fileName = file.originalFilename ?: "unknown"
-            val extension = fileName.substringAfterLast('.', "").lowercase()
+        if (file.isEmpty) return result
 
-            val text = textExtractor.extract(file, extension)
-            if (text.isBlank()) return@run emptyList()
+        val fileName = file.originalFilename ?: "unknown"
+        val extension = fileName.substringAfterLast('.', "").lowercase()
 
-            val chosenProfile = profileOverride ?: profileDetector.detect(text, extension)
-            val splitter =
-                defaultSplitters[chosenProfile]
-                    ?: error("Unknown splitter profile: $chosenProfile")
+        val extracted = textExtractor.extract(file, extension)
 
+        if (extracted.isNotBlank()) {
             val metadata =
-                mutableMapOf<String, Any>(
+                mapOf(
                     "source" to fileName,
                     "extension" to extension,
                     "fileSize" to file.size,
-                    "profile" to chosenProfile,
                 )
 
-            val document =
-                Document
-                    .builder()
-                    .text(text)
-                    .metadata(metadata)
-                    .build()
+            val chunked =
+                chunkText(
+                    text = extracted,
+                    metadata = metadata,
+                    profileOverride = profileOverride,
+                    extension = extension,
+                )
 
-            splitter.apply(listOf(document))
+            result = chunked
         }
+
+        return result
+    }
+
+    /** --------------------------------------------------------
+     *  HELPERS
+     * ---------------------------------------------------------*/
+    private fun normalizeText(text: String): String =
+        text
+            .replace("\r\n", "\n")
+            .replace("\n\n+".toRegex(), "\n")
+            .trim()
 }

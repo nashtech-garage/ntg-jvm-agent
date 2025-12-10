@@ -93,6 +93,18 @@ data class Agent(
         const val MIN_PENALTY = -2.0
         const val MAX_PENALTY = 2.0
         const val MIN_DIMENSION = 64
+
+        fun stub(): Agent =
+            Agent(
+                name = "",
+                provider = "",
+                baseUrl = "",
+                apiKey = "",
+                chatCompletionsPath = "",
+                embeddingsPath = "",
+                embeddingModel = "",
+                model = "",
+            )
     }
 
     @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)

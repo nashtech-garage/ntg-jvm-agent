@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.entity.agent
 
 import com.ntgjvmagent.orchestrator.entity.Tool
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -25,7 +25,7 @@ class AgentTool(
     var config: Map<String, Any>? = null,
     @Column(name = "active", nullable = false)
     var active: Boolean = true,
-) : BaseEntity() {
+) : UserAuditedEntity() {
     companion object {
         fun of(
             agent: Agent,

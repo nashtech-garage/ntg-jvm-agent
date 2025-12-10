@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
-import { Plus, Search } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  RefreshCw,
+  MoreVertical,
+  ExternalLink,
+  Download,
+  Database,
+  Activity,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,31 +23,53 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, KnowledgeListData } from '@/types/agent';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function KnowledgePage() {
-  const { agent } = useAgent() as {
-    agent: AgentDetail | null;
-  };
+  const { agent } = useAgent() as { agent: AgentDetail | null };
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const { data = [], isLoading } = useSWR(
+  const {
+    data = [],
+    isLoading,
+    mutate,
+  } = useSWR(
     agent ? `/api/agents/${agent.id}/knowledge` : null,
-    fetcher
+    fetcher,
+    {
+      refreshInterval: 2000, // auto-refresh to update status live
+    }
   );
 
   const filtered = data.filter((item: KnowledgeListData) => {
     const q = query.trim().toLowerCase();
-
-    // If blank → return all items
-    if (!q) return true;
-
-    return item.name?.toLowerCase().includes(q);
+    return !q || item.name?.toLowerCase().includes(q);
   });
+
+  async function handleResync(knowledgeId: string) {
+    if (!agent) return;
+    setLoadingId(knowledgeId);
+
+    try {
+      await fetch(`/api/agents/${agent.id}/knowledge/${knowledgeId}/resync`, {
+        method: 'POST',
+      });
+      mutate();
+    } finally {
+      setLoadingId(null);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -48,7 +79,7 @@ export default function KnowledgePage() {
           disabled={!agent}
           onClick={() => agent && router.push(`/admin/agents/${agent.id}/knowledge/add`)}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-1" />
           Add Knowledge
         </Button>
 
@@ -76,25 +107,146 @@ export default function KnowledgePage() {
               <TableHead>Available to</TableHead>
               <TableHead>Last modified</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[60px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {filtered.map((k: KnowledgeListData) => (
-              <TableRow key={k.id}>
-                <TableCell>{k.name}</TableCell>
-                <TableCell>{k.type}</TableCell>
-                <TableCell>{k.availableTo}</TableCell>
-                <TableCell>
-                  <span className="font-semibold">{k.lastModifiedBy}</span>{' '}
-                  <span className="text-xs text-muted-foreground">{k.lastModifiedWhen}</span>
-                </TableCell>
-                <TableCell>{k.status}</TableCell>
-              </TableRow>
-            ))}
+            {filtered.map((item: KnowledgeListData) => {
+              const loading = loadingId === item.id;
+
+              return (
+                <TableRow key={item.id}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.type}</TableCell>
+                  <TableCell>{item.availableTo}</TableCell>
+
+                  <TableCell>
+                    <span className="font-semibold">{item.lastModifiedBy}</span>{' '}
+                    <span className="text-xs text-muted-foreground">{item.lastModifiedWhen}</span>
+                  </TableCell>
+
+                  <TableCell>
+                    <StatusBadge status={item.status} />
+                  </TableCell>
+
+                  {/* ACTION MENU */}
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="end">
+                        {/* RESYNC */}
+                        <DropdownMenuItem disabled={loading} onClick={() => handleResync(item.id)}>
+                          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                          Resync
+                        </DropdownMenuItem>
+
+                        {/* View Details */}
+                        <DropdownMenuItem onClick={() => viewDetails(item.id)}>
+                          <Activity className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+
+                        {/* WEB_URL */}
+                        {item.type === 'WEB_URL' && item.sourceUri && (
+                          <DropdownMenuItem onClick={() => openUrl(item.sourceUri)}>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open URL
+                          </DropdownMenuItem>
+                        )}
+
+                        {/* FILE */}
+                        {item.type === 'FILE' && (
+                          <DropdownMenuItem onClick={() => downloadFile(item.id)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download File
+                          </DropdownMenuItem>
+                        )}
+
+                        {/* API */}
+                        {item.type === 'API' && (
+                          <DropdownMenuItem onClick={() => testApi(item.id)}>
+                            <Activity className="h-4 w-4 mr-2" />
+                            Test API
+                          </DropdownMenuItem>
+                        )}
+
+                        {/* DATABASE */}
+                        {item.type === 'DATABASE' && (
+                          <DropdownMenuItem onClick={() => testDb(item.id)}>
+                            <Database className="h-4 w-4 mr-2" />
+                            Test DB Connection
+                          </DropdownMenuItem>
+                        )}
+
+                        {/* DELETE */}
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => deleteKnowledge(item.id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
     </div>
+  );
+}
+
+export function openUrl(url?: string) {
+  if (!url) return;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export function downloadFile(id?: string) {
+  if (!id) return;
+  window.open(`/api/knowledge/${id}/download`, '_blank');
+}
+
+export function testApi(id?: string) {
+  if (!id) return;
+  router.push(`/admin/knowledge/${id}/test-api`);
+}
+
+export function testDb(id?: string) {
+  if (!id) return;
+  router.push(`/admin/knowledge/${id}/test-db`);
+}
+
+export function viewDetails(id?: string) {
+  if (!id) return;
+  router.push(`/admin/knowledge/${id}`);
+}
+
+export function deleteKnowledge(id?: string) {
+  if (!id) return;
+  router.push(`/admin/knowledge/${id}/delete`);
+}
+
+// Status badge component
+export function StatusBadge({ status }: Readonly<{ status: string }>) {
+  const colors: Record<string, string> = {
+    PENDING: 'bg-gray-100 text-gray-700',
+    INGESTING: 'bg-yellow-100 text-yellow-800',
+    EMBEDDING_PENDING: 'bg-blue-100 text-blue-800',
+    READY: 'bg-green-100 text-green-800',
+    FAILED: 'bg-red-100 text-red-800',
+  };
+
+  return (
+    <span className={`px-2 py-1 rounded text-xs font-medium ${colors[status] ?? ''}`}>
+      {status.replaceAll('_', ' ')}
+    </span>
   );
 }

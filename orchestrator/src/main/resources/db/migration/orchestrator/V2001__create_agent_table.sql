@@ -98,18 +98,34 @@ CREATE INDEX IF NOT EXISTS idx_agent_tool_active ON agent_tool(active);
 -- 4. agent_knowledge
 -- =======================
 CREATE TABLE IF NOT EXISTS agent_knowledge (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id        UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
-    name            VARCHAR(100) NOT NULL,
-    source_type     VARCHAR(50) NOT NULL,
-    source_uri      TEXT,
-    metadata        JSONB NOT NULL DEFAULT '{}'::jsonb,
-    active          BOOLEAN NOT NULL DEFAULT TRUE,
-    deleted_at      TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    created_by      UUID REFERENCES users(id),
-    updated_at      TIMESTAMPTZ,
-    updated_by      UUID REFERENCES users(id)
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id         UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
+    name             VARCHAR(100) NOT NULL,
+    source_type      VARCHAR(50) NOT NULL,
+    source_uri       TEXT,
+    metadata         JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    status            VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    last_processed_at TIMESTAMPTZ,
+    error_message     TEXT,
+
+    active           BOOLEAN NOT NULL DEFAULT TRUE,
+    deleted_at       TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    created_by       UUID REFERENCES users(id),
+    updated_at       TIMESTAMPTZ,
+    updated_by       UUID REFERENCES users(id),
+
+    CONSTRAINT chk_agent_knowledge_status CHECK (
+        status IN (
+            'PENDING',
+            'INGESTING',
+            'EMBEDDING_PENDING',
+            'READY',
+            'FAILED',
+            'OUTDATED'
+        )
+    )
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_agent_id ON agent_knowledge(agent_id);
@@ -120,6 +136,9 @@ CREATE INDEX IF NOT EXISTS idx_agent_knowledge_active_not_deleted ON agent_knowl
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge USING gin (metadata);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_per_agent ON agent_knowledge (agent_id, name) WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON agent_knowledge (agent_id, source_uri) WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_knowledge_status ON agent_knowledge(status);
+CREATE INDEX IF NOT EXISTS idx_agent_knowledge_updated_at ON agent_knowledge(updated_at);
+
 
 -- =======================
 -- 5. knowledge_chunk (pgvector)

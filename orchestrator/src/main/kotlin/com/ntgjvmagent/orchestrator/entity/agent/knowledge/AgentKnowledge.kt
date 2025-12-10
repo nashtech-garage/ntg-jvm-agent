@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.entity.agent.knowledge
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -13,6 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import java.time.Instant
 
 @Entity
 @Table(name = "agent_knowledge")
@@ -22,7 +24,7 @@ data class AgentKnowledge(
     var agent: Agent,
     @Column(nullable = false, length = 100)
     var name: String,
-    @Column(name = "source_type", length = 50)
+    @Column(name = "source_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     var sourceType: KnowledgeSourceType,
     @Column(name = "source_uri")
@@ -30,4 +32,20 @@ data class AgentKnowledge(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var metadata: Map<String, Any?> = emptyMap(),
-) : SoftDeletableEntity()
+    @Column(name = "status", nullable = false, length = 30)
+    @Enumerated(EnumType.STRING)
+    var status: KnowledgeStatus = KnowledgeStatus.PENDING,
+    @Column(name = "last_processed_at")
+    var lastProcessedAt: Instant? = null,
+    @Column(name = "error_message")
+    var errorMessage: String? = null,
+) : SoftDeletableEntity() {
+    companion object {
+        fun stub(): AgentKnowledge =
+            AgentKnowledge(
+                agent = Agent.stub(),
+                name = "",
+                sourceType = KnowledgeSourceType.INLINE,
+            )
+    }
+}

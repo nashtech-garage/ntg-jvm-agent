@@ -1,10 +1,10 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class ErrorResponseVm(
     val status: Int,
     val error: String,
     val message: String?,
-    val timestamp: OffsetDateTime = OffsetDateTime.now(),
+    val timestamp: Instant = Instant.now(),
 )

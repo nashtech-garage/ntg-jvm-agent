@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity.agent.knowledge
 
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -25,8 +25,17 @@ class KnowledgeChunk(
     var metadata: Map<String, Any?> = emptyMap(),
     @Column(name = "embedding_768")
     @JdbcTypeCode(SqlTypes.VECTOR)
-    var embedding768: FloatArray?,
+    var embedding768: FloatArray? = null,
     @Column(name = "embedding_1536")
     @JdbcTypeCode(SqlTypes.VECTOR)
-    var embedding1536: FloatArray?,
-) : BaseEntity()
+    var embedding1536: FloatArray? = null,
+) : UserAuditedEntity() {
+    companion object {
+        fun stub(): KnowledgeChunk =
+            KnowledgeChunk(
+                knowledge = AgentKnowledge.stub(),
+                chunkOrder = 0,
+                content = "",
+            )
+    }
+}

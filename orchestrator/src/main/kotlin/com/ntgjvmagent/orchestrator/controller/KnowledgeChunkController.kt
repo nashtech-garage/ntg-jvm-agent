@@ -2,9 +2,8 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.request.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.ingestion.FileImportWorker
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
-import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
-import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -32,7 +31,7 @@ import java.util.UUID
 )
 class KnowledgeChunkController(
     private val chunkService: KnowledgeChunkService,
-    private val knowledgeImportService: KnowledgeImportService,
+    private val fileImportWorker: FileImportWorker,
 ) {
     @GetMapping
     @Operation(summary = "List all chunks for a knowledge source of an agent")
@@ -79,14 +78,24 @@ class KnowledgeChunkController(
             newMetadata = req.metadata,
         )
 
+    // ------------------------------------------------------------------
+    // ASYNC FILE IMPORT
+    // ------------------------------------------------------------------
     @PostMapping("/import")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Import a document file and split it into chunks")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Import a document file and enqueue async chunk processing")
     fun importFile(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
         @RequestPart("file") file: MultipartFile,
-    ): KnowledgeImportingResponseVm = knowledgeImportService.importDocument(agentId, knowledgeId, file)
+    ): Map<String, String> {
+        // Queue async file import
+        fileImportWorker.run(agentId, knowledgeId, file)
+
+        return mapOf(
+            "originalFilename" to (file.originalFilename ?: "uploaded-file"),
+        )
+    }
 
     @GetMapping("/search")
     @Operation(summary = "Search similar chunks by text query")

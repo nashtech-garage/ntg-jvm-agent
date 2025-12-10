@@ -2,8 +2,8 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
-import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -20,16 +20,16 @@ class KnowledgeImportService(
     private val logger = LoggerFactory.getLogger(KnowledgeImportService::class.java)
 
     @Transactional
-    fun importDocument(
+    fun performImport(
         agentId: UUID,
         knowledgeId: UUID,
         file: MultipartFile,
-    ): KnowledgeImportingResponseVm {
+    ): Int {
         val fileName = file.originalFilename ?: "uploaded-file"
         val contentType = file.contentType ?: "application/octet-stream"
 
         logger.info(
-            "Importing FILE for agent={}, knowledge={}, name={}, contentType={}, size={} bytes",
+            "Worker importing FILE for agent={}, knowledge={}, name={}, contentType={}, size={} bytes",
             agentId,
             knowledgeId,
             fileName,
@@ -37,37 +37,20 @@ class KnowledgeImportService(
             file.size,
         )
 
-        // Validate parent knowledge row
-        if (!knowledgeRepo.existsByIdAndAgentId(knowledgeId, agentId)) {
-            throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
-        }
+        val knowledge =
+            knowledgeRepo.findByIdAndAgentId(knowledgeId, agentId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
-        // reject files with no name / no extension (safety)
-        if (fileName.isBlank()) {
-            throw BadRequestException("File name is missing")
-        }
-
-        // ------------------------------
-        // Chunk the document
-        // ------------------------------
-        val documents =
-            documentChunker.splitDocumentIntoChunks(file)
-
+        val documents = documentChunker.chunkFile(file)
         if (documents.isEmpty()) {
             throw BadRequestException("File contains no readable text: $fileName")
         }
 
-        // Determine next chunk order (important for multi-file)
-        var currentOrder =
-            chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId)
+        var order = chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId)
 
-        // ------------------------------
-        // Create chunks (DB + vector store)
-        // ------------------------------
         documents.forEachIndexed { index, doc ->
 
-            // Enrich metadata with file info for better traceability
-            val enrichedMetadata: Map<String, Any> =
+            val enrichedMetadata =
                 doc.metadata +
                     mapOf(
                         "fileName" to fileName,
@@ -75,27 +58,29 @@ class KnowledgeImportService(
                         "importTimestamp" to System.currentTimeMillis(),
                     )
 
-            chunkService.addChunk(
+            chunkService.createChunkAndEnqueueEmbedding(
                 agentId = agentId,
                 knowledgeId = knowledgeId,
-                chunkOrder = currentOrder,
                 content = doc.text ?: "",
                 metadata = enrichedMetadata,
+                chunkOrder = order,
             )
-            currentOrder++
+
+            order++
         }
 
+        knowledge.status = KnowledgeStatus.EMBEDDING_PENDING
+        knowledge.errorMessage = null
+        knowledgeRepo.save(knowledge)
+
         logger.info(
-            "Imported FILE for agent={}, knowledge={}, file={}, segments={}",
+            "Worker finished FILE import: agent={}, knowledge={}, file={}, chunksCreated={}",
             agentId,
             knowledgeId,
             fileName,
             documents.size,
         )
 
-        return KnowledgeImportingResponseVm(
-            originalFilename = fileName,
-            numberOfSegment = documents.size,
-        )
+        return documents.size
     }
 }
