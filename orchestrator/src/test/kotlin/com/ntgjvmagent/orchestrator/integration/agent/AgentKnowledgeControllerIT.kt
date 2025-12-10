@@ -26,8 +26,10 @@ class AgentKnowledgeControllerIT
 
         @BeforeEach
         fun setup() {
-            repository.deleteAll()
-            agentRepository.deleteAll()
+            repository.deleteAllInBatch()
+            agentRepository.deleteAllInBatch()
+            repository.flush()
+            agentRepository.flush()
 
             agent =
                 agentRepository.save(
