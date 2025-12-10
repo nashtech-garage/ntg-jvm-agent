@@ -26,7 +26,7 @@ function CodeComponent({
       {String(children).replace(/\n$/, '')}
     </SyntaxHighlighter>
   ) : (
-    <code className="bg-gray-200 px-1 py-0.5 rounded" {...props}>
+    <code className="bg-surface-soft px-1 py-0.5 rounded text-foreground" {...props}>
       {children}
     </code>
   );
@@ -34,7 +34,7 @@ function CodeComponent({
 
 export default function RichTextPresenter({ content }: Readonly<{ content: string }>) {
   return (
-    <div className="prose prose-blue max-w-none bg-gray-30 p-4 rounded-lg">
+    <div className="prose max-w-none rounded-lg bg-surface-muted p-4 text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-a:text-primary prose-code:bg-transparent">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -45,7 +45,7 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
               onClick={() => href && window.open(href, '_blank', 'noopener,noreferrer')}
               title={href}
               aria-label={href ? `Open link: ${href}` : 'Open link'}
-              className="text-sm text-gray-500 px-1 py-0.5 leading-[1.2] rounded hover:text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              className="text-sm text-muted-foreground px-1 py-0.5 leading-[1.2] rounded hover:text-foreground bg-surface-muted hover:bg-surface-soft cursor-pointer"
               style={{ lineHeight: 1.2 }}
             >
               {children}

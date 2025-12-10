@@ -2,29 +2,68 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-soft: #eef2f6;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --muted: #475569;
+  --muted-foreground: #64748b;
+  --primary: #0284c7;
+  --primary-foreground: #f8fafc;
+  --primary-soft: #f0f9ff;
+  --primary-border: #bae6fd;
+  --primary-strong: #0369a1;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #ef4444;
+  --danger-strong: #dc2626;
+  --danger-soft: #fef2f2;
+  --danger-border: #fecdd3;
+  --success: #22c55e;
+  --success-soft: #ecfdf3;
+  --success-border: #bbf7d0;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --avatar: #93c5fd;
+  --inverse: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-soft: var(--surface-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-border: var(--primary-border);
+  --color-primary-strong: var(--primary-strong);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-overlay: var(--overlay);
+  --color-avatar: var(--avatar);
+  --color-inverse: var(--inverse);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16), transparent 35%),
-    radial-gradient(circle at 80% 0%, rgba(52, 211, 153, 0.12), transparent 30%), #e9eef5;
-  color: #0f172a;
+  color: var(--color-foreground);
   font-family:
     'Inter',
     'Segoe UI',
@@ -39,6 +78,6 @@ body {
 }
 
 ::selection {
-  background: rgba(14, 165, 233, 0.25);
-  color: #e2e8f0;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
 }

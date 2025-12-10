@@ -9,12 +9,12 @@ export const metadata: Metadata = {
 
 const notFound = () => {
   return (
-    <div className="flex flex-col gap-6 justify-center items-center h-full bg-gradient-to-b not-dark:from-green-50 dark:from-green-100  to-green-200">
-      <h1 className="text-5xl font-bold text-red-600">404 - Not Found</h1>
-      <h2 className="text-3xl text-black">The page you are looking for does not exist.</h2>
+    <div className="flex flex-col gap-6 justify-center items-center h-full">
+      <h3 className="text-3xl font-bold text-danger-strong">404 - Not Found</h3>
+      <h4 className="text-foreground">The page you are looking for does not exist.</h4>
       <Link
         href={'/'}
-        className="text-xl border border-black rounded p-4 cursor-pointer hover:border-white hover:text-white hover:bg-black"
+        className="border border-foreground text-foreground rounded p-4 cursor-pointer transition hover:border-foreground hover:text-inverse hover:bg-foreground"
       >
         Go back to home page
       </Link>

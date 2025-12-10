@@ -54,7 +54,7 @@ export default function AgentDropdown() {
     <div ref={boxRef} className="relative inline-block">
       <button
         onClick={toggle}
-        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm shadow-slate-200 transition hover:border-sky-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+        className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground shadow-sm shadow-[0_6px_16px_color-mix(in_oklab,var(--color-border)_70%,transparent)] transition hover:border-primary-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-border"
       >
         {selected?.avatar ? (
           <img
@@ -63,24 +63,24 @@ export default function AgentDropdown() {
             className="h-5 w-5 rounded-full object-cover"
           />
         ) : (
-          <div className="h-5 w-5 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white">
+          <div className="h-5 w-5 rounded-full bg-avatar flex items-center justify-center text-xs font-bold text-inverse">
             {selected?.name?.charAt(0)?.toUpperCase() || 'A'}
           </div>
         )}
         <div className="flex items-center">{selected ? selected.name : 'Select agent'}</div>
 
         <span className={`transition-transform ${open ? 'rotate-180' : 'rotate-0'}`}>
-          <ChevronDown className="h-4 w-4 text-slate-500" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-200">
+        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-2xl shadow-[0_14px_34px_color-mix(in_oklab,var(--color-border)_75%,transparent)]">
           {agents.map((agent) => (
             <div
               key={agent.id}
               onClick={() => handleSelect(agent)}
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-slate-800 transition hover:bg-slate-50"
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-foreground transition hover:bg-surface-muted"
             >
               {agent.avatar ? (
                 <img
@@ -89,7 +89,7 @@ export default function AgentDropdown() {
                   className="h-8 w-8 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-full bg-blue-300 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                <div className="h-8 w-8 rounded-full bg-avatar flex items-center justify-center text-xs font-bold text-inverse flex-shrink-0">
                   {agent.name?.charAt(0)?.toUpperCase() || 'A'}
                 </div>
               )}

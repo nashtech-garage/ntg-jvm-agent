@@ -88,17 +88,17 @@ export default function ChatBox({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm shadow-[0_6px_18px_color-mix(in_oklab,var(--color-border)_80%,transparent)]">
       {previewUrls.length > 0 && (
         <div className="flex flex-wrap gap-3">
           {previewUrls.map((item) => (
             <div
               key={item}
-              className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm shadow-slate-200/70"
+              className="relative overflow-hidden rounded-xl border border-border bg-surface-muted p-2 shadow-sm shadow-[0_4px_12px_color-mix(in_oklab,var(--color-border)_70%,transparent)]"
             >
               <button
                 onClick={() => handleRemovePreview(item)}
-                className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white transition hover:bg-black/70"
+                className="absolute right-2 top-2 rounded-full bg-overlay p-1 text-inverse transition hover:bg-[color-mix(in_oklab,var(--color-overlay)_80%,transparent)]"
                 aria-label="Remove image"
               >
                 <CircleX size={14} />
@@ -118,7 +118,7 @@ export default function ChatBox({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 shadow-inner shadow-slate-200 transition hover:-translate-y-0.5 hover:border-sky-300 hover:text-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 text-primary shadow-inner shadow-primary/20 transition hover:border-primary/60 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-40"
           disabled={previewUrls.length === 3}
           aria-label="Attach images (up to 3)"
         >
@@ -139,20 +139,20 @@ export default function ChatBox({
           placeholder="Type your message..."
           minRows={1}
           maxRows={8}
-          className="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 shadow-inner shadow-slate-200 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200"
+          className="flex-1 resize-none rounded-xl border border-border bg-surface-muted px-3 py-3 text-sm text-foreground shadow-inner shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-border)_80%,transparent)] outline-none transition placeholder:text-muted-foreground focus:border-primary-border focus:ring-2 focus:ring-primary-border"
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || !agents.length}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200/70 transition hover:shadow-sky-300 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-[0_10px_30px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] transition hover:bg-primary-strong hover:shadow-[0_12px_34px_color-mix(in_oklab,var(--color-primary)_32%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60"
           aria-label="Send message"
         >
           <Send size={18} />
         </button>
       </div>
       <div className="flex items-center justify-between px-1">
-        <p className="text-xs text-slate-500">Enter to send - Shift + Enter for new line</p>
-        {!agents.length && <p className="text-xs text-amber-600">No agent available yet</p>}
+        <p className="text-xs text-muted-foreground">Enter to send - Shift + Enter for new line</p>
+        {!agents.length && <p className="text-xs text-warning">No agent available yet</p>}
       </div>
     </div>
   );
