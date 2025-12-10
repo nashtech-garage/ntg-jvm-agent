@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
+import java.time.OffsetDateTime
 
 @Service
 class UserServiceImpl(
@@ -79,6 +80,17 @@ class UserServiceImpl(
         val saved = userRepository.save(updatedUser)
         logger.info("User '{}' deactivated successfully", username)
         return saved.toDto()
+    }
+
+    override fun deleteUser(username: String) {
+        val user = getUserByUserName(username)
+        val deletedUser = user.copy(
+            enabled = false,
+            deletedAt = OffsetDateTime.now()
+        )
+        userRepository.save(deletedUser)
+        userRepository.delete(deletedUser)
+        logger.info("User '{}' deleted successfully", username)
     }
 
     fun getUserByUserName(username: String): UserEntity {

@@ -14,3 +14,7 @@ export enum LoginErrors {
   REFRESH_TOKEN_MISSING = 'RefreshTokenMissing',
   REFRESH_TOKEN_ERROR = 'RefreshAccessTokenError',
 }
+
+export const API_URLS = {
+  USERS: '/api/users',
+};
