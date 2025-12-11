@@ -9,6 +9,7 @@ import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
 import { useAuth } from '@/contexts/AuthContext';
 import ShareConversationModal from './ShareConversationModal';
+import { Button } from './ui/button';
 
 export default function Sidebar() {
   const { signOut } = useAuth();
@@ -133,26 +134,29 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-muted shadow-sm transition hover:-translate-y-0.5 hover:border-primary-border hover:text-primary-strong"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        </Button>
       </div>
 
       {/* Action wrapper */}
       <div id="action-wrapper">
-        <button
+        <Button
+          variant="ghost"
           onClick={newChat}
-          className="group flex w-full items-center gap-3 rounded-xl border border-primary-border bg-primary-soft px-4 py-3 text-primary-strong shadow-sm shadow-[0_10px_22px_color-mix(in_oklab,var(--color-primary)_22%,transparent)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-border"
+          className="my-2 group flex w-full items-center justify-start gap-3 rounded-xl border border-primary-border bg-primary-soft px-4 py-6 text-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-border"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-muted text-muted transition group-hover:bg-primary-soft group-hover:text-primary-strong">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-soft text-muted">
             <SquarePen size={18} />
           </span>
           {!collapsed && <span className="text-sm font-semibold">New Chat</span>}
-        </button>
+        </Button>
       </div>
 
       {/* History list */}
@@ -216,7 +220,9 @@ export default function Sidebar() {
                   <span className="truncate text-sm font-medium text-foreground">{item.title}</span>
 
                   {/* Dropdown button */}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
                       setOpenDropdown(openDropdown === item.id ? null : item.id);
@@ -225,12 +231,13 @@ export default function Sidebar() {
                     aria-label="Conversation actions"
                   >
                     <MoreVertical size={16} />
-                  </button>
+                  </Button>
 
                   {/* Dropdown menu */}
                   {openDropdown === item.id && (
                     <div className="absolute right-0 top-full z-50 mt-2 min-w-max overflow-hidden rounded-lg border border-border bg-surface shadow-lg shadow-[0_14px_32px_color-mix(in_oklab,var(--color-border)_70%,transparent)]">
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           setRenamingId(item.id);
@@ -241,8 +248,9 @@ export default function Sidebar() {
                       >
                         <SquarePen size={14} />
                         Rename
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           shareConversation(item.id, item.title);
@@ -251,8 +259,9 @@ export default function Sidebar() {
                       >
                         <Share2 size={14} />
                         Share
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeConversation(item.id);
@@ -261,7 +270,7 @@ export default function Sidebar() {
                       >
                         <Trash size={14} />
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -282,7 +291,8 @@ export default function Sidebar() {
             <p className="ml-1 font-semibold text-foreground">{userName}</p>
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
           onClick={handleLogout}
           className="flex w-full items-center justify-center rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-inverse transition hover:bg-danger-strong"
           title={collapsed ? 'Logout' : undefined}
@@ -309,7 +319,7 @@ export default function Sidebar() {
           >
             Logout
           </span>
-        </button>
+        </Button>
       </div>
 
       {/* Share Modal */}
