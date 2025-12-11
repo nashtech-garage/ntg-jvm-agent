@@ -178,7 +178,7 @@ export default function Sidebar() {
               ref={(el) => {
                 if (el) dropdownRefs.current[item.id] = el;
               }}
-              className="relative"
+              className="relative cursor-pointer"
             >
               {/* Rename input */}
               {renamingId === item.id ? (
