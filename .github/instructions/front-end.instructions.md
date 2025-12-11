@@ -104,8 +104,8 @@ project-root/
 - Use the shared NextAuth config in `src/libs/auth-options.ts` and the built-in route at `app/api/auth/[...nextauth]/route.ts` for OAuth flows.
 - Keep tokens server-side: rely on NextAuth cookies and helpers; never stash access/refresh tokens in `localStorage`/`sessionStorage` or send them to the client unnecessarily.
 - Server actions/API routes that need an access token should call `getAccessToken` from `src/actions/session.ts`; middleware should use `getSessionToken` from `src/utils/server-utils.ts` to enforce roles.
-- Invoke actions `login`, `logout` or `user` through `useAuth`.
-- Avoid rename or remove NextAuth env vars `NEXTAUTH_URL`, `NEXTAUTH_SECRET`.
+- Use `useAuth` to access the `user` state property and invoke authentication methods `signIn` and `signOut`.
+- Do not rename or remove NextAuth env vars `NEXTAUTH_URL`, `NEXTAUTH_SECRET`.
 
 ### Error handling and logging
 
