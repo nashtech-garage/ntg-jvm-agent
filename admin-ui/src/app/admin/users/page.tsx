@@ -1,5 +1,6 @@
 'use client';
 
+import EditUserModal from '@/components/modal/edit-user-modal';
 import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
@@ -20,6 +21,8 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -263,7 +266,7 @@ export default function UserManagement() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
-                  <tr key={user.username} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -307,7 +310,13 @@ export default function UserManagement() {
                       >
                         {user.enabled ? 'Deactivate' : 'Activate'}
                       </button>
-                      <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                      <button
+                        className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsModalOpen(true);
+                        }}
+                      >
                         Edit
                       </button>
                       <button
@@ -367,6 +376,19 @@ export default function UserManagement() {
           onConfirm={handleConfirmDelete}
           onCancel={closeDeleteModal}
         />
+
+        {/* Edit User Modal */}
+        {selectedUser && (
+          <EditUserModal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            user={selectedUser}
+            onSubmit={(updatedUser: User) => {
+              setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+              setIsModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </>
   );

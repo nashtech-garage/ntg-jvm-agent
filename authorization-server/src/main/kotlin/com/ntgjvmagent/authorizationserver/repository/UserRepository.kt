@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import java.util.UUID
 
 interface UserRepository :
-    JpaRepository<UserEntity, String>,
+    JpaRepository<UserEntity, UUID>,
     JpaSpecificationExecutor<UserEntity> {
     @Query(
         """

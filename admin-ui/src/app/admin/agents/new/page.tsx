@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import AgentForm from '@/components/agent/agent-form';
 import { AgentFormData } from '@/types/agent';
 import { getDefaultAgentAvatar } from '@/utils/avatar';
+import { toast } from 'react-hot-toast';
 
 export default function AgentCreatePage() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function AgentCreatePage() {
       return;
     }
 
-    alert('Failed to create agent');
+    toast.error('Failed to create agent');
   }
 
   return <AgentForm onSubmit={onSubmit} />;
