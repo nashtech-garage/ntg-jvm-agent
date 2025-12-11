@@ -5,6 +5,7 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { toast } from 'react-hot-toast';
 import { User } from '../../models/user';
+import { updateUser } from '@/services/users';
 
 interface EditUserModalProps {
   open: boolean;
@@ -34,24 +35,11 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: form.username,
-          name: form.name,
-          email: form.email,
-        }),
+      const updatedUser = await updateUser(user.id, {
+        username: form.username,
+        name: form.name,
+        email: form.email,
       });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to update user');
-      }
-
-      const updatedUser: User = await res.json();
       onSubmit(updatedUser);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
