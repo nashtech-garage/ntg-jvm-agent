@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -15,19 +15,20 @@ interface EditUserModalProps {
 }
 
 export default function EditUserModal({ open, onClose, user, onSubmit }: EditUserModalProps) {
-  const [form, setForm] = useState({
-    username: user?.username || '',
-    name: user?.name || '',
-    email: user?.email || '',
-  });
-
-  useEffect(() => {
-    setForm({
+  const initialForm = useMemo(
+    () => ({
       username: user?.username || '',
       name: user?.name || '',
       email: user?.email || '',
-    });
-  }, [user, open]);
+    }),
+    [user?.id, open]
+  );
+
+  const [form, setForm] = useState(initialForm);
+
+  useEffect(() => {
+    setForm(initialForm);
+  }, [initialForm]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

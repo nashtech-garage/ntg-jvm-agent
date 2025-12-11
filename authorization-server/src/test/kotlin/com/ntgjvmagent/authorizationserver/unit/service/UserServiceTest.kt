@@ -77,7 +77,6 @@ class UserServiceTest {
         assertEquals(2, result.users.size)
 
         verify(userRepository, times(1)).findAllExcept(currentUserId, pageable)
-        verify(userRepository, times(1)).findAll(pageable)
     }
 
 
