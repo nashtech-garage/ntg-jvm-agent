@@ -1,10 +1,19 @@
 'use client';
 
+import EditUserModal from '@/components/modal/edit-user-modal';
 import { useCallback, useEffect, useState } from 'react';
 import CreateUserModal from '@/components/modal/create-user-modal';
 import { User, UserPageDto } from '@/models/user';
 import { Toaster, toast } from 'react-hot-toast';
 import logger from '@/utils/logger';
+import CommonConfirmModal from '@/components/modal/common-confirm-modal';
+import { API_URLS } from '@/constants/constant';
+
+type DeleteUserResponse = {
+  message?: string;
+  error?: string;
+  raw?: string;
+};
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,7 +21,11 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -80,6 +93,53 @@ export default function UserManagement() {
 
   const handleActivate = async (username: string) => {
     await updateUserStatus(username, true);
+  };
+  const openDeleteModal = (username: string) => {
+    setUserToDelete(username);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const query = new URLSearchParams({ username: userToDelete }).toString();
+      const response = await fetch(`${API_URLS.USERS}?${query}`, {
+        method: 'DELETE',
+      });
+
+      const text = await response.text();
+      let jsonResult: DeleteUserResponse = {};
+      try {
+        jsonResult = text ? JSON.parse(text) : {};
+      } catch {
+        jsonResult = text ? { raw: text } : {};
+      }
+
+      if (!response.ok) {
+        logger.error(
+          `Failed to delete user "${userToDelete}". Status: ${response.status}`,
+          jsonResult
+        );
+        toast.error(jsonResult.error || `Failed to delete user "${userToDelete}".`);
+        return;
+      }
+
+      setUsers((prev) => prev.filter((u) => u.username !== userToDelete));
+
+      const message = jsonResult.message || `User "${userToDelete}" has been deleted successfully.`;
+      toast.success(message);
+    } catch (error) {
+      logger.error('Error deleting user:', error);
+      toast.error(`Failed to delete user "${userToDelete}".`);
+    } finally {
+      closeDeleteModal();
+    }
   };
 
   if (loading) {
@@ -206,7 +266,7 @@ export default function UserManagement() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
-                  <tr key={user.username} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -250,10 +310,19 @@ export default function UserManagement() {
                       >
                         {user.enabled ? 'Deactivate' : 'Activate'}
                       </button>
-                      <button className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                      <button
+                        className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsModalOpen(true);
+                        }}
+                      >
                         Edit
                       </button>
-                      <button className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                      <button
+                        onClick={() => openDeleteModal(user.username)}
+                        className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium"
+                      >
                         Delete
                       </button>
                     </td>
@@ -293,6 +362,33 @@ export default function UserManagement() {
             fetchUsers();
           }}
         />
+        <CommonConfirmModal
+          isOpen={showDeleteModal}
+          title="Delete User"
+          message={
+            userToDelete
+              ? `Are you sure you want to delete user "${userToDelete}"? This action cannot be undone.`
+              : 'Are you sure you want to delete this user?'
+          }
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={handleConfirmDelete}
+          onCancel={closeDeleteModal}
+        />
+
+        {/* Edit User Modal */}
+        {selectedUser && (
+          <EditUserModal
+            open={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            user={selectedUser}
+            onSubmit={(updatedUser: User) => {
+              setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+              setIsModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </>
   );

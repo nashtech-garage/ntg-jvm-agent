@@ -7,7 +7,8 @@ import { exchangeAuthorizationCode } from '@/services/auth';
 import { API_PATH, PAGE_PATH } from '@/constants/url';
 
 const authServerURL = {
-  authorize: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/authorize`,
+  // TODO: switch to SERVER_CONFIG for authorize when Auth Server is deployed in public site
+  authorize: `${PUBLIC_CONFIG.AUTH_SERVER}/oauth2/authorize`,
   userInfo: `${SERVER_CONFIG.AUTH_SERVER}/userinfo`,
   token: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`,
 };
