@@ -151,7 +151,7 @@ export default function ChatBox({
           variant="ghost"
           onClick={handleSend}
           disabled={!input.trim() || !agents.length}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-[0_10px_30px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] transition hover:bg-primary-strong hover:shadow-[0_12px_34px_color-mix(in_oklab,var(--color-primary)_32%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-5 text-sm font-semibold text-primary-foreground shadow-lg shadow-[0_10px_30px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] transition hover:bg-primary-strong hover:shadow-[0_12px_34px_color-mix(in_oklab,var(--color-primary)_32%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60"
           aria-label="Send message"
         >
           <Send size={18} />

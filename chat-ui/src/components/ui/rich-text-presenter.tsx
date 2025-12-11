@@ -48,7 +48,6 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
               title={href}
               aria-label={href ? `Open link: ${href}` : 'Open link'}
               className="text-sm text-muted-foreground px-1 py-0.5 leading-[1.2] rounded hover:text-foreground bg-surface-muted hover:bg-surface-soft cursor-pointer"
-              style={{ lineHeight: 1.2 }}
             >
               {children}
             </Button>
