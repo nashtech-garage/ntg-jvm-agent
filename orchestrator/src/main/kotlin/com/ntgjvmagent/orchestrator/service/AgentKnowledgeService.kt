@@ -19,10 +19,18 @@ class AgentKnowledgeService(
     private val agentRepo: AgentRepository,
 ) {
     @Transactional(readOnly = true)
-    fun getByAgent(agentId: UUID): List<AgentKnowledgeListResponseDto> =
+    fun getByAgent(
+        agentId: UUID,
+        name: String?,
+    ): List<AgentKnowledgeListResponseDto> =
         repo
-            .findAllByAgentId(agentId)
-            .map(AgentKnowledgeMapper::toListResponse)
+            .let {
+                if (name.isNullOrBlank()) {
+                    it.findAllByAgentId(agentId)
+                } else {
+                    it.searchByAgentAndName(agentId, name.trim())
+                }
+            }.map(AgentKnowledgeMapper::toListResponse)
 
     @Transactional(readOnly = true)
     fun getOneForAgent(

@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SERVER_CONFIG } from '@/constants/site-config';
+import { BACKEND_PATH_KNOWLEDGE } from '@/constants/url';
 import { getAccessToken } from '@/actions/session';
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const token = await getAccessToken();
   if (!token) return new NextResponse('Unauthorized', { status: 401 });
 
   const { id } = await params;
 
-  const backendRes = await fetch(
-    `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}/knowledge`,
-    {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-    }
-  );
+  const { searchParams } = new URL(req.url);
+  const searchQuery = searchParams.get('name') || '';
+  const backendPath = BACKEND_PATH_KNOWLEDGE.KNOWLEDGE_SEARCH(id, searchQuery);
+  const backendUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}${backendPath}`;
+
+  const backendRes = await fetch(backendUrl, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
 
   if (!backendRes.ok) {
     return new NextResponse('Failed to load knowledge', {

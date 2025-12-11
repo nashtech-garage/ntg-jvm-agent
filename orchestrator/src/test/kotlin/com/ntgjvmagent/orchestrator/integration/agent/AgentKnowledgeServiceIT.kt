@@ -64,7 +64,7 @@ class AgentKnowledgeServiceIT
 
         @Test
         fun `getByAgent should return only knowledge for agent`() {
-            val result = service.getByAgent(agent.id!!)
+            val result = service.getByAgent(agent.id!!, "")
             assertEquals(1, result.size)
             assertEquals(knowledge.id, result.first().id)
         }
