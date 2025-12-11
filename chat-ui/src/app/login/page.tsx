@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { LoginErrors, LoginParams } from '@/constants/constant';
 import { PAGE_PATH } from '@/constants/url';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
@@ -89,7 +90,8 @@ function LoginPageContent() {
           )}
 
           <div>
-            <button
+            <Button
+              variant="ghost"
               onClick={handleLogin}
               disabled={isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-blue-600 hover:blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
@@ -111,7 +113,7 @@ function LoginPageContent() {
                   Sign in
                 </div>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

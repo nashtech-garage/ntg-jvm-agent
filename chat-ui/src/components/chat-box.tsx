@@ -6,6 +6,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { FileSelectInfo } from '../models/file-select-info';
 import Image from 'next/image';
 import { useChatContext } from '../contexts/ChatContext';
+import { Button } from './ui/button';
 
 export default function ChatBox({
   onAsk,
@@ -96,13 +97,15 @@ export default function ChatBox({
               key={item}
               className="relative overflow-hidden rounded-xl border border-border bg-surface-muted p-2 shadow-sm shadow-[0_4px_12px_color-mix(in_oklab,var(--color-border)_70%,transparent)]"
             >
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleRemovePreview(item)}
                 className="absolute right-2 top-2 rounded-full bg-overlay p-1 text-inverse transition hover:bg-[color-mix(in_oklab,var(--color-overlay)_80%,transparent)]"
                 aria-label="Remove image"
               >
                 <CircleX size={14} />
-              </button>
+              </Button>
               <Image
                 src={item}
                 width={200}
@@ -115,15 +118,17 @@ export default function ChatBox({
         </div>
       )}
       <div className="flex items-end gap-3">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => fileInputRef.current?.click()}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 text-primary shadow-inner shadow-primary/20 transition hover:border-primary/60 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-40"
           disabled={previewUrls.length === 3}
           aria-label="Attach images (up to 3)"
         >
           <Images size={18} />
-        </button>
+        </Button>
         <input
           type="file"
           ref={fileInputRef}
@@ -141,14 +146,16 @@ export default function ChatBox({
           maxRows={8}
           className="flex-1 resize-none rounded-xl border border-border bg-surface-muted px-3 py-3 text-sm text-foreground shadow-inner shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-border)_80%,transparent)] outline-none transition placeholder:text-muted-foreground focus:border-primary-border focus:ring-2 focus:ring-primary-border"
         />
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           onClick={handleSend}
           disabled={!input.trim() || !agents.length}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-[0_10px_30px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] transition hover:bg-primary-strong hover:shadow-[0_12px_34px_color-mix(in_oklab,var(--color-primary)_32%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-5 text-sm font-semibold text-primary-foreground shadow-lg shadow-[0_10px_30px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] transition hover:bg-primary-strong hover:shadow-[0_12px_34px_color-mix(in_oklab,var(--color-primary)_32%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-60"
           aria-label="Send message"
         >
           <Send size={18} />
-        </button>
+        </Button>
       </div>
       <div className="flex items-center justify-between px-1">
         <p className="text-xs text-muted-foreground">Enter to send - Shift + Enter for new line</p>

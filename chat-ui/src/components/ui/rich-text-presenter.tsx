@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { Button } from './button';
 
 function CodeComponent({
   inline,
@@ -40,16 +41,16 @@ export default function RichTextPresenter({ content }: Readonly<{ content: strin
         components={{
           code: CodeComponent,
           a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
-            <button
+            <Button
+              variant="link"
               type="button"
               onClick={() => href && window.open(href, '_blank', 'noopener,noreferrer')}
               title={href}
               aria-label={href ? `Open link: ${href}` : 'Open link'}
               className="text-sm text-muted-foreground px-1 py-0.5 leading-[1.2] rounded hover:text-foreground bg-surface-muted hover:bg-surface-soft cursor-pointer"
-              style={{ lineHeight: 1.2 }}
             >
               {children}
-            </button>
+            </Button>
           ),
         }}
       >

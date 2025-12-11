@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from './ui/button';
 
 interface ShareConversationModalProps {
   conversationId: string;
@@ -82,20 +83,22 @@ export default function ShareConversationModal({
                   value={`${window.location.origin}${shareUrl}`}
                   className="flex-1 px-3 py-2 border border-border rounded text-sm bg-surface text-foreground"
                 />
-                <button
+                <Button
+                  variant="ghost"
                   onClick={handleCopyUrl}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary-strong text-sm transition"
                 >
                   {copied ? 'Copied!' : 'Copy'}
-                </button>
+                </Button>
               </div>
             </div>
-            <button
+            <Button
+              variant="ghost"
               onClick={onClose}
               className="w-full px-4 py-2 bg-muted text-inverse rounded hover:bg-[color-mix(in_oklab,var(--color-muted)_85%,transparent)] transition"
             >
               Done
-            </button>
+            </Button>
           </div>
         ) : (
           <form onSubmit={handleShare} className="space-y-4">
@@ -121,20 +124,22 @@ export default function ShareConversationModal({
             )}
 
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="ghost"
                 type="submit"
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary-strong disabled:opacity-50 transition"
               >
                 {loading ? 'Sharing...' : 'Create Share Link'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={onClose}
                 className="flex-1 px-4 py-2 bg-muted text-inverse rounded hover:bg-[color-mix(in_oklab,var(--color-muted)_85%,transparent)] transition"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}

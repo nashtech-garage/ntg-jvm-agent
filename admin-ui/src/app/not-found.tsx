@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function NotFoundPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-surface-soft px-4">
+    <main className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
       <Card className="w-full max-w-lg border-0 shadow-none bg-background">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-100">
@@ -26,7 +26,7 @@ export default function NotFoundPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span className="rounded-full bg-surface-soft px-3 py-1 font-mono text-xs uppercase tracking-[0.2em]">
+            <span className="rounded-full bg-muted px-3 py-1 font-mono text-xs uppercase tracking-[0.2em]">
               404
             </span>
             <span className="wrap-break-words">Requested page could not be located.</span>
