@@ -14,10 +14,11 @@ applyTo: 'admin-ui/**, chat-ui/**'
 - Prefer colocation: if logic or components only serve a single route, keep them in that route folder; promote to `components/`, `utils/`, etc., only when reused.
 - Related Files Together: Keep files that change together in the same directory.
 - Use path alias `@/*` points to src directory (see `tsconfig.json`); prefer these aliases rather than relative paths.
-- Consistent Structure: Maintain consistent folder structure across similar features
-- Shallow Nesting: Avoid deeply nested folder structures
-- Clear Separation: Separate concerns clearly (UI, logic, data, types)
-- Easy Navigation: Structure should make it easy to find and modify related code
+- Consistent Structure: Maintain consistent folder structure across similar features.
+- Shallow Nesting: Avoid deeply nested folder structures.
+- Clear Separation: Separate concerns clearly (UI, logic, data, types).
+- Centralize: env vars `process.env.*` in `src/constants/site-config.ts`; paths or URLs in `src/constants/url.ts`.
+- Easy Navigation: Structure should make it easy to find and modify related code.
 
 #### Directory Structure
 
@@ -61,15 +62,15 @@ project-root/
 - Directories: kebab-case (e.g., `user` or `user-modal`).
 - Normal files: kebab-case (e.g., `site-config.ts` or `button-group.tsx`)
 - Route segments: kebab-case folders; use `(group)` folders only when intentionally grouping routes.
-- Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`)
+- Function/ Variable name: camelCase (e.g. `getAccessToken` or `customerId`).
 - Component name: PascalCase (e.g., `Button` or `ButtonGroup`).
 - Contexts/providers: end with `Provider` (e.g., `AuthProvider`).
 - Hooks start with `use`, stores: end with `Store`.
 
 ## Implementation Guidelines
 
-- Follow React/Next.JS for application implementation
-- Make sure that eslint rules are passed when commit codes
+- Follow React/Next.JS for application implementation.
+- Make sure that eslint rules are passed when commit codes.
 
 ### Component Design
 
@@ -95,8 +96,16 @@ project-root/
 ### API routes
 
 - **Resource Naming:** use plural nouns for collections (`/api/users`, `/api/chat`); avoid use verbs in URL paths and use kebab-case for multi-word resources (`/api/user-profile`)
-- **HTTP Methods:** GET for retrieval, POST for creation, PUT for full updates, PATCH for partial updates, DELETE for removal
-- **Nesting:** Consider flattening deeply nested resources. If nesting, limit to 2-3 levels maximum
+- **HTTP Methods:** GET for retrieval, POST for creation, PUT for full updates, PATCH for partial updates, DELETE for removal.
+- **Nesting:** Consider flattening deeply nested resources. If nesting, limit to 2-3 levels maximum.
+
+### Authentication
+
+- Use the shared NextAuth config in `src/libs/auth-options.ts` and the built-in route at `app/api/auth/[...nextauth]/route.ts` for OAuth flows.
+- Keep tokens server-side: rely on NextAuth cookies and helpers; never stash access/refresh tokens in `localStorage`/`sessionStorage` or send them to the client unnecessarily.
+- Server actions/API routes that need an access token should call `getAccessToken` from `src/actions/session.ts`; middleware should use `getSessionToken` from `src/utils/server-utils.ts` to enforce roles.
+- Use `useAuth` to access the `user` state property and invoke authentication methods `signIn` and `signOut`.
+- Do not rename or remove NextAuth env vars `NEXTAUTH_URL`, `NEXTAUTH_SECRET`.
 
 ### Error handling and logging
 
