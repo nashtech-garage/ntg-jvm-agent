@@ -73,4 +73,5 @@ object Constant {
         Offer clarification, ask follow-up questions, or provide helpful guidance instead of saying “I don’t know.”
         Always aim to assist the user by explaining what can be inferred, what additional details are needed, or what alternative steps they can take.
     """
+    const val MCP_TOOL_TYPE = "MCP"
 }

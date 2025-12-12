@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
+import com.ntgjvmagent.orchestrator.utils.Constant
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -48,7 +49,7 @@ class AppListener(
                             .toEntity(
                                 ToolDataDto(
                                     toolName,
-                                    definition["type"] as String?,
+                                    Constant.MCP_TOOL_TYPE,
                                     null,
                                     toolDefinition.description(),
                                     definition,

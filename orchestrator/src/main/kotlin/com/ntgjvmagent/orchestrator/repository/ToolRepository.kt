@@ -13,12 +13,10 @@ interface ToolRepository : JpaRepository<Tool, UUID> {
 
     @Query(
         """
-        SELECT t.base_url AS baseUrl, t.connection_config AS config
-        FROM tool t
-        WHERE t.base_url IS NOT NULL AND t.active = true
-        GROUP BY t.base_url, t.connection_config
+        SELECT DISTINCT t.baseUrl AS baseUrl, t.connectionConfig AS config
+        FROM Tool t
+        WHERE t.baseUrl IS NOT NULL AND t.active = true
         """,
-        nativeQuery = true,
     )
     fun findActiveExternalTools(): List<ExternalToolDto>
 }

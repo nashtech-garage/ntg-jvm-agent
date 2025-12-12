@@ -8,6 +8,7 @@ import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
 import com.ntgjvmagent.orchestrator.utils.AuthType
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -51,12 +52,14 @@ class ToolControllerIT
             repository.save(
                 Tool(
                     name = "Tool A",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Active Tool",
                 ).apply { active = true },
             )
             repository.save(
                 Tool(
                     name = "Tool B",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Inactive Tool",
                 ).apply { active = false },
             )
@@ -74,6 +77,7 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Tool C",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "Testing retrieval",
                     ).apply { active = true },
                 )
@@ -92,6 +96,7 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Old Tool",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "Before update",
                     ).apply { active = true },
                 )
@@ -101,6 +106,7 @@ class ToolControllerIT
                     name = "Updated Tool",
                     description = "After update",
                     active = true,
+                    type = Constant.MCP_TOOL_TYPE,
                 )
 
             mockMvc
@@ -116,6 +122,7 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Tool D",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "To be soft deleted",
                     ).apply { active = true },
                 )

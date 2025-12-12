@@ -7,6 +7,7 @@ import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.service.ToolService
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -34,7 +35,7 @@ class ToolServiceIT
                 repo.save(
                     Tool(
                         name = "Laser Gun",
-                        type = "Weapon",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "High energy laser weapon",
                         connectionConfig = mapOf("power" to 9001),
                     ).apply { active = true },
@@ -82,7 +83,7 @@ class ToolServiceIT
             val updateRequest =
                 ToolDataDto(
                     name = "Laser Blaster",
-                    type = "Weapon",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Upgraded laser weapon",
                     definition = mapOf("power" to 12000),
                     active = false,

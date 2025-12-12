@@ -55,7 +55,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_name_not_deleted ON agent (lower(name
 CREATE TABLE IF NOT EXISTS tool (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(100) NOT NULL,
-    type         VARCHAR(50),
+    type         VARCHAR(50) NOT NULL CHECK (type IN ('MCP')),
     description  TEXT,
     definition   JSONB,
     base_url     VARCHAR(200) NULL,

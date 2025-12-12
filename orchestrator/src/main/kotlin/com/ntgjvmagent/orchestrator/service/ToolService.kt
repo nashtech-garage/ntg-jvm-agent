@@ -10,6 +10,7 @@ import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.utils.AuthType
+import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.utils.McpClientTransportType
 import io.modelcontextprotocol.client.McpClient
 import io.modelcontextprotocol.client.McpSyncClient
@@ -92,13 +93,21 @@ class ToolService(
             return
         }
 
-        val existingToolNames = repo.findAllByActiveTrue().map { it.name }
+        val allTools = repo.findAll()
         for (toolCallback in toolCallbacks) {
             val toolDefinition = toolCallback.toolDefinition
             val toolName = toolDefinition.name()
-            if (existingToolNames.contains(toolName)) {
+            val inactiveToolMatchNames = allTools.stream().filter { it.name == toolName && !it.active }.toList()
+            if (inactiveToolMatchNames.isNotEmpty()) {
+                val reactiveToolMatchNames =
+                    inactiveToolMatchNames.map {
+                        it.active = true
+                        it
+                    }
+                repo.saveAll(reactiveToolMatchNames)
                 continue
             }
+
             val definition =
                 objectMapper
                     .readValue(
@@ -118,7 +127,7 @@ class ToolService(
                     .toEntity(
                         ToolDataDto(
                             toolName,
-                            definition["type"] as String?,
+                            Constant.MCP_TOOL_TYPE,
                             request.baseUrl,
                             toolDefinition.description(),
                             definition,
@@ -133,12 +142,7 @@ class ToolService(
         val externalTools = repo.findActiveExternalTools()
         val toolCallbacks: MutableList<ToolCallback> = mutableListOf()
         for (tool in externalTools) {
-            val connectionConfig =
-                objectMapper
-                    .readValue(
-                        tool.getConfig(),
-                        object : TypeReference<Map<String, Any>>() {},
-                    )
+            val connectionConfig = tool.getConfig()
             // Current only support SSE
             if (McpClientTransportType.SSE.name != connectionConfig["transportType"]) {
                 continue
