@@ -2,11 +2,9 @@ package com.ntgjvmagent.orchestrator.component
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
+import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
-import com.ntgjvmagent.orchestrator.utils.Utils
-import org.apache.logging.log4j.util.Strings
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -36,10 +34,10 @@ class AppListener(
         if (toolCallbacks.isNotEmpty()) {
             toolCallbacks.forEach { callback ->
                 val toolDefinition = callback.toolDefinition
-                val toolName = Utils.getShortToolName(toolDefinition.name()) ?: Strings.EMPTY
+                val toolName = toolDefinition.name()
                 val tool = allToolEntities.find { it.name == toolName }
                 if (tool == null) {
-                    val config =
+                    val definition =
                         objectMapper
                             .readValue(
                                 toolDefinition.inputSchema(),
@@ -48,11 +46,12 @@ class AppListener(
                     val toolEntity =
                         ToolMapper
                             .toEntity(
-                                ToolRequestDto(
+                                ToolDataDto(
                                     toolName,
-                                    config["type"] as String?,
+                                    definition["type"] as String?,
+                                    null,
                                     toolDefinition.description(),
-                                    config,
+                                    definition,
                                 ),
                             )
                     toolRepo.save(toolEntity)

@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
+import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.ToolResponseDto
 import com.ntgjvmagent.orchestrator.service.ToolService
@@ -37,12 +38,12 @@ class ToolController(
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
         @Valid @RequestBody req: ToolRequestDto,
-    ): ToolResponseDto = service.create(req)
+    ) = service.create(req)
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: UUID,
-        @Valid @RequestBody req: ToolRequestDto,
+        @Valid @RequestBody req: ToolDataDto,
     ): ToolResponseDto = service.update(id, req)
 
     @DeleteMapping("/{id}")

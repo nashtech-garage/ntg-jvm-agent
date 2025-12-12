@@ -21,7 +21,13 @@ data class Tool(
     var description: String? = null,
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    var config: Map<String, Any>? = null,
+    var definition: Map<String, Any>? = null,
+    // e.g. { endpoint, type ("stdio", "sse", "streamable"), authorization }
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "connection_config", columnDefinition = "jsonb")
+    var connectionConfig: Map<String, Any>? = null,
+    @Column(name = "base_url")
+    var baseUrl: String? = null,
 ) : SoftDeletableEntity() {
     @OneToMany(mappedBy = "tool", cascade = [CascadeType.ALL], orphanRemoval = true)
     var agents: MutableSet<AgentTool> = mutableSetOf()
