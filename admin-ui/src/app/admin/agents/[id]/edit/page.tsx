@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import AgentForm from '@/components/agent/agent-form';
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, AgentFormData } from '@/types/agent';
+import { toast } from 'react-hot-toast';
 
 export default function AgentEditPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function AgentEditPage() {
       return;
     }
 
-    alert('Failed to update agent');
+    toast.error('Failed to update agent');
   }
 
   if (!agent) return <p>Loading...</p>;
