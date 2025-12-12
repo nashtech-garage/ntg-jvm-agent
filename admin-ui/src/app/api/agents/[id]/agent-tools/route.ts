@@ -5,7 +5,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
 
   const token = await getAccessToken();
-  console.log(token);
 
   if (!token) {
     return new Response('Unauthorized', { status: 401 });

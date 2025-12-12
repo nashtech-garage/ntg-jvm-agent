@@ -26,9 +26,7 @@ export async function GET(_req: Request) {
   return Response.json(data);
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
+export async function POST(req: Request) {
   const token = await getAccessToken();
 
   if (!token) {

@@ -4,7 +4,6 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
 import { McpToolAuthenticationFormValues } from '@/schemas/mcp-tool-authentication-schemas';
-import { Label } from '@/components/ui/label';
 
 export function APIKeyAuthForm({
   form,
