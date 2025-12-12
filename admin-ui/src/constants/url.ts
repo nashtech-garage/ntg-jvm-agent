@@ -7,4 +7,5 @@ export const PAGE_PATH = {
 export const API_PATH = {
   AUTH_CALLBACK: (providerId: string) => `/api/auth/callback/${providerId}`,
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
+  AGENT_TOOLS: (agentId: string) => `/api/agents/${agentId}/agent-tools`,
 } as const;

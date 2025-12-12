@@ -59,9 +59,15 @@ class AgentToolService(
             .map(AgentToolMapper::toResponse)
 
     @Transactional(readOnly = true)
-    fun getToolsWithAssignmentStatus(agentId: UUID): List<ToolWithAssignmentResponseDto> =
-        agentToolRepository
-            .findToolsWithAssignment(agentId)
+    fun getToolsWithAssignmentStatus(
+        agentId: UUID,
+        name: String?,
+    ): List<ToolWithAssignmentResponseDto> =
+        if (name.isNullOrBlank()) {
+            agentToolRepository.findToolsWithAssignment(agentId)
+        } else {
+            agentToolRepository.findToolsWithAssignmentAndSearch(agentId, name)
+        }
 
     @Transactional
     fun updateStatus(

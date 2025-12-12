@@ -44,6 +44,29 @@ interface AgentToolRepository : JpaRepository<AgentTool, UUID> {
         @Param("agentId") agentId: UUID,
     ): List<ToolWithAssignmentResponseDto>
 
+    @Query(
+        """
+        SELECT
+            t.id AS toolId,
+            t.name AS toolName,
+            t.description AS toolDescription,
+            CASE WHEN at.agent_id IS NOT NULL THEN true ELSE false END AS isAssigned
+        FROM tool t
+        LEFT JOIN agent_tool at
+            ON t.id = at.tool_id
+            AND at.agent_id = :agentId
+            AND at.active = true
+        WHERE t.active = true
+            AND LOWER(t.name) LIKE LOWER(CONCAT('%', :name, '%'))
+        ORDER BY t.name
+        """,
+        nativeQuery = true,
+    )
+    fun findToolsWithAssignmentAndSearch(
+        @Param("agentId") agentId: UUID,
+        @Param("name") name: String,
+    ): List<ToolWithAssignmentResponseDto>
+
     @Modifying
     fun deleteByAgentIdAndToolId(
         agentId: UUID,
