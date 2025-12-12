@@ -23,7 +23,7 @@ class AgentService(
                 if (name.isNullOrBlank()) {
                     it.findAll()
                 } else {
-                    it.findByNameContainingIgnoreCase(name)
+                    it.findByNameContainingIgnoreCase(name.trim())
                 }
             }.map(AgentMapper::toListResponse)
 

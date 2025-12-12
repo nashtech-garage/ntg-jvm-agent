@@ -5,10 +5,8 @@ import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import { fetcher } from '@/utils/fetcher';
 import { Plus, Search } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AgentListData } from '@/types/agent';
 import { API_PATH, PAGE_PATH } from '@/constants/url';
 import { AgentsTable } from '@/components/agent/agents-table';
 
@@ -32,7 +30,7 @@ export default function AgentTable() {
   const showTableLoading = useMemo(() => isLoading && !agents, [isLoading, agents]);
 
   const handleSearch = useCallback(() => {
-    setSearchQuery(searchTerm);
+    setSearchQuery(searchTerm.trim());
   }, [searchTerm]);
 
   const handleKeyDown = useCallback(
