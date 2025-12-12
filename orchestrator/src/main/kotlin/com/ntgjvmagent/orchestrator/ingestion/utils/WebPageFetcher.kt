@@ -3,90 +3,73 @@ package com.ntgjvmagent.orchestrator.ingestion.utils
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.io.IOException
-import java.time.Duration
-import java.util.concurrent.TimeoutException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 
 @Component
 class WebPageFetcher(
-    @Qualifier("crawlerWebClient")
-    private val client: WebClient,
+    @Qualifier("crawlerRestClient")
+    private val rest: RestClient,
+    private val urlSafetyValidator: UrlSafetyValidator,
 ) {
     companion object {
-        private const val MAX_LOGICAL_BYTES = 2 * 1024 * 1024 // 2MB ingestion limit
-        private const val TIMEOUT_SECONDS = 10L
+        const val MAX_PAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2MB
     }
 
-    fun fetch(url: String): String =
-        try {
-            val responseEntity =
-                client
+    fun fetch(url: String): String {
+        urlSafetyValidator.validate(url)
+
+        return try {
+            val response =
+                rest
                     .get()
                     .uri(url)
-                    .accept(MediaType.TEXT_HTML)
                     .retrieve()
-                    .onStatus({ !it.is2xxSuccessful }) { resp ->
-                        resp.bodyToMono(String::class.java).map { body ->
-                            WebPageFetchException(
-                                "HTTP ${resp.statusCode()} for $url: $body",
-                            )
-                        }
-                    }.toEntity(ByteArray::class.java)
-                    .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
-                    .block()
-                    ?: throw WebPageFetchException("Empty response from $url")
+                    .toEntity(ByteArray::class.java)
 
-            val contentType = responseEntity.headers.contentType
-            check(
-                contentType != null &&
-                    (
-                        contentType.includes(MediaType.TEXT_HTML) ||
-                            contentType.includes(MediaType.APPLICATION_XHTML_XML)
-                    ),
-            ) {
-                "Unsupported content-type: $contentType for $url"
-            }
+            validateContentType(url, response.headers.contentType)
 
-            val bodyBytes = responseEntity.body ?: ByteArray(0)
+            val body = response.body ?: ByteArray(0)
+            validateSize(url, body)
 
-            check(bodyBytes.size <= MAX_LOGICAL_BYTES) {
-                "Page too large (${bodyBytes.size} bytes). Max allowed = $MAX_LOGICAL_BYTES"
-            }
-
-            bodyBytes.toString(Charsets.UTF_8)
-        } catch (ex: TimeoutException) {
-            throw WebPageFetchException(
-                "Timeout (${TIMEOUT_SECONDS}s) when fetching $url",
-                ex,
-            )
-        } catch (ex: WebClientResponseException) {
-            throw WebPageFetchException(
-                "HTTP ${ex.statusCode} while fetching $url: ${ex.responseBodyAsString}",
-                ex,
-            )
-        } catch (ex: IOException) {
-            throw WebPageFetchException(
-                "I/O error while fetching $url: ${ex.message}",
-                ex,
-            )
-        } catch (ex: IllegalStateException) {
-            throw WebPageFetchException(
-                "Invalid state while fetching $url: ${ex.message}",
-                ex,
-            )
+            body.toString(Charsets.UTF_8)
+        } catch (ex: RestClientException) {
+            throw WebPageFetchException("HTTP error while fetching $url: ${ex.message}", ex)
         } catch (ex: IllegalArgumentException) {
+            throw WebPageFetchException("Invalid request to $url: ${ex.message}", ex)
+        } catch (ex: IllegalStateException) {
+            throw WebPageFetchException("Client error while fetching $url: ${ex.message}", ex)
+        }
+    }
+
+    private fun validateContentType(
+        url: String,
+        contentType: MediaType?,
+    ) {
+        val ok =
+            contentType != null &&
+                (
+                    contentType.includes(MediaType.TEXT_HTML) ||
+                        contentType.includes(MediaType.APPLICATION_XHTML_XML)
+                )
+
+        if (!ok) {
+            throw WebPageFetchException("Unsupported content-type for $url: $contentType")
+        }
+    }
+
+    private fun validateSize(
+        url: String,
+        body: ByteArray,
+    ) {
+        if (body.size > MAX_PAGE_SIZE_BYTES) {
             throw WebPageFetchException(
-                "Invalid argument while fetching $url: ${ex.message}",
-                ex,
+                "Page too large for $url: ${body.size} bytes (max=$MAX_PAGE_SIZE_BYTES)",
             )
         }
+    }
 }
 
-/**
- * Custom checked-like runtime exception for fetch errors.
- */
 class WebPageFetchException(
     message: String,
     cause: Throwable? = null,

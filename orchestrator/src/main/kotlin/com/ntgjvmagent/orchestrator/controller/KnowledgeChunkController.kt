@@ -7,6 +7,7 @@ import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @RestController
@@ -87,9 +89,17 @@ class KnowledgeChunkController(
     fun importFile(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
-        @RequestPart("file") file: MultipartFile,
+        @RequestPart("file") @NotNull file: MultipartFile,
     ): Map<String, String> {
-        // Queue async file import
+        // ---- Validate input ----
+        if (file.isEmpty) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Uploaded file is empty or missing",
+            )
+        }
+
+        // ---- Queue async import ----
         fileImportWorker.run(agentId, knowledgeId, file)
 
         return mapOf(

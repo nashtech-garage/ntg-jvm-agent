@@ -27,4 +27,16 @@ class EmbeddingJobService(
 
         return job?.let { jobRepo.save(it) }
     }
+
+    @Transactional
+    fun takeBatch(limit: Int): List<EmbeddingJob> {
+        val jobs = mutableListOf<EmbeddingJob>()
+
+        repeat(limit) {
+            val job = takeJob() ?: return jobs
+            jobs += job
+        }
+
+        return jobs
+    }
 }

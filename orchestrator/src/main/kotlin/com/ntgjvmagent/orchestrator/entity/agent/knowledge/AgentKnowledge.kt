@@ -48,4 +48,20 @@ data class AgentKnowledge(
                 sourceType = KnowledgeSourceType.INLINE,
             )
     }
+
+    fun markIngesting() {
+        status = KnowledgeStatus.INGESTING
+        errorMessage = null
+    }
+
+    fun markEmbeddingPending() {
+        status = KnowledgeStatus.EMBEDDING_PENDING
+        lastProcessedAt = Instant.now()
+        errorMessage = null
+    }
+
+    fun markFailed(message: String?) {
+        status = KnowledgeStatus.FAILED
+        errorMessage = message
+    }
 }

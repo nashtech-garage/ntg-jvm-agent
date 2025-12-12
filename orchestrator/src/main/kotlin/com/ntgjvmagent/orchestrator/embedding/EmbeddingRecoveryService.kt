@@ -12,7 +12,7 @@ import java.time.Instant
 class EmbeddingRecoveryService(
     private val embeddingJobRepo: EmbeddingJobRepository,
 ) : ApplicationRunner {
-    private val log = LoggerFactory.getLogger(EmbeddingRecoveryService::class.java)
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional
     override fun run(args: ApplicationArguments?) {

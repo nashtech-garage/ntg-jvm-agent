@@ -13,7 +13,8 @@ import com.ntgjvmagent.orchestrator.viewmodel.SharedConversationViewVm
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
@@ -45,7 +46,7 @@ class ConversationShareService(
         }
 
         val shareToken = generateShareToken()
-        val expiresAt = OffsetDateTime.now().plusDays(request.expiryDays.toLong())
+        val expiresAt = Instant.now().plus(request.expiryDays.toLong(), ChronoUnit.DAYS)
 
         // Get current messages and save their IDs
         val currentMessages = messageRepo.listMessageByConversationId(conversationId)
@@ -72,7 +73,7 @@ class ConversationShareService(
             shareToken = shareToken,
             isExpired = false,
             expiresAt = expiresAt,
-            createdAt = (savedShare.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
+            createdAt = savedShare.createdAt ?: Instant.now(),
         )
     }
 
@@ -88,7 +89,7 @@ class ConversationShareService(
             throw BadRequestException("This share has been revoked")
         }
 
-        if (share.expiresAt != null && OffsetDateTime.now().isAfter(share.expiresAt)) {
+        if (share.expiresAt != null && Instant.now().isAfter(share.expiresAt)) {
             share.isExpired = true
             conversationShareRepo.save(share)
             throw BadRequestException("This share link has expired")
@@ -113,7 +114,7 @@ class ConversationShareService(
         return SharedConversationViewVm(
             id = conversation.id ?: error("Conversation ID cannot be null"),
             title = conversation.title,
-            createdAt = (conversation.createdAt as? OffsetDateTime) ?: OffsetDateTime.now(),
+            createdAt = conversation.createdAt ?: Instant.now(),
             sharedByUsername = share.sharedByUsername,
             messages = messages,
         )

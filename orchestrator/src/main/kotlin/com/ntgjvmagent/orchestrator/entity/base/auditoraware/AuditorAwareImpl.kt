@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.entity.base.auditoraware
 
 import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.repository.UserRepository
-import org.springframework.context.annotation.Profile
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component
 import java.util.Optional
 import java.util.UUID
 
-@Profile("!test")
 @Component("auditorAware")
 class AuditorAwareImpl(
     private val userRepository: UserRepository,

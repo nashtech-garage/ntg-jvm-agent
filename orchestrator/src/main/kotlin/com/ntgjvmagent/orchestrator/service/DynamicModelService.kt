@@ -1,11 +1,12 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.component.SimpleApiKey
+import com.ntgjvmagent.orchestrator.embedding.ReactiveEmbeddingModel
+import com.ntgjvmagent.orchestrator.embedding.SpringAiEmbeddingModelAdapter
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode
-import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
@@ -20,6 +21,7 @@ import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 
 @Service
 class DynamicModelService(
@@ -28,37 +30,72 @@ class DynamicModelService(
     private val observationRegistry: ObservationRegistry,
     private val agentRepo: AgentRepository,
 ) {
-    /** THREAD-SAFE CACHE **/
-    private val cache = ConcurrentHashMap<UUID, Pair<ChatModel, EmbeddingModel>>()
+    /**
+     * Cache stores:
+     *  1) ChatModel
+     *  2) Wrapped reactive EmbeddingModel
+     *  3) Raw Spring AI EmbeddingModel (needed for PgVectorStore)
+     */
+    private val cache = ConcurrentHashMap<UUID, Triple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel>>()
 
-    fun getChatModel(agentId: UUID): ChatModel = cache.computeIfAbsent(agentId) { createModels(agentId) }.first
+    fun getChatModel(agentId: UUID): ChatModel = cache.computeIfAbsent(agentId) { createModels(it) }.first
 
-    fun getEmbeddingModel(agentId: UUID): EmbeddingModel =
-        cache.computeIfAbsent(agentId) { createModels(agentId) }.second
+    /** Reactive embedding model (adapter-wrapped) used by EmbeddingService */
+    fun getEmbeddingModel(agentId: UUID): ReactiveEmbeddingModel =
+        cache.computeIfAbsent(agentId) { createModels(it) }.second
 
-    fun invalidateCacheForAgent(agentId: UUID) {
-        cache.remove(agentId)
+    /** Raw Spring AI embedding model used by PgVectorStore */
+    fun getRawSpringEmbeddingModel(agentId: UUID): SpringEmbeddingModel =
+        cache.computeIfAbsent(agentId) { createModels(it) }.third
+
+    /**
+     * Atomic reload of caching entry for a given agent.
+     * Prevents concurrency races and duplicate rebuilds.
+     */
+    fun reloadModelsForAgent(agentId: UUID) {
+        cache.compute(agentId) { _, _ ->
+            createModels(agentId)
+        }
     }
 
-    /** Build both chat + embedding models **/
-    private fun createModels(agentId: UUID): Pair<ChatModel, EmbeddingModel> {
-        val config = agentRepo.findById(agentId).orElseThrow()
+    /**
+     * Prefer reload() instead of removing.
+     * Never leave the cache empty in concurrent systems.
+     */
+    fun invalidateCacheForAgent(agentId: UUID) {
+        reloadModelsForAgent(agentId)
+    }
+
+    // ---------------------------------------------------------------------
+    // Build Chat + Embedding models (Spring + wrapped)
+    // ---------------------------------------------------------------------
+    private fun createModels(
+        agentId: UUID,
+    ): Triple<
+        ChatModel,
+        ReactiveEmbeddingModel,
+        SpringEmbeddingModel,
+    > {
+        val agentConfig = agentRepo.findById(agentId).orElseThrow()
 
         val api =
             createOpenAiApi(
-                baseUrl = config.baseUrl,
-                apiKey = config.apiKey,
-                chatCompletionsPath = config.chatCompletionsPath,
-                embeddingsPath = config.embeddingsPath,
+                baseUrl = agentConfig.baseUrl,
+                apiKey = agentConfig.apiKey,
+                chatCompletionsPath = agentConfig.chatCompletionsPath,
+                embeddingsPath = agentConfig.embeddingsPath,
             )
 
-        val chat = createChatModel(api, config.model)
-        val embed = createEmbeddingModel(api, config.embeddingModel, config.dimension)
+        val chatModel = createChatModel(api, agentConfig.model)
+        val springEmbeddingModel = createSpringEmbeddingModel(api, agentConfig.embeddingModel, agentConfig.dimension)
+        val wrappedEmbeddingModel = SpringAiEmbeddingModelAdapter(springEmbeddingModel)
 
-        return chat to embed
+        return Triple(chatModel, wrappedEmbeddingModel, springEmbeddingModel)
     }
 
-    /** Chat model - NO SPRING RETRY **/
+    // ---------------------------------------------------------------------
+    // Chat Model
+    // ---------------------------------------------------------------------
     private fun createChatModel(
         api: OpenAiApi,
         modelName: String,
@@ -78,12 +115,15 @@ class DynamicModelService(
         )
     }
 
-    /** Embedding model - NO SPRING RETRY **/
-    private fun createEmbeddingModel(
+    // ---------------------------------------------------------------------
+    // RAW Spring AI EmbeddingModel
+    // This is required by PgVectorStore (synchronous)
+    // ---------------------------------------------------------------------
+    private fun createSpringEmbeddingModel(
         api: OpenAiApi,
         modelName: String,
         dimension: Int,
-    ): EmbeddingModel {
+    ): SpringEmbeddingModel {
         val options =
             OpenAiEmbeddingOptions
                 .builder()
@@ -100,6 +140,9 @@ class DynamicModelService(
         )
     }
 
+    // ---------------------------------------------------------------------
+    // OpenAI API Client
+    // ---------------------------------------------------------------------
     private fun createOpenAiApi(
         baseUrl: String,
         apiKey: String,

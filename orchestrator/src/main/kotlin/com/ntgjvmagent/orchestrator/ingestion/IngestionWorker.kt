@@ -2,15 +2,14 @@ package com.ntgjvmagent.orchestrator.ingestion
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.IngestionJob
-import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.IngestionJobRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 
 @Component
 class IngestionWorker(
@@ -19,6 +18,7 @@ class IngestionWorker(
     private val knowledgeRepo: AgentKnowledgeRepository,
     private val knowledgeChunkService: KnowledgeChunkService,
     private val orchestrator: IngestionOrchestrator,
+    private val txManager: PlatformTransactionManager,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -49,35 +49,56 @@ class IngestionWorker(
         }
     }
 
-    @Transactional
-    fun executeJob(job: IngestionJob) {
+    /**
+     * Main ingestion pipeline.
+     * NO LONG-LIVED TRANSACTION HERE.
+     */
+    private fun executeJob(job: IngestionJob) {
         val knowledge = job.knowledge
         val agentId = knowledge.agent.id!!
         val knowledgeId = knowledge.id!!
 
-        jobService.markRunning(job)
+        // ---------------- STEP 1: Mark job RUNNING ----------------
+        transactional {
+            jobService.markRunning(job)
+        }
 
-        updateKnowledgeIngesting(knowledge)
+        // ---------------- STEP 2: Mark knowledge INGESTING --------
+        transactional {
+            updateKnowledgeIngesting(knowledge)
+        }
 
-        knowledgeChunkService.deleteAllChunks(agentId, knowledgeId)
+        // ---------------- STEP 3: Delete old chunks ---------------
+        transactional {
+            knowledgeChunkService.deleteAllChunks(agentId, knowledgeId)
+        }
 
-        // Run ingestion handler (WEB_URL, FILE, INLINE...)
+        // ---------------- STEP 4: Long-running ingestion ----------
+        // This MUST NOT be inside a DB transaction.
         orchestrator.process(knowledge)
 
-        jobService.markSuccess(job)
-        updateKnowledgeEmbeddingPending(knowledge)
+        // ---------------- STEP 5: Mark success + enqueue embedding
+        transactional {
+            jobService.markSuccess(job)
+            updateKnowledgeEmbeddingPending(knowledge)
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Transaction helper for DB-only units of work
+    // ----------------------------------------------------------------
+    private fun <T> transactional(block: () -> T): T {
+        val tmpl = TransactionTemplate(txManager)
+        return tmpl.execute { block() }!!
     }
 
     private fun updateKnowledgeIngesting(k: AgentKnowledge) {
-        k.status = KnowledgeStatus.INGESTING
-        k.errorMessage = null
+        k.markIngesting()
         knowledgeRepo.save(k)
     }
 
     private fun updateKnowledgeEmbeddingPending(k: AgentKnowledge) {
-        k.status = KnowledgeStatus.EMBEDDING_PENDING
-        k.lastProcessedAt = Instant.now()
-        k.errorMessage = null
+        k.markEmbeddingPending()
         knowledgeRepo.save(k)
     }
 
@@ -88,22 +109,22 @@ class IngestionWorker(
     ) {
         val truncated = message?.take(MAX_ERROR_MESSAGE_LENGTH)
 
-        jobService.incrementAttempts(job)
+        transactional {
+            jobService.incrementAttempts(job)
 
-        val exceeded = job.attempts >= job.maxAttempts
+            val exceeded = job.attempts >= job.maxAttempts
 
-        if (exceeded) {
-            // ---------------- Permanently failed ----------------
-            jobService.markFailed(job, truncated ?: "Unknown error")
-
-            knowledge.status = KnowledgeStatus.FAILED
-            knowledge.errorMessage = truncated
-            knowledgeRepo.save(knowledge)
-        } else {
-            // ---------------- Requeue job ----------------
-            job.status = IngestionJobStatus.PENDING
-            job.errorMessage = truncated
-            jobRepo.save(job)
+            if (exceeded) {
+                // Permanently failed
+                jobService.markFailed(job, truncated ?: "Unknown error")
+                knowledge.markFailed(truncated)
+                knowledgeRepo.save(knowledge)
+            } else {
+                // Requeue
+                job.status = IngestionJobStatus.PENDING
+                job.errorMessage = truncated
+                jobRepo.save(job)
+            }
         }
     }
 }

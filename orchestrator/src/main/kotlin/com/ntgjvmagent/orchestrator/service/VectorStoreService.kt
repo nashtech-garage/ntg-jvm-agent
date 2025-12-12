@@ -1,8 +1,10 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -16,27 +18,46 @@ class VectorStoreService(
 ) {
     private val cache = ConcurrentHashMap<UUID, VectorStore>()
 
+    /**
+     * Return cached vector store or build it atomically if missing.
+     */
     fun getVectorStore(agentId: UUID): VectorStore = cache.computeIfAbsent(agentId) { buildVectorStore(it) }
 
-    fun invalidate(agentId: UUID) {
-        cache.remove(agentId)
+    /**
+     * Atomically reload vector store for this agent.
+     * Ensures only one thread rebuilds the store.
+     */
+    fun reload(agentId: UUID) {
+        cache.compute(agentId) { _, _ ->
+            buildVectorStore(agentId)
+        }
     }
 
+    /**
+     * Preferred replacement for invalidate() — because remove() creates
+     * a race window in high concurrency systems.
+     */
+    fun invalidate(agentId: UUID) {
+        reload(agentId)
+    }
+
+    /**
+     * Build the vector store for the given agent.
+     */
     private fun buildVectorStore(agentId: UUID): VectorStore {
-        // --- Get agent dimension (never call remote embedding API) ---
+        // Get agent config (local DB)
         val agent =
-            agentRepo
-                .findById(agentId)
-                .orElseThrow { IllegalArgumentException("Agent $agentId not found") }
+            agentRepo.findByIdOrNull(agentId)
+                ?: throw EntityNotFoundException("Agent $agentId not found")
 
         val dimension = agent.dimension
 
-        // --- Build embedding model normally (does NOT call API) ---
-        val embeddingModel = dynamicModelService.getEmbeddingModel(agentId)
+        // PgVectorStore requires the BLOCKING Spring AI EmbeddingModel
+        val springEmbeddingModel = dynamicModelService.getRawSpringEmbeddingModel(agentId)
 
-        // --- Build vector store for that agent ---
+        // Build vector store with per-agent table
         return PgVectorStore
-            .builder(jdbcTemplate, embeddingModel)
+            .builder(jdbcTemplate, springEmbeddingModel)
             .dimensions(dimension)
             .schemaName("public")
             .vectorTableName("vector_store_$dimension")

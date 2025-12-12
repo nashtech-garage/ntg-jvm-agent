@@ -1,20 +1,23 @@
 package com.ntgjvmagent.orchestrator.embedding
 
+import com.ntgjvmagent.orchestrator.config.EmbeddingWorkerProperties
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.EmbeddingJob
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.VectorStoreService
 import com.ntgjvmagent.orchestrator.utils.Constant
 import io.github.resilience4j.ratelimiter.RequestNotPermitted
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.ai.document.Document
 import org.springframework.dao.DataAccessException
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.client.HttpClientErrorException
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
+import java.time.Duration
 
 @Service
 class EmbeddingWorker(
@@ -23,63 +26,153 @@ class EmbeddingWorker(
     private val embeddingService: EmbeddingService,
     private val vectorStoreService: VectorStoreService,
     private val statusService: EmbeddingJobStatusService,
+    private val props: EmbeddingWorkerProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelay = 1000)
-    fun processQueue() {
-        val job = embeddingJobService.takeJob() ?: return
-        safeExecute(job)
+    @Volatile
+    private var currentConcurrency = props.minConcurrency
+
+    /** Set when we receive a RequestNotPermitted so concurrency will not increase */
+    @Volatile
+    private var rateLimitedRecently = false
+
+    @PostConstruct
+    fun startWorker() {
+        log.info("Starting adaptive reactive embedding worker...")
+
+        Flux
+            .interval(Duration.ofMillis(props.pollIntervalMs))
+            .flatMap { pollAndExecuteJobs() }
+            .subscribe(
+                { /* no-op */ },
+                { ex -> log.error("Worker crashed: {}", ex.message, ex) },
+            )
     }
 
-    @Suppress("TooGenericExceptionCaught")
-    private fun safeExecute(job: EmbeddingJob) {
-        try {
-            executeJob(job)
-        } catch (ex: RequestNotPermitted) {
-            log.warn("Rate limit hit for job {}. Delaying retry...", job.id)
-            statusService.markRetryLater(job, ex)
-        } catch (ex: HttpClientErrorException.TooManyRequests) {
-            log.warn("429 for job {}. Delaying retry...", job.id)
-            statusService.markRetryLater(job, ex)
-        } catch (ex: DataAccessException) {
-            log.error("DB failure for job {}: {}", job.id, ex.message)
-            statusService.markRetryLater(job, ex)
-        } catch (ex: Exception) {
-            log.error("Unexpected error for job {}: {}", job.id, ex.message, ex)
-            statusService.markFailure(job, ex)
+    /**
+     * Poll up to `currentConcurrency` jobs and process them reactively.
+     */
+    private fun pollAndExecuteJobs(): Flux<Unit> {
+        val jobs = embeddingJobService.takeBatch(currentConcurrency)
+
+        if (jobs.isEmpty()) {
+            decreaseConcurrency()
+            return Flux.empty()
         }
+
+        increaseConcurrency(jobs.size)
+
+        return Flux
+            .fromIterable(jobs)
+            .flatMap({ job -> processJobReactive(job) }, currentConcurrency)
     }
 
-    fun executeJob(job: EmbeddingJob) {
-        val chunk =
-            chunkRepo.findByIdOrNull(job.chunk.id!!)
-                ?: throw EntityNotFoundException("Chunk missing")
-
+    /**
+     * Full reactive job execution.
+     */
+    private fun processJobReactive(job: EmbeddingJob): Mono<Unit> {
         val agentId = job.agent.id!!
 
-        val embedding = embeddingService.embed(agentId, chunk.content)
+        return Mono
+            .fromCallable {
+                chunkRepo.findByIdOrNull(job.chunk.id!!)
+                    ?: throw EntityNotFoundException("Chunk missing for job ${job.id}")
+            }.subscribeOn(Schedulers.boundedElastic())
+            .flatMap { chunk ->
+                embeddingService
+                    .embedReactive(agentId, chunk.content)
+                    .map { embedding -> chunk to embedding }
+            }.flatMap { (chunk, embedding) ->
+                persistEmbeddingReactive(chunk, embedding)
+            }.flatMap { chunk ->
+                val docs = listOf(toDocument(chunk))
 
-        persistEmbeddingTx(chunk, embedding)
-
-        vectorStoreService
-            .getVectorStore(agentId)
-            .add(listOf(toDocument(chunk)))
-
-        statusService.markSuccess(job)
+                Mono
+                    .fromCallable {
+                        vectorStoreService.getVectorStore(agentId).add(docs)
+                    }.subscribeOn(Schedulers.boundedElastic())
+                    .thenReturn(chunk)
+            }.then(
+                Mono.defer {
+                    statusService.markSuccess(job)
+                    Mono.empty<Unit>()
+                },
+            ).onErrorResume { ex -> handleFailure(job, ex) }
     }
 
-    @Transactional
-    fun persistEmbeddingTx(
+    /**
+     * Persist embeddings in DB (reactively via boundedElastic).
+     */
+    private fun persistEmbeddingReactive(
         chunk: KnowledgeChunk,
         embedding: FloatArray,
-    ) {
-        when (embedding.size) {
-            Constant.GEMINI_DIMENSION -> chunk.embedding768 = embedding
-            Constant.CHATGPT_DIMENSION -> chunk.embedding1536 = embedding
-            else -> throw IllegalArgumentException("Unsupported dimension")
+    ): Mono<KnowledgeChunk> =
+        Mono
+            .fromCallable {
+                when (embedding.size) {
+                    Constant.GEMINI_DIMENSION -> chunk.embedding768 = embedding
+                    Constant.CHATGPT_DIMENSION -> chunk.embedding1536 = embedding
+                    else -> throw IllegalArgumentException("Unsupported embedding dimension ${embedding.size}")
+                }
+                chunkRepo.save(chunk)
+            }.subscribeOn(Schedulers.boundedElastic())
+
+    /**
+     * Worker-level failure handler.
+     */
+    private fun handleFailure(
+        job: EmbeddingJob,
+        ex: Throwable,
+    ): Mono<Unit> =
+        Mono.defer {
+            when (ex) {
+                is RequestNotPermitted -> {
+                    log.warn("RateLimiter blocked job {}. Retrying later.", job.id)
+                    rateLimitedRecently = true
+                    statusService.markRetryLater(job, ex)
+                }
+
+                is DataAccessException -> {
+                    log.warn("DB failure for job {}: {}. Retrying later.", job.id, ex.message)
+                    statusService.markRetryLater(job, ex)
+                }
+
+                is EntityNotFoundException -> {
+                    log.error("Missing chunk for job {}: {}", job.id, ex.message)
+                    statusService.markFailure(job, ex)
+                }
+
+                else -> {
+                    log.error("Job {} failed after embedding retries: {}", job.id, ex.message)
+                    statusService.markFailure(job, ex)
+                }
+            }
+            Mono.empty()
         }
-        chunkRepo.save(chunk)
+
+    // ---------------------------------------------------------------------
+    // Adaptive concurrency logic
+    // ---------------------------------------------------------------------
+
+    private fun increaseConcurrency(jobsReceived: Int) {
+        if (!rateLimitedRecently &&
+            currentConcurrency < props.maxConcurrency &&
+            jobsReceived == currentConcurrency
+        ) {
+            currentConcurrency += props.stepUp
+            log.info("Increasing worker concurrency to {}", currentConcurrency)
+        }
+    }
+
+    private fun decreaseConcurrency() {
+        if (currentConcurrency > props.minConcurrency) {
+            currentConcurrency -= props.stepDown
+            log.info("Decreasing worker concurrency to {}", currentConcurrency)
+        }
+
+        // Reset rate limit flag once we reduce concurrency
+        rateLimitedRecently = false
     }
 
     private fun toDocument(chunk: KnowledgeChunk) =
