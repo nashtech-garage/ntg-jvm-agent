@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
-import com.ntgjvmagent.orchestrator.dto.response.AgentListResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
@@ -18,7 +17,15 @@ class AgentService(
     private val dynamicModelService: DynamicModelService,
 ) {
     @Transactional(readOnly = true)
-    fun getAll(): List<AgentListResponseDto> = repo.findAll().map(AgentMapper::toListResponse)
+    fun getAll(name: String?) =
+        repo
+            .let {
+                if (name.isNullOrBlank()) {
+                    it.findAll()
+                } else {
+                    it.findByNameContainingIgnoreCase(name.trim())
+                }
+            }.map(AgentMapper::toListResponse)
 
     @Transactional(readOnly = true)
     fun getAllActive(): List<AgentResponseDto> = repo.findAllByActiveTrue().map(AgentMapper::toResponse)
