@@ -2,10 +2,13 @@ package com.ntgjvmagent.orchestrator.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.entity.User
+import com.ntgjvmagent.orchestrator.integration.config.AsyncTestConfig
+import com.ntgjvmagent.orchestrator.integration.config.DisableSchedulingConfig
 import com.ntgjvmagent.orchestrator.integration.config.PostgresTestContainer
 import com.ntgjvmagent.orchestrator.integration.config.TestAuditorConfig
 import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
 import com.ntgjvmagent.orchestrator.repository.UserRepository
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
@@ -28,7 +31,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import reactor.core.scheduler.Schedulers
 
+@ActiveProfiles("test")
 @SpringBootTest
 @ImportAutoConfiguration(
     exclude = [
@@ -40,9 +45,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Container spins up once per class
 @ContextConfiguration(initializers = [PostgresTestContainer.Initializer::class])
-@Import(TestEmbeddingConfig::class, TestAuditorConfig::class)
+@Import(TestEmbeddingConfig::class, TestAuditorConfig::class, AsyncTestConfig::class, DisableSchedulingConfig::class)
 @Tag("integration")
-@ActiveProfiles("test")
 abstract class BaseIntegrationTest {
     @Autowired
     protected lateinit var mockMvc: MockMvc
@@ -65,6 +69,20 @@ abstract class BaseIntegrationTest {
                     email = "integrationtestuser@testemail.com",
                 ),
             )
+        }
+    }
+
+    @AfterAll
+    fun shutdownSchedulers() {
+        Schedulers.shutdownNow() // clean Reactor threads
+
+        Thread.getAllStackTraces().forEach { (thread, stack) ->
+            if (!thread.isDaemon) {
+                println("NON-DAEMON THREAD STILL RUNNING: ${thread.name}")
+                stack.forEach { element ->
+                    println("    at $element")
+                }
+            }
         }
     }
 

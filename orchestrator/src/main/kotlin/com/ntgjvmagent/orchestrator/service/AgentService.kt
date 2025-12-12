@@ -9,7 +9,7 @@ import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -75,7 +75,7 @@ class AgentService(
         val agent =
             repo.findByIdOrNull(id)
                 ?: throw EntityNotFoundException("Agent not found: $id")
-        agent.deletedAt = OffsetDateTime.now()
+        agent.deletedAt = Instant.now()
         repo.save(agent)
     }
 }

@@ -9,7 +9,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Entity
 @Table(name = "conversation_share")
@@ -24,7 +24,7 @@ data class ConversationShareEntity(
     @Column(name = "is_expired")
     var isExpired: Boolean = false,
     @Column(name = "expires_at")
-    val expiresAt: OffsetDateTime? = null,
+    val expiresAt: Instant? = null,
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "shared_message_ids", columnDefinition = "JSONB")
     val sharedMessageIds: List<String> = emptyList(), // JSONB array: ["uuid1", "uuid2", ...]

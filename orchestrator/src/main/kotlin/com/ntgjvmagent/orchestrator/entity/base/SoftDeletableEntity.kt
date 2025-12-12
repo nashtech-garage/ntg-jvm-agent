@@ -4,20 +4,20 @@ import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.SQLRestriction
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @MappedSuperclass
 @DynamicUpdate
 @SQLRestriction("deleted_at IS NULL")
-abstract class SoftDeletableEntity : BaseEntity() {
+abstract class SoftDeletableEntity : UserAuditedEntity() {
     @Column(name = "deleted_at")
-    var deletedAt: OffsetDateTime? = null
+    var deletedAt: Instant? = null
 
     @Column(name = "active", nullable = false)
     var active: Boolean = true
 
     fun markDeleted() {
-        deletedAt = OffsetDateTime.now()
+        deletedAt = Instant.now()
         active = false
     }
 }

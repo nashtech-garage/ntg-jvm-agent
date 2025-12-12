@@ -3,20 +3,25 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeListResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
+import com.ntgjvmagent.orchestrator.ingestion.IngestionLifecycleService
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
 import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.UUID
 
 @Service
 class AgentKnowledgeService(
     private val repo: AgentKnowledgeRepository,
     private val agentRepo: AgentRepository,
+    private val ingestionLifecycleService: IngestionLifecycleService,
 ) {
     @Transactional(readOnly = true)
     fun getByAgent(agentId: UUID): List<AgentKnowledgeListResponseDto> =
@@ -36,6 +41,9 @@ class AgentKnowledgeService(
         return AgentKnowledgeMapper.toResponse(entity)
     }
 
+    // -------------------------------
+    // CREATE (Generic / Non-file types)
+    // -------------------------------
     @Transactional
     fun create(
         agentId: UUID,
@@ -45,13 +53,25 @@ class AgentKnowledgeService(
             agentRepo.findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
 
-        val entity = AgentKnowledgeMapper.toEntity(agent, request)
+        val entity =
+            AgentKnowledgeMapper.toEntity(agent, request).copy(
+                status = KnowledgeStatus.PENDING,
+                errorMessage = null,
+                lastProcessedAt = null,
+            )
 
-        return AgentKnowledgeMapper.toResponse(repo.save(entity))
+        val saved = repo.save(entity)
+
+        scheduleIngestionAfterCommit(agentId, saved.id!!)
+
+        return AgentKnowledgeMapper.toResponse(saved)
     }
 
+    // -------------------------------
+    // CREATE (File-based)
+    // -------------------------------
     @Transactional
-    fun create(
+    fun createFileKnowledge(
         agentId: UUID,
         request: FileKnowledgeInternalRequest,
     ): AgentKnowledgeResponseDto {
@@ -59,9 +79,16 @@ class AgentKnowledgeService(
             agentRepo.findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
 
-        val entity = AgentKnowledgeMapper.toEntity(agent, request)
+        val entity =
+            AgentKnowledgeMapper.toEntity(agent, request).copy(
+                status = KnowledgeStatus.INGESTING,
+                errorMessage = null,
+                lastProcessedAt = null,
+            )
 
-        return AgentKnowledgeMapper.toResponse(repo.save(entity))
+        val saved = repo.save(entity)
+
+        return AgentKnowledgeMapper.toResponse(saved)
     }
 
     @Transactional
@@ -71,13 +98,13 @@ class AgentKnowledgeService(
         request: AgentKnowledgeRequestDto,
     ): AgentKnowledgeResponseDto {
         val existing =
-            repo.findByIdOrNull(knowledgeId)
-                ?: throw EntityNotFoundException("Knowledge not found: $knowledgeId")
+            repo.findByIdAndAgentId(knowledgeId, agentId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
-        // Prevent agent transfer
-        require(existing.agent.id == agentId) {
-            "Knowledge $knowledgeId does not belong to agent $agentId"
-        }
+        val sourceChanged =
+            existing.sourceType != request.sourceType ||
+                existing.sourceUri != request.sourceUri ||
+                existing.metadata != request.metadata
 
         existing.apply {
             name = request.name
@@ -86,7 +113,18 @@ class AgentKnowledgeService(
             metadata = request.metadata
         }
 
-        return AgentKnowledgeMapper.toResponse(repo.save(existing))
+        val saved = repo.save(existing)
+
+        if (sourceChanged) {
+            saved.status = KnowledgeStatus.PENDING
+            saved.errorMessage = null
+            saved.lastProcessedAt = null
+            repo.save(saved)
+
+            scheduleIngestionAfterCommit(agentId, saved.id!!)
+        }
+
+        return AgentKnowledgeMapper.toResponse(saved)
     }
 
     @Transactional
@@ -95,14 +133,23 @@ class AgentKnowledgeService(
         knowledgeId: UUID,
     ) {
         val existing =
-            repo.findByIdOrNull(knowledgeId)
+            repo.findByIdAndAgentId(knowledgeId, agentId)
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
-
-        require(existing.agent.id == agentId) {
-            "Knowledge $knowledgeId does not belong to agent $agentId"
-        }
 
         existing.markDeleted()
         repo.save(existing)
+    }
+
+    private fun scheduleIngestionAfterCommit(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ) {
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCommit() {
+                    ingestionLifecycleService.triggerIngestionAsync(agentId, knowledgeId)
+                }
+            },
+        )
     }
 }

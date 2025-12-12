@@ -44,7 +44,7 @@ class RegisteredClientConfig {
                 .scope("chatbot.write")
                 .scope("admin.read")
                 .scope("admin.write")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .build()
 
             if (existing == null) {

@@ -1,8 +1,11 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.embedding.EmbeddingQueueService
+import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
+import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityNotFoundException
@@ -17,8 +20,41 @@ class KnowledgeChunkService(
     private val chunkRepo: KnowledgeChunkRepository,
     private val knowledgeRepo: AgentKnowledgeRepository,
     private val vectorStoreService: VectorStoreService,
-    private val dynamicModelService: DynamicModelService,
+    private val embeddingService: EmbeddingService,
+    private val embeddingQueueService: EmbeddingQueueService,
+    private val embeddingJobRepo: EmbeddingJobRepository,
 ) {
+    @Transactional
+    fun createChunkAndEnqueueEmbedding(
+        agentId: UUID,
+        knowledgeId: UUID,
+        content: String,
+        metadata: Map<String, Any?> = emptyMap(),
+        chunkOrder: Int? = null,
+    ): KnowledgeChunkResponseDto {
+        val knowledge =
+            knowledgeRepo.findByIdAndAgentId(knowledgeId, agentId)
+                ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
+
+        val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
+
+        val chunk =
+            KnowledgeChunk(
+                knowledge = knowledge,
+                chunkOrder = order,
+                content = content,
+                metadata = metadata,
+                embedding768 = null,
+                embedding1536 = null,
+            )
+
+        val savedChunk = chunkRepo.save(chunk)
+
+        embeddingQueueService.enqueueForChunk(savedChunk)
+
+        return KnowledgeChunkResponseDto.from(savedChunk)
+    }
+
     @Transactional
     fun addChunk(
         agentId: UUID,
@@ -32,9 +68,8 @@ class KnowledgeChunkService(
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
         val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
-        val embedding = dynamicModelService.getEmbeddingModel(agentId).embed(content)
+        val embedding = embeddingService.embed(agentId, content)
 
-        embedding.size
         val chunk =
             KnowledgeChunk(
                 knowledge = knowledge,
@@ -46,6 +81,7 @@ class KnowledgeChunkService(
             )
 
         val savedChunk = chunkRepo.save(chunk)
+
         vectorStoreService
             .getVectorStore(agentId)
             .add(listOf(buildDocument(savedChunk)))
@@ -65,13 +101,11 @@ class KnowledgeChunkService(
             chunkRepo.findByIdOrNull(chunkId)
                 ?: throw EntityNotFoundException("Chunk $chunkId not found")
 
-        require(chunk.knowledge.id == knowledgeId) { "Chunk $chunkId does not belong to knowledge $knowledgeId" }
+        require(chunk.knowledge.id == knowledgeId)
+        require(chunk.knowledge.agent.id == agentId)
 
-        if (chunk.knowledge.agent.id != agentId) {
-            throw EntityNotFoundException("Chunk $chunkId does not belong to agent $agentId")
-        }
+        val embedding = embeddingService.embed(agentId, newContent)
 
-        val embedding = dynamicModelService.getEmbeddingModel(agentId).embed(newContent)
         chunk.apply {
             content = newContent
             metadata = newMetadata
@@ -82,10 +116,13 @@ class KnowledgeChunkService(
             }
         }
 
+        val savedChunk = chunkRepo.save(chunk)
+
         vectorStoreService
             .getVectorStore(agentId)
-            .add(listOf(buildDocument(chunk)))
-        return KnowledgeChunkResponseDto.from(chunkRepo.save(chunk))
+            .add(listOf(buildDocument(savedChunk)))
+
+        return KnowledgeChunkResponseDto.from(savedChunk)
     }
 
     @Transactional(readOnly = true)
@@ -95,7 +132,7 @@ class KnowledgeChunkService(
     ): List<KnowledgeChunkResponseDto> =
         chunkRepo
             .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledgeId, agentId)
-            .map(KnowledgeChunkResponseDto::from)
+            .map(KnowledgeChunkResponseDto.Companion::from)
 
     @Transactional(readOnly = true)
     fun countByKnowledge(
@@ -119,38 +156,58 @@ class KnowledgeChunkService(
         query: String,
         topK: Int = 5,
     ): List<KnowledgeChunkResponseDto> {
-        // Ensure knowledge belongs to agent
         if (!knowledgeRepo.existsByIdAndAgentId(knowledgeId, agentId)) {
             throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
         }
 
-        val results: List<Document> =
-            vectorStoreService
-                .getVectorStore(
-                    agentId,
-                ).similaritySearch(query)
-                .toList()
+        val results =
+            vectorStoreService.getVectorStore(agentId).similaritySearch(query).toList()
 
-        if (results.isEmpty()) {
-            return emptyList()
-        }
+        if (results.isEmpty()) return emptyList()
 
-        val activeKnowledgeIds = chunkRepo.findAllKnowledgeIdsActiveByAgent(agentId).map { it.toString() }
+        val activeKnowledgeIds =
+            chunkRepo.findAllKnowledgeIdsActiveByAgent(agentId).map { it.toString() }
 
         return results
-            .filter { doc -> doc.metadata["knowledge_id"]?.toString() in activeKnowledgeIds }
+            .filter { doc -> doc.metadata["knowledgeId"]?.toString() in activeKnowledgeIds }
             .take(topK)
-            .map(KnowledgeChunkResponseDto::fromDocument)
+            .map(KnowledgeChunkResponseDto.Companion::fromDocument)
     }
 
     private fun buildDocument(chunk: KnowledgeChunk): Document {
         val metadata =
             chunk.metadata +
                 mapOf(
-                    "chunk_id" to chunk.id.toString(),
-                    "knowledge_id" to chunk.knowledge.id.toString(),
-                    "chunk_order" to chunk.chunkOrder.toString(),
+                    "chunkId" to chunk.id.toString(),
+                    "knowledgeId" to chunk.knowledge.id.toString(),
+                    "chunkOrder" to chunk.chunkOrder,
                 )
+
         return Document(chunk.id.toString(), chunk.content, metadata)
+    }
+
+    @Transactional
+    fun deleteAllChunks(
+        agentId: UUID,
+        knowledgeId: UUID,
+    ) {
+        val chunks =
+            chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledgeId, agentId)
+
+        if (chunks.isEmpty()) return
+
+        val chunkIds = chunks.map { it.id!! }
+        val vectorIds = chunkIds.map(UUID::toString)
+
+        // 1. Delete embeddings from vector store
+        vectorStoreService
+            .getVectorStore(agentId)
+            .delete(vectorIds)
+
+        // 2. Delete embedding jobs for these chunks
+        embeddingJobRepo.deleteAllByChunkIds(chunkIds)
+
+        // 3. Delete chunks
+        chunkRepo.deleteAll(chunks)
     }
 }

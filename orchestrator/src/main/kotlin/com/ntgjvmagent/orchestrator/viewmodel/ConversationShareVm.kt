@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.viewmodel
 
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.UUID
 
 // Request Models
@@ -20,14 +20,14 @@ data class ConversationShareResponseVm(
     val sharedByUsername: String,
     val shareToken: String,
     val isExpired: Boolean,
-    val expiresAt: OffsetDateTime?,
-    val createdAt: OffsetDateTime,
+    val expiresAt: Instant?,
+    val createdAt: Instant,
 )
 
 data class SharedConversationViewVm(
     val id: UUID,
     val title: String,
-    val createdAt: OffsetDateTime,
+    val createdAt: Instant,
     val sharedByUsername: String,
     val messages: List<ChatMessageResponseVm>,
 )
