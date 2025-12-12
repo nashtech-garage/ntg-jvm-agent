@@ -1,6 +1,8 @@
 package com.ntgjvmagent.orchestrator.controller
 
+import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
 import com.ntgjvmagent.orchestrator.service.ConversationService
+import com.ntgjvmagent.orchestrator.service.MessageService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
@@ -27,6 +29,7 @@ import java.util.UUID
 @RequestMapping("/api/conversations")
 class ConversationController(
     private val conversationService: ConversationService,
+    private val messageService: MessageService,
 ) {
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
@@ -69,5 +72,16 @@ class ConversationController(
         val username = (authentication.principal as Jwt).subject
         val updatedConversation = conversationService.updateConversationTitle(conversationId, request.title, username)
         return ResponseEntity.ok(updatedConversation)
+    }
+
+    @PutMapping("/messages/{messageId}/reaction")
+    fun setReaction(
+        @PathVariable messageId: UUID,
+        @Valid @RequestBody reactionRequest: ReactionRequestDto,
+        authentication: Authentication,
+    ): ResponseEntity<ChatMessageResponseVm> {
+        val username = (authentication.principal as Jwt).subject
+        val updated = messageService.reactMessage(messageId, reactionRequest.reaction, username)
+        return ResponseEntity.ok(updated)
     }
 }
