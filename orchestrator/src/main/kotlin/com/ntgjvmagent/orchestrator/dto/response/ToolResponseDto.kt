@@ -7,6 +7,6 @@ data class ToolResponseDto(
     val name: String,
     val type: String?,
     val description: String?,
-    val config: Map<String, Any>?,
+    val definition: Map<String, Any>?,
     val active: Boolean,
 )

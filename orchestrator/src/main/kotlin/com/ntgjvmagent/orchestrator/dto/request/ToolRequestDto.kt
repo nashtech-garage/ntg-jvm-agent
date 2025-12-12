@@ -3,9 +3,11 @@ package com.ntgjvmagent.orchestrator.dto.request
 import jakarta.validation.constraints.NotBlank
 
 data class ToolRequestDto(
-    @field:NotBlank val name: String,
-    val type: String? = null,
-    val description: String? = null,
-    val config: Map<String, Any>? = null,
-    val active: Boolean = true,
+    @field:NotBlank
+    val baseUrl: String,
+    @field:NotBlank
+    val transportType: String,
+    @field:NotBlank
+    val endpoint: String,
+    val authorization: AuthenticationRequestDto,
 )

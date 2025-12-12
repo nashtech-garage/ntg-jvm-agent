@@ -1,0 +1,43 @@
+'use client';
+
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { UseFormReturn } from 'react-hook-form';
+import { McpToolAuthenticationFormValues } from '@/schemas/mcp-tool-authentication-schemas';
+
+export function JWTBearerAuthForm({
+  form,
+}: Readonly<{
+  form: UseFormReturn<McpToolAuthenticationFormValues>;
+}>) {
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="headerName"
+        render={() => (
+          <FormItem>
+            <FormLabel>Header name</FormLabel>
+            <FormControl>
+              <Input value="Authorization" readOnly disabled />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="token"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>JWT Bearer token</FormLabel>
+            <FormControl>
+              <Input placeholder="xxxxxxxxxxxxxxx" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+}
