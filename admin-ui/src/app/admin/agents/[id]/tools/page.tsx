@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -18,6 +17,7 @@ import {
 import { useAgent } from '@/contexts/AgentContext';
 import { AgentDetail, AssignmentToolData } from '@/types/agent';
 import logger from '@/utils/logger';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function ToolsPage() {
   const { agent } = useAgent() as {
@@ -27,6 +27,7 @@ export default function ToolsPage() {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [assignmentTools, setAssignmentTools] = useState<AssignmentToolData[]>([]);
+  const { errorToaster } = useToaster();
 
   useEffect(() => {
     if (!agent) return;
@@ -65,7 +66,7 @@ export default function ToolsPage() {
       });
 
       if (!result.ok) {
-        toast.error(await result.text());
+        errorToaster(await result.text());
         return;
       }
 

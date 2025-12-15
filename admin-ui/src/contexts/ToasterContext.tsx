@@ -3,6 +3,7 @@
 import { Toaster, toast } from 'react-hot-toast';
 
 interface ToastOptions {
+  id?: string;
   limit?: boolean;
 }
 
@@ -27,23 +28,24 @@ export function ToasterProvider() {
   );
 }
 
-export function useToaster() {
+export function useToaster(options?: ToastOptions) {
+  const toasterId = options?.id ?? 'app-toaster';
+  const limit = options?.limit ?? true;
+
   const dismissToaster = (id: string) => {
     toast.dismiss(id);
   };
 
-  const showErrorToast = (message: string, options?: ToastOptions) => {
-    const errorToasterId = 'app-error-toast';
-    const limit = options?.limit ?? true;
+  const errorToaster = (message: string) => {
+    const errorToasterId = `${toasterId}-error`;
     if (limit) {
       dismissToaster(errorToasterId);
     }
     return toast.error(message, { id: errorToasterId });
   };
 
-  const showSuccessToast = (message: string, options?: ToastOptions) => {
-    const successToasterId = 'app-success-toast';
-    const limit = options?.limit ?? true;
+  const successToaster = (message: string) => {
+    const successToasterId = `${toasterId}-success`;
     if (limit) {
       dismissToaster(successToasterId);
     }
@@ -51,7 +53,7 @@ export function useToaster() {
   };
 
   return {
-    toasterError: showErrorToast,
-    toasterSuccess: showSuccessToast,
+    errorToaster,
+    successToaster,
   };
 }

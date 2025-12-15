@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation';
 import AgentForm from '@/components/agent/agent-form';
 import { AgentFormData } from '@/types/agent';
 import { getDefaultAgentAvatar } from '@/utils/avatar';
-import { toast } from 'react-hot-toast';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AgentCreatePage() {
   const router = useRouter();
+  const { errorToaster } = useToaster();
 
   async function onSubmit(data: AgentFormData) {
     // Create new object to avoid direct mutation
@@ -26,7 +27,7 @@ export default function AgentCreatePage() {
       return;
     }
 
-    toast.error('Failed to create agent');
+    errorToaster('Failed to create agent');
   }
 
   return <AgentForm onSubmit={onSubmit} />;
