@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ChatResult from '@/components/chat-result';
 import { ChatMessage } from '@/models/chat-message';
-import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useToaster } from '@/contexts/ToasterContext';
 
 interface SharedConversation {
   id: string;
@@ -18,6 +18,7 @@ interface SharedConversation {
 
 export default function SharedConversationPage() {
   const params = useParams();
+  const { showError } = useToaster();
   const shareToken = params.shareToken as string;
   const [conversation, setConversation] = useState<SharedConversation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function SharedConversationPage() {
         const res = await fetch(`/api/chat/shared/${shareToken}`);
         if (!res.ok) {
           const errorData = (await res.json()) as { error?: string };
-          toast.error(errorData.error || 'Failed to load shared conversation');
+          showError(errorData.error || 'Failed to load shared conversation');
           setIsLoading(false);
           return;
         }
@@ -36,7 +37,7 @@ export default function SharedConversationPage() {
         const data = (await res.json()) as SharedConversation;
         setConversation(data);
       } catch (error) {
-        toast.error(
+        showError(
           `Error loading conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       } finally {
@@ -45,7 +46,7 @@ export default function SharedConversationPage() {
     };
 
     fetchSharedConversation();
-  }, [shareToken]);
+  }, [showError, shareToken]);
 
   if (isLoading) {
     return (

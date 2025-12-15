@@ -8,7 +8,7 @@ import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AgentCreatePage() {
   const router = useRouter();
-  const { errorToaster } = useToaster();
+  const { showError } = useToaster();
 
   async function onSubmit(data: AgentFormData) {
     // Create new object to avoid direct mutation
@@ -27,7 +27,7 @@ export default function AgentCreatePage() {
       return;
     }
 
-    errorToaster('Failed to create agent');
+    showError('Failed to create agent');
   }
 
   return <AgentForm onSubmit={onSubmit} />;

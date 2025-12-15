@@ -7,7 +7,7 @@ import { AgentDetail, AgentFormData } from '@/types/agent';
 import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AgentEditPage() {
-  const { errorToaster } = useToaster();
+  const { showError } = useToaster();
   const router = useRouter();
   const { agent, mutate } = useAgent() as {
     agent: AgentDetail | null;
@@ -29,7 +29,7 @@ export default function AgentEditPage() {
       return;
     }
 
-    errorToaster('Failed to update agent');
+    showError('Failed to update agent');
   }
 
   if (!agent) return <p>Loading...</p>;

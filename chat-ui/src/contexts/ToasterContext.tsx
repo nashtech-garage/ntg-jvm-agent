@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster, toast } from 'sonner';
 
 /**
  * Options to control a toast namespace and duplication behavior.
@@ -14,22 +14,7 @@ interface ToastOptions {
 }
 
 export function ToasterProvider() {
-  return (
-    <Toaster
-      position="top-right"
-      gutter={8}
-      toastOptions={{
-        duration: 3000,
-        className: 'app-toast',
-        success: {
-          className: 'app-toast app-toast-success',
-        },
-        error: {
-          className: 'app-toast app-toast-error',
-        },
-      }}
-    />
-  );
+  return <Toaster richColors position="top-right" duration={1500} />;
 }
 
 /**

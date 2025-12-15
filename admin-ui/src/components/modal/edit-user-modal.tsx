@@ -25,7 +25,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
   );
 
   const [form, setForm] = useState(initialForm);
-  const { errorToaster } = useToaster();
+  const { showError } = useToaster();
 
   useEffect(() => {
     setForm(initialForm);
@@ -45,7 +45,7 @@ export default function EditUserModal({ open, onClose, user, onSubmit }: EditUse
       onSubmit(updatedUser);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      errorToaster('Update user failed: ' + errorMessage);
+      showError('Update user failed: ' + errorMessage);
     }
   };
 

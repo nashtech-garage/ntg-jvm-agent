@@ -17,7 +17,7 @@ export default function AvatarUpload({
   agentName,
   onAvatarChange,
 }: AvatarUploadProps) {
-  const { errorToaster } = useToaster();
+  const { showError } = useToaster();
   const [preview, setPreview] = useState<string | undefined>(currentAvatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,13 +27,13 @@ export default function AvatarUpload({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      errorToaster('Please select an image file');
+      showError('Please select an image file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      errorToaster('Image size must be less than 5MB');
+      showError('Image size must be less than 5MB');
       return;
     }
 

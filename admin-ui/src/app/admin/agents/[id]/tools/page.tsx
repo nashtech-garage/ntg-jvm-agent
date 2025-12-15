@@ -27,7 +27,7 @@ export default function ToolsPage() {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [assignmentTools, setAssignmentTools] = useState<AssignmentToolData[]>([]);
-  const { errorToaster } = useToaster();
+  const { showError } = useToaster();
 
   useEffect(() => {
     if (!agent) return;
@@ -66,7 +66,7 @@ export default function ToolsPage() {
       });
 
       if (!result.ok) {
-        errorToaster(await result.text());
+        showError(await result.text());
         return;
       }
 

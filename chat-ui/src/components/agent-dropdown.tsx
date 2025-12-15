@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Agent } from '../models/agent';
 import { ChevronDown } from 'lucide-react';
-import { toast } from 'sonner';
 import { useChatContext } from '../contexts/ChatContext';
 import { Button } from './ui/button';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AgentDropdown() {
   const { agents, setAgents, setSelectedAgent } = useChatContext();
+  const { showError } = useToaster();
   const [open, setOpen] = useState<boolean>(false);
   const [selected, setSelected] = useState<Agent | null>(agents[0]);
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -43,14 +44,14 @@ export default function AgentDropdown() {
           setSelectedAgent(agents[0]);
         }
       } catch (error) {
-        toast.error(`Error fetching agents: ${error}`);
+        showError(`Error fetching agents: ${error}`);
       }
     };
 
     if (!agents.length) {
       fetchAgents();
     }
-  }, [agents.length, setAgents, setSelectedAgent]);
+  }, [agents.length, showError, setAgents, setSelectedAgent]);
 
   return (
     <div ref={boxRef} className="relative inline-block">

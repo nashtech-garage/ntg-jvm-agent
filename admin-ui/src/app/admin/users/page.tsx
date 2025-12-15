@@ -16,7 +16,7 @@ type DeleteUserResponse = {
 };
 
 export default function UserManagement() {
-  const { errorToaster, successToaster } = useToaster();
+  const { showError, showSuccess } = useToaster();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,12 +80,12 @@ export default function UserManagement() {
       );
       const action = enabled ? 'activated' : 'deactivated';
       const message = `User "${username}" has been ${action} successfully.`;
-      successToaster(message);
+      showSuccess(message);
     } catch (error) {
       logger.error('Error updating user status:', error);
       const action = enabled ? 'activate' : 'deactivate';
       const message = `Failed to ${action} user "${username}".`;
-      errorToaster(message);
+      showError(message);
     }
   };
 
@@ -128,17 +128,17 @@ export default function UserManagement() {
           `Failed to delete user "${userToDelete}". Status: ${response.status}`,
           jsonResult
         );
-        errorToaster(jsonResult.error || `Failed to delete user "${userToDelete}".`);
+        showError(jsonResult.error || `Failed to delete user "${userToDelete}".`);
         return;
       }
 
       setUsers((prev) => prev.filter((u) => u.username !== userToDelete));
 
       const message = jsonResult.message || `User "${userToDelete}" has been deleted successfully.`;
-      successToaster(message);
+      showSuccess(message);
     } catch (error) {
       logger.error('Error deleting user:', error);
-      errorToaster(`Failed to delete user "${userToDelete}".`);
+      showError(`Failed to delete user "${userToDelete}".`);
     } finally {
       closeDeleteModal();
     }
