@@ -50,10 +50,11 @@ object AgentKnowledgeMapper {
             id = entity.id!!,
             name = entity.name,
             type = entity.sourceType,
+            sourceUri = entity.sourceUri,
             availableTo = entity.agent.name,
             usage = "",
             lastModifiedBy = entity.updatedBy?.name ?: "Unknown",
             lastModifiedWhen = entity.updatedAt?.toRelativeString(),
-            status = "Ready",
+            status = entity.status,
         )
 }

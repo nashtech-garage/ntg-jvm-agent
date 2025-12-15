@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity
 
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -27,7 +27,7 @@ data class ChatMessageMediaEntity(
     val data: ByteArray,
     @Column(name = "file_size")
     val fileSize: Long,
-) : BaseEntity() {
+) : UserAuditedEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

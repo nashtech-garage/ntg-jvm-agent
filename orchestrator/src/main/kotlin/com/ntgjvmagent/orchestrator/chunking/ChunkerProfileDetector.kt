@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.chunking
 
 import org.springframework.stereotype.Component
+import kotlin.collections.get
 
 @Component
 class ChunkerProfileDetector {

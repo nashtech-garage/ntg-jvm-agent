@@ -2,12 +2,12 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.request.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.ingestion.FileImportWorker
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
-import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
-import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @RestController
@@ -32,7 +33,7 @@ import java.util.UUID
 )
 class KnowledgeChunkController(
     private val chunkService: KnowledgeChunkService,
-    private val knowledgeImportService: KnowledgeImportService,
+    private val fileImportWorker: FileImportWorker,
 ) {
     @GetMapping
     @Operation(summary = "List all chunks for a knowledge source of an agent")
@@ -79,14 +80,32 @@ class KnowledgeChunkController(
             newMetadata = req.metadata,
         )
 
+    // ------------------------------------------------------------------
+    // ASYNC FILE IMPORT
+    // ------------------------------------------------------------------
     @PostMapping("/import")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Import a document file and split it into chunks")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Import a document file and enqueue async chunk processing")
     fun importFile(
         @PathVariable agentId: UUID,
         @PathVariable knowledgeId: UUID,
-        @RequestPart("file") file: MultipartFile,
-    ): KnowledgeImportingResponseVm = knowledgeImportService.importDocument(agentId, knowledgeId, file)
+        @RequestPart("file") @NotNull file: MultipartFile,
+    ): Map<String, String> {
+        // ---- Validate input ----
+        if (file.isEmpty) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Uploaded file is empty or missing",
+            )
+        }
+
+        // ---- Queue async import ----
+        fileImportWorker.run(agentId, knowledgeId, file)
+
+        return mapOf(
+            "originalFilename" to (file.originalFilename ?: "uploaded-file"),
+        )
+    }
 
     @GetMapping("/search")
     @Operation(summary = "Search similar chunks by text query")

@@ -5,10 +5,14 @@ import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.chunking.DocumentTextExtractor
 import com.ntgjvmagent.orchestrator.config.ChunkerProperties
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -18,6 +22,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.springframework.mock.web.MockMultipartFile
 import java.io.ByteArrayOutputStream
 import java.util.UUID
@@ -32,36 +37,55 @@ class KnowledgeImportServiceTest {
 
     private val agentId = UUID.randomUUID()
     private val knowledgeId = UUID.randomUUID()
+    private lateinit var knowledge: AgentKnowledge
 
     @BeforeEach
     fun setUp() {
-        chunkService = mockk()
+        // --------------------------------------
+        // Mock Knowledge entity
+        // --------------------------------------
+        knowledge =
+            AgentKnowledge(
+                agent = mockk(relaxed = true),
+                name = "Test Knowledge",
+                sourceType = KnowledgeSourceType.WEB_URL,
+                sourceUri = "http://example.com",
+                metadata = emptyMap(),
+            ).apply {
+                id = knowledgeId
+                active = true
+                status = KnowledgeStatus.PENDING
+            }
+
+        // --------------------------------------
+        // Mock services
+        // --------------------------------------
+        chunkService = mockk(relaxed = true)
         knowledgeRepo = mockk()
 
-        // Always return true for knowledge existence
-        every { knowledgeRepo.existsByIdAndAgentId(any(), any()) } returns true
+        every { knowledgeRepo.findByIdAndAgentId(knowledgeId, agentId) } returns knowledge
+        every { knowledgeRepo.save(any()) } answers { firstArg() }
 
-        // Setup chunk order mock
-        every { chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId) } returns 0
+        every { chunkService.getNextChunkOrderForKnowledge(agentId, knowledgeId) } returns 1
 
-        // Correctly map arguments (NO MORE CLASSCAST ISSUES)
-        every {
-            chunkService.addChunk(
+        coEvery {
+            chunkService.createChunkAndEnqueueEmbedding(
                 agentId = any(),
                 knowledgeId = any(),
-                chunkOrder = any(),
                 content = any(),
                 metadata = any(),
+                chunkOrder = any(),
             )
-        } answers {
+        } returns
             KnowledgeChunkResponseDto(
                 id = UUID.randomUUID(),
-                content = arg<String>(2),
-                metadata = arg<Map<String, Any?>>(3),
+                content = "mock-content",
+                metadata = emptyMap(),
             )
-        }
 
-        // Chunker with simple deterministic profiles
+        // --------------------------------------
+        // Chunker configuration
+        // --------------------------------------
         val chunkerProperties =
             ChunkerProperties().apply {
                 profiles["semantic"] =
@@ -92,67 +116,52 @@ class KnowledgeImportServiceTest {
     // -------------------------------------------------------
 
     @Test
-    fun `importDocument should process txt file correctly`() {
+    fun `performImport should process txt file correctly`() {
         val content = (1..20).joinToString(" ") { "Sentence $it" }
 
-        val file =
-            MockMultipartFile(
-                "file",
-                "test.txt",
-                "text/plain",
-                content.toByteArray(),
-            )
+        val file = MockMultipartFile("file", "test.txt", "text/plain", content.toByteArray())
 
-        val response = service.importDocument(agentId, knowledgeId, file)
+        val chunks = service.performImport(agentId, knowledgeId, file)
 
-        assertEquals("test.txt", response.originalFilename)
-        assertTrue(response.numberOfSegment > 1)
+        assertTrue(chunks > 1)
+
+        assertEquals(KnowledgeStatus.EMBEDDING_PENDING, knowledge.status)
+        assertNull(knowledge.errorMessage)
     }
 
     @Test
-    fun `importDocument should process md file correctly`() {
-        val content = (1..20).joinToString(" ") { "# Heading $it some markdown text." }
+    fun `performImport should process md file correctly`() {
+        val content = (1..20).joinToString(" ") { "# H$it markdown sample text" }
 
-        val file =
-            MockMultipartFile(
-                "file",
-                "test.md",
-                "text/markdown",
-                content.toByteArray(),
-            )
+        val file = MockMultipartFile("file", "test.md", "text/markdown", content.toByteArray())
 
-        val response = service.importDocument(agentId, knowledgeId, file)
+        val chunks = service.performImport(agentId, knowledgeId, file)
 
-        assertEquals("test.md", response.originalFilename)
-        assertTrue(response.numberOfSegment > 1)
+        assertTrue(chunks > 1)
+
+        assertEquals(KnowledgeStatus.EMBEDDING_PENDING, knowledge.status)
+        assertNull(knowledge.errorMessage)
     }
 
     @Test
-    fun `importDocument should throw BadRequestException for empty file`() {
-        val file =
-            MockMultipartFile(
-                "file",
-                "empty.txt",
-                "text/plain",
-                ByteArray(0),
-            )
+    fun `performImport should throw BadRequestException for empty file`() {
+        val file = MockMultipartFile("file", "empty.txt", "text/plain", ByteArray(0))
 
-        val exception =
+        val ex =
             assertFailsWith<BadRequestException> {
-                service.importDocument(agentId, knowledgeId, file)
+                service.performImport(agentId, knowledgeId, file)
             }
 
-        assert(exception.message!!.contains("contains no readable text"))
+        assert(ex.message!!.contains("contains no readable text"))
     }
 
     @Test
-    fun `importDocument should process pdf file correctly`() {
+    fun `performImport should process pdf file correctly`() {
         val pdfBytes =
             ByteArrayOutputStream().use { out ->
                 PDDocument().use { doc ->
                     val page = PDPage()
                     doc.addPage(page)
-
                     PDPageContentStream(doc, page).use { cs ->
                         cs.beginText()
                         cs.setFont(PDType1Font.HELVETICA, 12f)
@@ -160,23 +169,18 @@ class KnowledgeImportServiceTest {
                         cs.showText("PDF test content for chunking")
                         cs.endText()
                     }
-
                     doc.save(out)
                 }
                 out.toByteArray()
             }
 
-        val file =
-            MockMultipartFile(
-                "file",
-                "test.pdf",
-                "application/pdf",
-                pdfBytes,
-            )
+        val file = MockMultipartFile("file", "test.pdf", "application/pdf", pdfBytes)
 
-        val response = service.importDocument(agentId, knowledgeId, file)
+        val chunks = service.performImport(agentId, knowledgeId, file)
 
-        assertEquals("test.pdf", response.originalFilename)
-        assertTrue(response.numberOfSegment >= 1)
+        assertTrue(chunks >= 1)
+
+        assertEquals(KnowledgeStatus.EMBEDDING_PENDING, knowledge.status)
+        assertNull(knowledge.errorMessage)
     }
 }

@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity
 
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
@@ -24,4 +24,4 @@ data class SystemSettingEntity(
     var userRegistration: Boolean,
     @Column(name = "email_verification")
     var emailVerification: Boolean,
-) : BaseEntity()
+) : UserAuditedEntity()

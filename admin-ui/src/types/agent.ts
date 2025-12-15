@@ -66,10 +66,11 @@ export type KnowledgeListData = {
   id: string;
   name: string;
   type: string;
+  sourceUri?: string;
   availableTo: string;
   lastModifiedBy: string;
   lastModifiedWhen: string;
-  status: string;
+  status: 'PENDING' | 'INGESTING' | 'EMBEDDING_PENDING' | 'READY' | 'FAILED' | 'OUTDATED';
 };
 
 export type ToolListData = {
