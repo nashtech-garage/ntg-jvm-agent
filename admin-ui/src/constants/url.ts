@@ -29,4 +29,5 @@ export const BACKEND_PATH = {
     return query ? `/api/agents?${query}` : '/api/agents';
   },
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
+  AGENT_TOOLS: (agentId: string) => `/api/agents/${agentId}/agent-tools`,
 } as const;
