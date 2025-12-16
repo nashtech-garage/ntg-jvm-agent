@@ -41,22 +41,24 @@ export function useToaster(options?: ToastOptions) {
 
   const showError = useCallback(
     (message: string) => {
-      const errorToasterId = `${id}-error`;
       if (limit) {
+        const errorToasterId = `${id}-error`;
         dismiss(errorToasterId);
+        return toast.error(message, { id: errorToasterId });
       }
-      return toast.error(message, { id: errorToasterId });
+      return toast.error(message);
     },
     [dismiss, limit, id]
   );
 
   const showSuccess = useCallback(
     (message: string) => {
-      const successToasterId = `${id}-success`;
       if (limit) {
+        const successToasterId = `${id}-success`;
         dismiss(successToasterId);
+        return toast.success(message, { id: successToasterId });
       }
-      return toast.success(message, { id: successToasterId });
+      return toast.success(message);
     },
     [dismiss, limit, id]
   );
