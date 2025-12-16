@@ -33,7 +33,7 @@ export function ToasterProvider() {
 }
 
 export function useToaster(options?: ToastOptions) {
-  const { id, limit } = options || { id: 'app-toaster', limit: true };
+  const { id = 'app-toaster', limit = true } = options || {};
 
   const dismiss = useCallback((id: string) => {
     toast.dismiss(id);
