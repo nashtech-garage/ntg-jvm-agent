@@ -4,12 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Trash, SquarePen, MoreVertical, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '../contexts/ChatContext';
-import { toast } from 'sonner';
 import { Constants } from '../constants/constant';
 import { customizeFetch } from '../utils/custom-fetch';
 import { useAuth } from '@/contexts/AuthContext';
 import ShareConversationModal from './ShareConversationModal';
 import { Button } from './ui/button';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function Sidebar() {
   const { signOut } = useAuth();
@@ -21,6 +21,7 @@ export default function Sidebar() {
     setChatMessages,
     setConversations,
   } = useChatContext();
+  const { showError, showSuccess } = useToaster();
   const [collapsed, setCollapsed] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export default function Sidebar() {
 
   const renameConversation = async (id: string) => {
     if (!newTitle.trim()) {
-      toast.error('Conversation name cannot be empty');
+      showError('Conversation name cannot be empty');
       return;
     }
 
@@ -65,7 +66,7 @@ export default function Sidebar() {
 
       const jsonResult = await res.json();
       if (!res.ok) {
-        toast.error(jsonResult.error || 'Failed to rename conversation');
+        showError(jsonResult.error || 'Failed to rename conversation');
         return;
       }
 
@@ -75,9 +76,9 @@ export default function Sidebar() {
       setRenamingId(null);
       setNewTitle('');
       setOpenDropdown(null);
-      toast.success('Conversation renamed successfully');
+      showSuccess('Conversation renamed successfully');
     } catch (error) {
-      toast.error(`Error renaming conversation: ${error}`);
+      showError(`Error renaming conversation: ${error}`);
     }
   };
 
@@ -85,7 +86,7 @@ export default function Sidebar() {
     const res = await customizeFetch(`/api/chat?conversationId=${id}`, { method: 'DELETE' });
     const jsonResult = await res.json();
     if (!res.ok) {
-      toast.error(jsonResult.error);
+      showError(jsonResult.error);
       return;
     }
 
@@ -96,7 +97,7 @@ export default function Sidebar() {
       router.replace(`/`);
     }
     setOpenDropdown(null);
-    toast.success(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
+    showSuccess(Constants.DELETE_CONVERSATION_SUCCESS_MSG);
   };
 
   const shareConversation = (id: string, title: string) => {

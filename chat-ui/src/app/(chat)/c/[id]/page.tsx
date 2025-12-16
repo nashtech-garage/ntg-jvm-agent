@@ -3,14 +3,15 @@
 import { useChatContext } from '@/contexts/ChatContext';
 import ChatPage from '../../page';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import { customizeFetch } from '@/utils/custom-fetch';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { setChatMessages, setActiveConversationId } = useChatContext();
+  const { showError } = useToaster();
 
   useEffect(() => {
     const fetchConversation = async () => {
@@ -20,11 +21,11 @@ export default function ConversationPage() {
         setChatMessages(messages);
         setActiveConversationId(id);
       } catch (error) {
-        toast.error(`Error fetching conversation: ${error}`);
+        showError(`Error fetching conversation: ${error}`);
       }
     };
     fetchConversation();
-  }, [id, setChatMessages, setActiveConversationId]);
+  }, [id, setChatMessages, setActiveConversationId, showError]);
 
   return <ChatPage />;
 }

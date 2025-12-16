@@ -12,8 +12,8 @@ import {
 } from 'react';
 import { Conversation } from '@/models/conversation';
 import { ChatMessage } from '@/models/chat-message';
-import { toast } from 'sonner';
 import { Agent } from '../models/agent';
+import { useToaster } from './ToasterContext';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -31,7 +31,31 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
+const fetchAll = async () => {
+  try {
+    const [userInfoRes, conversationsRes] = await Promise.all([
+      fetch('/api/user'),
+      fetch('/api/chat'),
+    ]);
+    const [userInfoData, conversationsData] = await Promise.all([
+      userInfoRes.json(),
+      conversationsRes.json(),
+    ]);
+    return {
+      userName: userInfoData?.sub || 'Unknown user',
+      conversations: conversationsData,
+    };
+  } catch (error) {
+    return {
+      error: `Error fetching user information or conversations: ${error}`,
+      userName: 'Unknown user',
+      conversations: [] as Conversation[],
+    };
+  }
+};
+
 export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const { showError } = useToaster();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -41,25 +65,15 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   // Load user info and all conversations on mount
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [userInfoRes, conversationsRes] = await Promise.all([
-          fetch('/api/user'),
-          fetch('/api/chat'),
-        ]);
-        const [userInfoData, conversationsData] = await Promise.all([
-          userInfoRes.json(),
-          conversationsRes.json(),
-        ]);
-        setUserName(userInfoData?.sub || 'Unknown user');
-        setConversations(conversationsData);
-      } catch (error) {
-        toast.error(`Error fetching user information or conversations: ${error}`);
+    fetchAll().then(({ userName, conversations, error }) => {
+      if (error) {
+        showError(error);
+      } else {
+        setUserName(userName);
+        setConversations(conversations);
       }
-    };
-
-    fetchAll();
-  }, []);
+    });
+  }, [showError]);
 
   const value = useMemo(
     () => ({

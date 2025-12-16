@@ -4,7 +4,6 @@ import { useState } from 'react';
 import ChatBox from '@/components/chat-box';
 import ChatResult from '@/components/chat-result';
 import { ChatResponse } from '@/models/chat-response';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/contexts/ChatContext';
 import { FileSelectInfo } from '@/models/file-select-info';
@@ -12,6 +11,7 @@ import { customizeFetch } from '@/utils/custom-fetch';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
 import logger from '@/utils/logger';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function Page() {
   const {
@@ -24,6 +24,7 @@ export default function Page() {
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const router = useRouter();
+  const { showError } = useToaster();
 
   const askQuestion = async (
     question: string,
@@ -61,7 +62,7 @@ export default function Page() {
       } catch (err) {
         logger.error('Failed to parse error response body', err);
       }
-      toast.error(errorMessage);
+      showError(errorMessage);
       return new Error(errorMessage);
     }
 
@@ -105,7 +106,7 @@ export default function Page() {
         }
 
         if (eventName === 'error') {
-          toast.error(data || 'Unexpected server error');
+          showError(data || 'Unexpected server error');
           return new Error(data);
         }
       }
@@ -174,7 +175,7 @@ export default function Page() {
       handleFinalResponse
     );
     if (result instanceof Error) {
-      toast.error(result.message);
+      showError(result.message);
       setIsTyping(false);
       setChatMessages((prev) => prev.filter((msg) => msg.id !== 'streaming'));
     }
