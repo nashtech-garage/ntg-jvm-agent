@@ -3,27 +3,24 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
-import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
-import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
+import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.font.PDType1Font
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 import java.io.ByteArrayOutputStream
-import java.util.UUID
+import java.nio.charset.StandardCharsets
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -34,18 +31,15 @@ class KnowledgeImportServiceIT
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val chunkRepo: KnowledgeChunkRepository,
         private val agentRepo: AgentRepository,
-        private val embeddingJobRepo: EmbeddingJobRepository,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
 
         @BeforeEach
         fun setUp() {
-            embeddingJobRepo.deleteAll()
             chunkRepo.deleteAll()
             knowledgeRepo.deleteAll()
             agentRepo.deleteAll()
-
             agentRepo.flush()
             knowledgeRepo.flush()
             chunkRepo.flush()
@@ -54,7 +48,7 @@ class KnowledgeImportServiceIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
-                        provider = "OpenAI",
+                        provider = ProviderType.OPENAI,
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
