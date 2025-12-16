@@ -1,11 +1,13 @@
 package com.ntgjvmagent.orchestrator.dto.request
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class AgentRequestDto(
@@ -16,7 +18,8 @@ data class AgentRequestDto(
     @field:Size(max = 5_000_000, message = "Avatar must not exceed 5MB")
     val avatar: String? = null,
     val active: Boolean = true,
-    val provider: String,
+    @field:NotNull(message = "Provider must not be null")
+    val provider: ProviderType,
     @field:NotBlank(message = "Base url must not be blank")
     val baseUrl: String,
     @field:NotBlank(message = "Api key must not be blank")
