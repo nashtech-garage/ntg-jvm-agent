@@ -3,15 +3,17 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
+import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
-import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
 import com.ntgjvmagent.orchestrator.storage.core.ObjectStorage
+import com.ntgjvmagent.orchestrator.viewmodel.KnowledgeImportingResponseVm
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
@@ -24,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
-import java.util.UUID
+import java.nio.charset.StandardCharsets
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -58,7 +60,7 @@ class KnowledgeImportServiceIT
                 agentRepo.save(
                     Agent(
                         name = "Test Agent",
-                        provider = "OpenAI",
+                        provider = ProviderType.OPENAI,
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",

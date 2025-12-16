@@ -18,6 +18,9 @@ import org.springframework.scheduling.annotation.EnableScheduling
         org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration::class,
         org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration::class,
         org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration::class,
+        org.springframework.ai.model.anthropic.autoconfigure.AnthropicChatAutoConfiguration::class,
+        org.springframework.ai.model.ollama.autoconfigure.OllamaChatAutoConfiguration::class,
+        org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration::class,
     ],
 )
 class OrchestratorApplication
