@@ -8,4 +8,6 @@ import java.util.UUID
 @Repository
 interface AgentRepository : JpaRepository<Agent, UUID> {
     fun findAllByActiveTrue(): List<Agent>
+
+    fun findByNameContainingIgnoreCase(name: String): List<Agent>
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
@@ -28,8 +29,10 @@ class AgentController(
 ) {
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "List all agents")
-    fun getAll(): List<AgentListResponseDto> = service.getAll()
+    @Operation(summary = "List agents or search by name")
+    fun getAll(
+        @RequestParam(required = false) name: String?,
+    ): List<AgentListResponseDto> = service.getAll(name)
 
     @GetMapping("/active")
     @PreAuthorize("hasAuthority('SCOPE_agents.read') or hasRole('ROLE_ADMIN') or hasRole('ROLE_CLIENT')")
