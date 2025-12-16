@@ -32,13 +32,8 @@ export function ToasterProvider() {
   );
 }
 
-/**
- * Creates namespaced success/error toast helpers.
- * @returns Object with `successToaster` and `errorToaster` that show the toast and return its id.
- */
 export function useToaster(options?: ToastOptions) {
-  const toasterId = options?.id ?? 'app-toaster';
-  const limit = options?.limit ?? true;
+  const { id, limit } = options || { id: 'app-toaster', limit: true };
 
   const dismiss = useCallback((id: string) => {
     toast.dismiss(id);
@@ -46,24 +41,24 @@ export function useToaster(options?: ToastOptions) {
 
   const showError = useCallback(
     (message: string) => {
-      const errorToasterId = `${toasterId}-error`;
+      const errorToasterId = `${id}-error`;
       if (limit) {
         dismiss(errorToasterId);
       }
       return toast.error(message, { id: errorToasterId });
     },
-    [dismiss, limit, toasterId]
+    [dismiss, limit, id]
   );
 
   const showSuccess = useCallback(
     (message: string) => {
-      const successToasterId = `${toasterId}-success`;
+      const successToasterId = `${id}-success`;
       if (limit) {
         dismiss(successToasterId);
       }
       return toast.success(message, { id: successToasterId });
     },
-    [dismiss, limit, toasterId]
+    [dismiss, limit, id]
   );
 
   return {
