@@ -15,7 +15,6 @@ import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel
 import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingOptions
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode
-import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.openai.OpenAiEmbeddingModel
 import org.springframework.ai.openai.OpenAiEmbeddingOptions
 import org.springframework.ai.openai.api.OpenAiApi
@@ -96,19 +95,20 @@ class DynamicModelService(
                 embeddingsPath = agent.embeddingsPath,
             )
         // Use ChatModelProvider to create chat model
-        val chatModel = chatModelProvider.createChatModel(
-            providerType = agentConfig.provider,
-            baseUrl = agentConfig.baseUrl,
-            apiKey = agentConfig.apiKey,
-            modelName = agentConfig.model,
-            temperature = agentConfig.temperature,
-            topP = agentConfig.topP,
-            maxTokens = agentConfig.maxTokens,
-            frequencyPenalty = agentConfig.frequencyPenalty,
-            presencePenalty = agentConfig.presencePenalty,
-            chatCompletionsPath = agentConfig.chatCompletionsPath,
-            embeddingsPath = agentConfig.embeddingsPath,
-        )
+        val chatModel =
+            chatModelProvider.createChatModel(
+                providerType = agentConfig.provider,
+                baseUrl = agentConfig.baseUrl,
+                apiKey = agentConfig.apiKey,
+                modelName = agentConfig.model,
+                temperature = agentConfig.temperature,
+                topP = agentConfig.topP,
+                maxTokens = agentConfig.maxTokens,
+                frequencyPenalty = agentConfig.frequencyPenalty,
+                presencePenalty = agentConfig.presencePenalty,
+                chatCompletionsPath = agentConfig.chatCompletionsPath,
+                embeddingsPath = agentConfig.embeddingsPath,
+            )
 
         val chatModel = createChatModel(api, agent.model)
         val springEmbeddingModel = createSpringEmbeddingModel(api, agent.embeddingModel, agent.dimension)
@@ -125,8 +125,10 @@ class DynamicModelService(
     // =====================================================================
     // Embedding Models (provider-based)
     // =====================================================================
-    private fun createEmbeddingModel(agentConfig: com.ntgjvmagent.orchestrator.entity.agent.Agent): SpringEmbeddingModel {
-        return when (agentConfig.provider) {
+    private fun createEmbeddingModel(
+        agentConfig: com.ntgjvmagent.orchestrator.entity.agent.Agent,
+    ): SpringEmbeddingModel =
+        when (agentConfig.provider) {
             ProviderType.OPENAI ->
                 createOpenAiEmbeddingModel(
                     baseUrl = agentConfig.baseUrl,
@@ -146,15 +148,20 @@ class DynamicModelService(
                 )
 
             ProviderType.OLLAMA ->
-                throw UnsupportedOperationException("Ollama embedding is not yet supported. Support will be added in future versions.")
+                throw UnsupportedOperationException(
+                    "Ollama embedding is not yet supported. Support will be added in future versions.",
+                )
 
             ProviderType.BEDROCK ->
-                throw UnsupportedOperationException("Bedrock embedding is not yet supported. Support will be added in future versions.")
+                throw UnsupportedOperationException(
+                    "Bedrock embedding is not yet supported. Support will be added in future versions.",
+                )
 
             ProviderType.ANTHROPIC ->
-                throw UnsupportedOperationException("Anthropic embedding is not yet supported. Support will be added in future versions.")
+                throw UnsupportedOperationException(
+                    "Anthropic embedding is not yet supported. Support will be added in future versions.",
+                )
         }
-    }
 
     // =====================================================================
     // OpenAI Embedding Model
