@@ -11,7 +11,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className="h-screen flex">
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col overflow-x-hidden">
           <AuthProvider>{children}</AuthProvider>
         </main>
         <ToasterProvider />

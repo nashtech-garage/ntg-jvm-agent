@@ -6,7 +6,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     <ChatProvider>
       <div className="flex h-screen">
         <Sidebar />
-        <div className="flex-1 flex flex-col">{children}</div>
+        <div className="flex-1 flex flex-col overflow-x-auto">{children}</div>
       </div>
     </ChatProvider>
   );

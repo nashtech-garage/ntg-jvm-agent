@@ -106,7 +106,7 @@ export default function ChatResult({
       {isTyping && (
         <div className="flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-muted shadow-sm shadow-[0_6px_14px_color-mix(in_oklab,var(--color-border)_70%,transparent)]">
           {agentAvatar ? (
-            <img
+            <Image
               src={agentAvatar}
               alt={agentName || 'Agent'}
               className="h-6 w-6 rounded-full object-cover flex-shrink-0"
