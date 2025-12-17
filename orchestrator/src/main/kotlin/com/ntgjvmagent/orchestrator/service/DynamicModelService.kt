@@ -32,7 +32,6 @@ import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 @Service
 class DynamicModelService(
     private val chatModelProvider: ChatModelProvider,
-    private val toolCallingManager: ToolCallingManager,
     private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
     private val agentRepo: AgentRepository,
