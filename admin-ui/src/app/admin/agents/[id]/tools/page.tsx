@@ -89,7 +89,7 @@ export default function ToolsPage() {
       {isLoading && <p>Loading...</p>}
       <Button
         disabled={!agent}
-        onClick={() => agent && router.push(`/agents/${agent.id}/tools/new`)}
+        onClick={() => agent && router.push(`/admin/agents/${agent.id}/tools/add`)}
       >
         <Plus className="h-4 w-4" />
         Add a tool

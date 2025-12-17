@@ -26,9 +26,7 @@ export async function GET(_req: Request) {
   return Response.json(data);
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
+export async function POST(req: Request) {
   const token = await getAccessToken();
 
   if (!token) {
@@ -37,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const body = await req.json();
 
-  const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/agents/${id}/tools`, {
+  const backendRes = await fetch(`${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/tools`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -48,11 +46,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (!backendRes.ok) {
-    return new Response('Failed to create tool', {
+    const errorRes = await backendRes.json();
+    return new Response(`Failed to add tool: ${errorRes.message}`, {
       status: backendRes.status,
     });
   }
 
-  const data = await backendRes.json();
-  return Response.json(data);
+  return backendRes;
 }

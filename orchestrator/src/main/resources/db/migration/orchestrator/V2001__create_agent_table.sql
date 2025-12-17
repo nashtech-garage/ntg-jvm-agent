@@ -55,9 +55,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_name_not_deleted ON agent (lower(name
 CREATE TABLE IF NOT EXISTS tool (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(100) NOT NULL,
-    type         VARCHAR(50),
+    type         VARCHAR(50) NOT NULL CHECK (type IN ('MCP')),
     description  TEXT,
-    config       JSONB,
+    definition   JSONB,
+    base_url     VARCHAR(200) NULL,
+    connection_config   JSONB NULL,
     active       BOOLEAN NOT NULL DEFAULT TRUE,
     deleted_at   TIMESTAMPTZ,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -71,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_tool_type ON tool(type);
 CREATE INDEX IF NOT EXISTS idx_tool_active ON tool(active);
 CREATE INDEX IF NOT EXISTS idx_tool_deleted_at ON tool(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_tool_active_not_deleted ON tool (active) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_tool_config_jsonb ON tool USING gin (config);
+CREATE INDEX IF NOT EXISTS idx_tool_definition_jsonb ON tool USING gin (definition);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_tool_name_not_deleted ON tool (lower(name)) WHERE deleted_at IS NULL;
 
 -- =======================

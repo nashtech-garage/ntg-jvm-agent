@@ -7,6 +7,7 @@ import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.service.AgentToolService
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.assertThrows
@@ -52,9 +53,20 @@ class AgentToolAssignmentServiceIT
                         embeddingsPath = "/embeddings",
                     ),
                 )
-            activeTool = toolRepository.save(Tool(name = "Laser Gun ${UUID.randomUUID()}").apply { active = true })
+            activeTool =
+                toolRepository.save(
+                    Tool(
+                        name = "Laser Gun ${UUID.randomUUID()}",
+                        type = Constant.MCP_TOOL_TYPE,
+                    ).apply { active = true },
+                )
             inactiveTool =
-                toolRepository.save(Tool(name = "Inactive Gadget ${UUID.randomUUID()}").apply { active = false })
+                toolRepository.save(
+                    Tool(
+                        name = "Inactive Gadget ${UUID.randomUUID()}",
+                        type = Constant.MCP_TOOL_TYPE,
+                    ).apply { active = false },
+                )
         }
 
         @Test

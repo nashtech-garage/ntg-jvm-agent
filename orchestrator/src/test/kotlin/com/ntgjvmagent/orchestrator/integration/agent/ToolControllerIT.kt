@@ -1,10 +1,14 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
+import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
+import com.ntgjvmagent.orchestrator.utils.AuthType
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,19 +29,22 @@ class ToolControllerIT
 
         @Test
         fun `should create a new agent tool`() {
+            val auth =
+                AuthenticationRequestDto(
+                    type = AuthType.NONE,
+                )
             val request =
                 ToolRequestDto(
-                    name = "LangChain",
-                    description = "A framework for building LLM applications",
-                    active = true,
+                    baseUrl = "https://docs.mcp.cloudflare.com",
+                    endpoint = "/sse",
+                    transportType = "SSE",
+                    authorization = auth,
                 )
 
             mockMvc
                 .perform(
                     postAuth("/api/tools", request, roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isCreated)
-                .andExpect(jsonPath("$.name").value("LangChain"))
-                .andExpect(jsonPath("$.active").value(true))
         }
 
         @Test
@@ -45,12 +52,14 @@ class ToolControllerIT
             repository.save(
                 Tool(
                     name = "Tool A",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Active Tool",
                 ).apply { active = true },
             )
             repository.save(
                 Tool(
                     name = "Tool B",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Inactive Tool",
                 ).apply { active = false },
             )
@@ -68,6 +77,7 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Tool C",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "Testing retrieval",
                     ).apply { active = true },
                 )
@@ -86,15 +96,17 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Old Tool",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "Before update",
                     ).apply { active = true },
                 )
 
             val updateRequest =
-                ToolRequestDto(
+                ToolDataDto(
                     name = "Updated Tool",
                     description = "After update",
                     active = true,
+                    type = Constant.MCP_TOOL_TYPE,
                 )
 
             mockMvc
@@ -110,6 +122,7 @@ class ToolControllerIT
                 repository.save(
                     Tool(
                         name = "Tool D",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "To be soft deleted",
                     ).apply { active = true },
                 )

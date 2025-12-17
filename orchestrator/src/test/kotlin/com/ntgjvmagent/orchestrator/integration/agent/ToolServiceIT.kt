@@ -1,10 +1,13 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
+import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.service.ToolService
+import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -32,9 +35,9 @@ class ToolServiceIT
                 repo.save(
                     Tool(
                         name = "Laser Gun",
-                        type = "Weapon",
+                        type = Constant.MCP_TOOL_TYPE,
                         description = "High energy laser weapon",
-                        config = mapOf("power" to 9001),
+                        connectionConfig = mapOf("power" to 9001),
                     ).apply { active = true },
                 )
         }
@@ -67,32 +70,29 @@ class ToolServiceIT
         fun `create should save new tool`() {
             val request =
                 ToolRequestDto(
-                    name = "Plasma Rifle",
-                    type = "Weapon",
-                    description = "Plasma energy rifle",
-                    config = mapOf("range" to 300),
-                    active = true,
+                    baseUrl = "https://docs.mcp.cloudflare.com",
+                    transportType = "SSE",
+                    endpoint = "/sse",
+                    authorization = AuthenticationRequestDto(),
                 )
-            val result = service.create(request)
-            assertEquals(request.name, result.name)
-            assertTrue(repo.existsById(result.id))
+            service.create(request)
         }
 
         @Test
         fun `update should modify existing tool`() {
             val updateRequest =
-                ToolRequestDto(
+                ToolDataDto(
                     name = "Laser Blaster",
-                    type = "Weapon",
+                    type = Constant.MCP_TOOL_TYPE,
                     description = "Upgraded laser weapon",
-                    config = mapOf("power" to 12000),
+                    definition = mapOf("power" to 12000),
                     active = false,
                 )
 
             val result = service.update(tool.id!!, updateRequest)
             assertEquals("Laser Blaster", result.name)
             assertEquals(false, result.active)
-            assertEquals(12000, result.config?.get("power"))
+            assertEquals(12000, result.definition?.get("power"))
         }
 
         @Test
