@@ -19,6 +19,11 @@
     "next-auth": "^4.24.13",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.0",
+    "react-textarea-autosize": "^8.5.9",
+    "remark-gfm": "^4.0.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -34,11 +39,6 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-tailwindcss": "^4.0.0-beta.0",
     "prettier": "^3.3.3",
-    "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^16.1.0",
-    "react-textarea-autosize": "^8.5.9",
-    "remark-gfm": "^4.0.1",
-    "sonner": "^2.0.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
