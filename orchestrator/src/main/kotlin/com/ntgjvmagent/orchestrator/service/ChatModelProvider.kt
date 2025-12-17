@@ -2,6 +2,8 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.azure.ai.openai.OpenAIClientBuilder
 import com.azure.core.credential.AzureKeyCredential
+import com.azure.core.http.policy.FixedDelayOptions
+import com.azure.core.http.policy.RetryOptions
 import com.ntgjvmagent.orchestrator.component.SimpleApiKey
 import com.ntgjvmagent.orchestrator.enum.ProviderType
 import io.micrometer.observation.ObservationRegistry
@@ -12,6 +14,7 @@ import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.retry.support.RetryTemplate
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
@@ -19,6 +22,7 @@ import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
 import java.math.BigDecimal
+import java.time.Duration
 
 /**
  * Service to create ChatModel instances based on provider type and configuration.
@@ -33,6 +37,7 @@ import java.math.BigDecimal
 @Service
 class ChatModelProvider(
     private val toolCallingManager: ToolCallingManager,
+    @Qualifier("noRetryTemplate")
     private val retryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
 ) {
@@ -149,6 +154,7 @@ class ChatModelProvider(
         val clientBuilder =
             OpenAIClientBuilder()
                 .credential(AzureKeyCredential(apiKey))
+                .retryOptions(RetryOptions(FixedDelayOptions(0, Duration.ZERO)))
                 .endpoint(baseUrl)
 
         val optionsBuilder =
@@ -159,7 +165,10 @@ class ChatModelProvider(
                 .topP(topP?.toDouble() ?: 1.0)
                 .frequencyPenalty(frequencyPenalty?.toDouble() ?: 0.0)
                 .presencePenalty(presencePenalty?.toDouble() ?: 0.0)
-                .maxTokens(maxTokens)
+
+        if (maxTokens != null) {
+            optionsBuilder.maxTokens(maxTokens)
+        }
 
         val options = optionsBuilder.build()
 
