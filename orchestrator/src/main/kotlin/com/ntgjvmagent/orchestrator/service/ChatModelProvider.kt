@@ -41,6 +41,7 @@ class ChatModelProvider(
     private val retryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
 ) {
+    @Suppress("LongParameterList")
     fun createChatModel(
         providerType: ProviderType,
         baseUrl: String,
@@ -130,6 +131,7 @@ class ChatModelProvider(
      * baseUrl: https://resource.openai.azure.com/
      * modelName: deployment name (e.g., gpt-4o)
      */
+    @Suppress("LongParameterList", "MagicNumber")
     private fun createAzureOpenAiChatModel(
         baseUrl: String, // https://<resource>.openai.azure.com
         apiKey: String,
@@ -169,46 +171,4 @@ class ChatModelProvider(
             .observationRegistry(observationRegistry)
             .build()
     }
-
-    /**
-     * Creates Ollama ChatModel using native OllamaChatModel.
-     * TODO: Implement Ollama support in future versions.
-     * baseUrl: http://localhost:11434
-     * model: llama2, mistral, neural-chat
-     */
-    private fun createOllamaChatModel(
-        baseUrl: String,
-        modelName: String,
-        temperature: BigDecimal?,
-        topP: BigDecimal?,
-        maxTokens: Int?,
-    ): ChatModel = throw UnsupportedOperationException("Ollama support coming soon")
-
-    /**
-     * Creates Amazon Bedrock ChatModel using native BedrockChatModel.
-     * TODO: Implement Bedrock support in future versions.
-     * model: anthropic.claude-sonnet-4-5-20250929-v1:0
-     * Requires AWS credentials configured
-     */
-    private fun createBedrockChatModel(
-        modelName: String,
-        temperature: BigDecimal?,
-        topP: BigDecimal?,
-        maxTokens: Int?,
-        additionalParams: Map<String, Any>?,
-    ): ChatModel = throw UnsupportedOperationException("Bedrock support coming soon")
-
-    /**
-     * Creates Anthropic ChatModel using native AnthropicChatModel.
-     * TODO: Implement Anthropic support in future versions.
-     * model: claude-3-5-sonnet-20241022, claude-3-opus-20240229
-     * baseUrl: https://api.anthropic.com (default)
-     */
-    private fun createAnthropicChatModel(
-        apiKey: String,
-        modelName: String,
-        temperature: BigDecimal?,
-        topP: BigDecimal?,
-        maxTokens: Int?,
-    ): ChatModel = throw UnsupportedOperationException("Anthropic support coming soon")
 }

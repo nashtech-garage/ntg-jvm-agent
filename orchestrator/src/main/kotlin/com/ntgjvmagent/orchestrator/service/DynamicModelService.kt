@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 
 @Service
+@Suppress("TooManyFunctions")
 class DynamicModelService(
     private val chatModelProvider: ChatModelProvider,
     private val noRetryTemplate: RetryTemplate,
