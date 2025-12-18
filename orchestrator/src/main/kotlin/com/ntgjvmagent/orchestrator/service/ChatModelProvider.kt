@@ -53,7 +53,6 @@ class ChatModelProvider(
         presencePenalty: BigDecimal? = null,
         chatCompletionsPath: String = "/v1/chat/completions",
         embeddingsPath: String = "/v1/embeddings",
-        additionalParams: Map<String, Any>? = null,
     ): ChatModel =
         when (providerType) {
             ProviderType.OPENAI ->
@@ -61,11 +60,6 @@ class ChatModelProvider(
                     baseUrl,
                     apiKey,
                     modelName,
-                    temperature,
-                    topP,
-                    maxTokens,
-                    frequencyPenalty,
-                    presencePenalty,
                     chatCompletionsPath,
                     embeddingsPath,
                 )
@@ -107,11 +101,6 @@ class ChatModelProvider(
         baseUrl: String,
         apiKey: String,
         modelName: String,
-        temperature: BigDecimal?,
-        topP: BigDecimal?,
-        maxTokens: Int?,
-        frequencyPenalty: BigDecimal?,
-        presencePenalty: BigDecimal?,
         chatCompletionsPath: String,
         embeddingsPath: String,
     ): ChatModel {
