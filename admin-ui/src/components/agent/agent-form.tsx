@@ -9,7 +9,7 @@ import {
 } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
@@ -33,6 +33,10 @@ import { AgentFormParams } from '@/types/agent';
 import type * as monaco from 'monaco-editor';
 import dynamic from 'next/dynamic';
 import AvatarUpload from './avatar-upload';
+import { Dropdown } from '../dropdown';
+import { Provider, ProviderDropDownItem } from '@/types/provider';
+import logger from '@/utils/logger';
+import { PROVIDER_PATH } from '@/constants/url';
 const Monaco = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
 // Zod schema for full Agent
@@ -86,6 +90,150 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
 
   // Detect if it's create or edit
   const isEdit = !!initialValues?.id;
+
+  const [providers, setProviders] = useState<ProviderDropDownItem[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [selectedEmbeddingModelId, setSelectedEmbeddingModelId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProviders() {
+      try {
+        const response = await fetch(PROVIDER_PATH.PROVIDERS);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load providers: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setProviders(data);
+      } catch (error) {
+        logger.error('Error fetching providers:', error);
+      }
+    }
+    loadProviders();
+  }, []);
+
+  const [providerDetail, setProviderDetail] = useState<Provider | null>(null);
+
+  const loadProviderDetail = async (id: string): Promise<Provider> => {
+    try {
+      const res = await fetch(PROVIDER_PATH.PROVIDER_DETAIL(id));
+
+      if (!res.ok) {
+        const error = new Error(
+          `Failed to load provider detail for id "${id}": ${res.status} ${res.statusText}`
+        );
+        logger.error(error.message);
+        throw error;
+      }
+      return res.json();
+    } catch (err) {
+      logger.error('Error fetching provider detail:', err);
+      throw err;
+    }
+  };
+
+  const loadAndSetProviderDetail = async (providerId: string) => {
+    const provider = providers.find((p) => p.id === providerId);
+    if (!provider?.active) return;
+
+    setSelectedProvider(providerId);
+    form.setValue('provider', provider.name);
+
+    const data = await loadProviderDetail(providerId);
+    setProviderDetail(data);
+
+    // autofill provider-level fields
+    form.setValue('baseUrl', data.baseUrl);
+    form.setValue('chatCompletionsPath', data.chatCompletionsPath);
+    form.setValue('embeddingsPath', data.embeddingsPath);
+
+    // default model
+    if (data.models?.length) {
+      form.setValue('model', data.models[0].modelName);
+      setSelectedModelId(data.models[0].id);
+    }
+
+    // default embedding model
+    if (data.embeddingModels?.length) {
+      form.setValue('embeddingModel', data.embeddingModels[0].embeddingName);
+      setSelectedEmbeddingModelId(data.embeddingModels[0].id);
+    }
+  };
+
+  useEffect(() => {
+    if (!providerDetail) return;
+
+    // sync model dropdown
+    const modelName = form.getValues('model');
+    if (modelName) {
+      const matchedModel = providerDetail.models?.find((m) => m.modelName === modelName);
+      if (matchedModel) {
+        setSelectedModelId(matchedModel.id);
+        form.setValue('model', matchedModel.modelName);
+        form.setValue('topP', matchedModel.defaultTopP);
+        form.setValue('temperature', matchedModel.defaultTemperature);
+        form.setValue('maxTokens', matchedModel.defaultMaxTokens);
+        form.setValue('frequencyPenalty', matchedModel.defaultFrequencyPenalty);
+        form.setValue('presencePenalty', matchedModel.defaultPresencePenalty);
+      }
+    }
+
+    // sync embedding model dropdown
+    const embeddingName = form.getValues('embeddingModel');
+    if (embeddingName) {
+      const matchedEmbedding = providerDetail.embeddingModels?.find(
+        (e) => e.embeddingName === embeddingName
+      );
+      if (matchedEmbedding) {
+        setSelectedEmbeddingModelId(matchedEmbedding.id);
+        form.setValue('embeddingModel', matchedEmbedding.embeddingName);
+        form.setValue('dimension', matchedEmbedding.dimension);
+      }
+    }
+  }, [providerDetail, form]);
+
+  const handleProviderChange = async (providerId: string) => {
+    try {
+      await loadAndSetProviderDetail(providerId);
+    } catch (err) {
+      logger.error('Failed to fetch provider detail:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!initialValues?.provider || providers.length === 0) return;
+
+    const matched = providers.find((p) => p.name === initialValues.provider);
+    if (!matched) return;
+
+    loadAndSetProviderDetail(matched.id).catch((err) => {
+      logger.error('Failed to init provider detail:', err);
+    });
+  }, [providers, initialValues?.provider]);
+
+  const handleModelChange = (id: string) => {
+    setSelectedModelId(id);
+    const selected = providerDetail?.models?.find((m) => m.id === id);
+    if (!selected) {
+      return;
+    }
+    form.setValue('model', selected.modelName);
+    form.setValue('topP', selected.defaultTopP);
+    form.setValue('temperature', selected.defaultTemperature);
+    form.setValue('maxTokens', selected.defaultMaxTokens);
+    form.setValue('frequencyPenalty', selected.defaultFrequencyPenalty);
+    form.setValue('presencePenalty', selected.defaultPresencePenalty);
+  };
+
+  const handleEmbeddingModelChange = (id: string) => {
+    setSelectedEmbeddingModelId(id);
+    const selected = providerDetail?.embeddingModels?.find((e) => e.id === id);
+    if (!selected) return;
+    form.setValue('embeddingModel', selected.embeddingName);
+    form.setValue('dimension', selected.dimension);
+  };
 
   return (
     <div className="space-y-6">
@@ -152,8 +300,22 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                 {/* ------------------- PROVIDER ------------------- */}
                 <TabsContent value="provider" className="space-y-4 pt-4">
                   <TwoColumn>
-                    <TextField<AgentFormValues> form={form} name="provider" label="Provider" />
-                    <TextField<AgentFormValues> form={form} name="baseUrl" label="Base URL" />
+                    <Dropdown
+                      label="Provider"
+                      options={providers.map((p) => ({
+                        label: p.name,
+                        value: p.id,
+                      }))}
+                      value={selectedProvider}
+                      onChange={handleProviderChange}
+                    />
+
+                    <TextField<AgentFormValues>
+                      form={form}
+                      name="baseUrl"
+                      label="Base URL"
+                      readOnly
+                    />
                   </TwoColumn>
                   <TextField<AgentFormValues>
                     form={form}
@@ -165,6 +327,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                     form={form}
                     name="chatCompletionsPath"
                     label="Chat Completions Path"
+                    readOnly
                   />
                 </TabsContent>
 
@@ -172,16 +335,34 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                 <TabsContent value="model" className="space-y-6 pt-4">
                   {/* ------------------- Provider Models ------------------- */}
                   <h3 className="text-lg font-semibold">Provider Models</h3>
-                  <TextField<AgentFormValues> form={form} name="model" label="Model" />
+
+                  <Dropdown
+                    label="Model"
+                    options={
+                      providerDetail?.models?.map((m) => ({
+                        label: m.modelName,
+                        value: m.id,
+                      })) ?? []
+                    }
+                    value={selectedModelId}
+                    onChange={handleModelChange}
+                  />
 
                   {/* ------------------- Embedding Configuration ------------------- */}
                   <h3 className="text-lg font-semibold">Embedding Configuration</h3>
                   <TwoColumn>
-                    <TextField<AgentFormValues>
-                      form={form}
-                      name="embeddingModel"
+                    <Dropdown
                       label="Embedding Model"
+                      options={
+                        providerDetail?.embeddingModels?.map((e) => ({
+                          label: e.embeddingName,
+                          value: e.id,
+                        })) ?? []
+                      }
+                      value={selectedEmbeddingModelId}
+                      onChange={handleEmbeddingModelChange}
                     />
+
                     <NumberField<AgentFormValues>
                       form={form}
                       name="dimension"
@@ -192,6 +373,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                     form={form}
                     name="embeddingsPath"
                     label="Embeddings API Path"
+                    readOnly
                   />
 
                   {/* ------------------- Generation Parameters ------------------- */}
@@ -319,6 +501,7 @@ interface TextFieldProps<T extends object> {
   name: Path<T>; // <-- use Path<T> instead of keyof T
   label: string;
   type?: string;
+  readOnly?: boolean;
 }
 
 export function TextField<T extends object>({
@@ -326,6 +509,7 @@ export function TextField<T extends object>({
   name,
   label,
   type = 'text',
+  readOnly = false,
 }: Readonly<TextFieldProps<T>>) {
   return (
     <FormField
@@ -335,7 +519,13 @@ export function TextField<T extends object>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input type={type} {...field} />
+            <Input
+              type={type}
+              {...field}
+              readOnly={readOnly}
+              onChange={readOnly ? undefined : field.onChange}
+              className={readOnly ? 'bg-muted cursor-not-allowed' : ''}
+            />
           </FormControl>
           <FormMessage />
         </FormItem>

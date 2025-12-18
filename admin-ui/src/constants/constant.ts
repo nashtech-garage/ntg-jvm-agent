@@ -1,5 +1,7 @@
 export const Constants = {
   THIRTY_DAYS_IN_SECONDS: 60 * 60 * 24 * 30,
+  FAILED_TO_FETCH_PROVIDER_NAME_MSG: 'Failed to fetch provider names.',
+  FAILED_TO_FETCH_PROVIDER_MSG: 'Failed to fetch providers.',
 };
 
 export enum LoginParams {
