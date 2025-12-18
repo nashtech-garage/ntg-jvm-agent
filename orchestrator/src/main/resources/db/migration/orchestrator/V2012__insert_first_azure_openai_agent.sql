@@ -52,4 +52,9 @@ INSERT INTO agent (
     NULL
 );
 
+-- Fix provider enum value from 'Open AI' to 'OPENAI' to match ProviderType enum
+UPDATE agent
+SET provider = 'OPENAI'
+WHERE provider = 'Open AI';
+
 -- Note: Replace {deployment-name} with your actual Azure OpenAI deployment name
