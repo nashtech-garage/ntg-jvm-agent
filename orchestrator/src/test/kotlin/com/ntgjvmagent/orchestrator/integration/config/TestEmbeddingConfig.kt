@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.integration.config
 import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.service.ChatModelProvider
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import io.micrometer.observation.ObservationRegistry
 import io.mockk.mockk
@@ -92,13 +93,13 @@ class TestEmbeddingConfig {
     @Bean
     @Primary
     fun testDynamicModelService(
+        chatModelProvider: ChatModelProvider,
         fakeReactiveEmbeddingModel: ReactiveEmbeddingModel,
         fakeSpringEmbeddingModel: SpringEmbeddingModel,
-        toolCallingManager: ToolCallingManager,
         agentRepo: AgentRepository, // REAL repository
     ): DynamicModelService =
         object : DynamicModelService(
-            toolCallingManager = toolCallingManager,
+            chatModelProvider = chatModelProvider,
             noRetryTemplate = RetryTemplate(),
             observationRegistry = ObservationRegistry.create(),
             agentRepo = agentRepo,
