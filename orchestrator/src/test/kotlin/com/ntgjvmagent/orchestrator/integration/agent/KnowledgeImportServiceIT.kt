@@ -1,14 +1,18 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
+import com.ntgjvmagent.orchestrator.embedding.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
+import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
@@ -18,15 +22,17 @@ import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.font.PDType1Font
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.assertNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
