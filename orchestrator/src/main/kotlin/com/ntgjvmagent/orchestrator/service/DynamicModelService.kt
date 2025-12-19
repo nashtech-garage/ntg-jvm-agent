@@ -2,12 +2,15 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.azure.ai.openai.OpenAIClientBuilder
 import com.azure.core.credential.AzureKeyCredential
+import com.azure.core.http.policy.FixedDelayOptions
+import com.azure.core.http.policy.RetryOptions
 import com.ntgjvmagent.orchestrator.component.SimpleApiKey
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.enum.ProviderType
+import com.ntgjvmagent.orchestrator.provider.ChatModelProvider
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.utils.Quadruple
 import io.micrometer.observation.ObservationRegistry
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
@@ -210,17 +214,24 @@ class DynamicModelService(
     // =====================================================================
     // Azure OpenAI Embedding Model
     // =====================================================================
+
     private fun createAzureOpenAiEmbeddingModel(
         baseUrl: String,
         apiKey: String,
-        embeddingModel: String, // Azure: deployment name embedding
+        embeddingModel: String, // Azure: deployment name for embeddings
         dimension: Int,
     ): SpringEmbeddingModel {
-        // 1) Azure OpenAI client (Azure SDK)
+
+        // Disable retries maxRetries = 0
+        val retryOptions = RetryOptions(FixedDelayOptions(0, Duration.ZERO))
+            // Never retry even if policy would consider it transient
+            .setShouldRetryCondition { false }
+
         val client =
             OpenAIClientBuilder()
                 .credential(AzureKeyCredential(apiKey))
                 .endpoint(baseUrl)
+                .retryOptions(retryOptions)
                 .buildClient()
 
         // 2) Options for embedding

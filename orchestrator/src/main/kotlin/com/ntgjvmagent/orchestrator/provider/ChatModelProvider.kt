@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.service
+package com.ntgjvmagent.orchestrator.provider
 
 import com.azure.ai.openai.OpenAIClientBuilder
 import com.azure.core.credential.AzureKeyCredential
