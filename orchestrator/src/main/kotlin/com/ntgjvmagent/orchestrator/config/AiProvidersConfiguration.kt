@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 class AiProvidersConfiguration {
     /**
      * Provide a placeholder OpenAIClientBuilder to prevent auto-configuration errors.
-     * The actual client creation is handled dynamically by ChatModelProvider using reflection.
+     * The actual client creation is handled directly by ChatModelProvider.
      */
     @Bean
     @ConditionalOnMissingBean(name = ["openAIClientBuilder"])
