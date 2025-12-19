@@ -25,9 +25,4 @@ class SpringAiEmbeddingModelAdapter(
             .fromCallable {
                 delegate.embed(texts)
             }.subscribeOn(Schedulers.boundedElastic())
-
-    /**
-     * Expose the underlying Spring model for PgVectorStore usage.
-     */
-    fun rawSpringModel(): SpringEmbeddingModel = delegate
 }

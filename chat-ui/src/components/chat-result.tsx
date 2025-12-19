@@ -109,6 +109,8 @@ export default function ChatResult({
             <Image
               src={agentAvatar}
               alt={agentName || 'Agent'}
+              width={24}
+              height={24}
               className="h-6 w-6 rounded-full object-cover flex-shrink-0"
             />
           ) : (

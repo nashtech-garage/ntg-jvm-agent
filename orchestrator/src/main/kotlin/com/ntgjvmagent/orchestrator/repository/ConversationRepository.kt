@@ -16,12 +16,12 @@ interface ConversationRepository : JpaRepository<ConversationEntity, UUID> {
                c.title AS title,
                c.createdAt AS createdAt
         FROM ConversationEntity c
-        WHERE c.username = :userName
+        WHERE c.createdBy.id = :userId
         AND c.isActive = true
         ORDER BY c.createdAt DESC
     """,
     )
     fun listActiveConversationsByUser(
-        @Param("userName") userName: String,
+        @Param("userId") userId: UUID,
     ): List<ConversationResponseVm>
 }

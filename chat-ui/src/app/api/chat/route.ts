@@ -8,7 +8,7 @@ const baseUrl = `${SERVER_CONFIG.ORCHESTRATOR_SERVER}/api/conversations`;
 export const GET = withAuthenticatedAPI(async (req, accessToken) => {
   const { searchParams } = new URL(req.url);
   const conversationId = searchParams.get('conversationId');
-  let targetUrl = `${baseUrl}/user`;
+  let targetUrl = `${baseUrl}`;
   try {
     if (conversationId) {
       targetUrl = `${baseUrl}/${conversationId}/messages`;

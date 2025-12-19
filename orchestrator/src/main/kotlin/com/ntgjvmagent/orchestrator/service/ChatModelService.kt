@@ -1,190 +1,274 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
-import com.ntgjvmagent.orchestrator.component.GlobalToolCallbackProvider
-import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
-import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
+import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
+import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.model.LlmAccountingContext
+import com.ntgjvmagent.orchestrator.model.TokenOperation
+import com.ntgjvmagent.orchestrator.token.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant
-import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
+import org.springframework.ai.chat.client.advisor.api.CallAdvisor
+import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.Prompt
-import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor
-import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter
-import org.springframework.ai.rag.generation.augmentation.QueryAugmenter
-import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever
-import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.vectorstore.filter.Filter
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Service
 class ChatModelService(
-    private val vectorStoreService: VectorStoreService,
-    private val agentKnowledgeRepo: AgentKnowledgeRepository,
-    private val agentToolRepository: AgentToolRepository,
-    private val filteredToolCallbackProvider: FilteredToolCallbackProvider,
-    private val globalToolCallbackProvider: GlobalToolCallbackProvider,
+    private val toolFacade: ToolExecutionFacade,
     private val dynamicModelService: DynamicModelService,
+    private val callAdvisorRegistry: CallAdvisorRegistry,
+    private val tokenFacade: TokenAccountingFacade,
 ) {
     private val logger = LoggerFactory.getLogger(ChatModelService::class.java)
 
+    /* =========================================================
+     * CHAT (streaming)
+     * ========================================================= */
+
     fun call(
-        request: ChatRequestVm,
+        userId: UUID,
+        request: ChatRequestDto,
         history: List<String> = emptyList(),
         summary: String = "",
     ): Flux<String> {
-        val combinedPrompt =
-            buildString {
-                if (summary.isNotBlank()) {
-                    appendLine("Conversation summary so far:")
-                    appendLine(summary)
-                    appendLine()
-                }
+        val combinedPrompt = buildCombinedPrompt(request, history, summary)
+        val agentConfig = dynamicModelService.getAgentConfig(request.agentId)
 
-                appendLine("User question: ${request.question}")
+        // Estimate + enforce CHAT input budget
+        val estimatedInputTokens =
+            tokenFacade.estimateInput(
+                model = agentConfig.model,
+                combinedPrompt = combinedPrompt,
+                history = history,
+                summary = summary,
+            )
 
-                if (history.isNotEmpty()) {
-                    appendLine("Chat history:")
-                    history.forEach { item ->
-                        appendLine(item)
-                    }
-                    appendLine()
-                }
-            }
+        tokenFacade.assertInputBudget(
+            userId = userId,
+            operation = TokenOperation.CHAT,
+            estimatedInputTokens = estimatedInputTokens,
+        )
 
-        val model = dynamicModelService.getChatModel(request.agentId)
-        val chatClient = ChatClient.builder(model).build()
-        val ragAdvisor = createRAGAdvisorForAgent(request.agentId)
+        val accountingContext =
+            LlmAccountingContext(
+                userId = userId,
+                agentId = request.agentId,
+                operation = TokenOperation.CHAT,
+                model = agentConfig.model,
+                inputText = combinedPrompt,
+                outputText = "",
+                estimatedInputTokens = estimatedInputTokens,
+                correlationId = request.correlationId,
+            )
 
-        var promptBuilder = chatClient.prompt()
-        if (ragAdvisor != null) {
-            promptBuilder = promptBuilder.advisors(ragAdvisor)
-        }
-        return promptBuilder
+        val chatClient = buildChatClient(request.agentId)
+        val advisors = callAdvisorRegistry.resolveForAgent(request.agentId)
+
+        return streamChatResponse(
+            userId = userId,
+            chatClient = chatClient,
+            advisors = advisors,
+            request = request,
+            accountingContext = accountingContext,
+        )
+    }
+
+    /* =========================================================
+     * SUMMARIZATION
+     * ========================================================= */
+
+    fun createSummarize(
+        userId: UUID,
+        agentId: UUID,
+        correlationId: String,
+        question: String,
+    ): String? {
+        val promptText =
+            """
+            ${Constant.SUMMARY_PROMPT}
+            "$question"
+            """.trimIndent()
+
+        return runSummarization(
+            userId = userId,
+            agentId = agentId,
+            promptText = promptText,
+            correlationId = correlationId,
+        )
+    }
+
+    fun createDynamicSummary(
+        userId: UUID,
+        agentId: UUID,
+        correlationId: String,
+        messagesToSummarize: List<String>,
+    ): String {
+        if (messagesToSummarize.isEmpty()) return ""
+
+        val promptText =
+            Constant.SUMMARY_UPDATE_PROMPT
+                .replace("{{latest_message}}", messagesToSummarize.joinToString("\n"))
+
+        return runSummarization(
+            userId = userId,
+            agentId = agentId,
+            promptText = promptText,
+            correlationId = correlationId,
+        ).orEmpty()
+    }
+
+    /* =========================================================
+     * Internal helpers
+     * ========================================================= */
+
+    private fun runSummarization(
+        userId: UUID,
+        agentId: UUID,
+        promptText: String,
+        correlationId: String,
+    ): String? {
+        val agentConfig = dynamicModelService.getAgentConfig(agentId)
+
+        // Estimate + enforce SUMMARIZATION budget
+        val estimatedInputTokens =
+            tokenFacade.estimateOutput(agentConfig.model, promptText)
+
+        tokenFacade.assertInputBudget(
+            userId = userId,
+            operation = TokenOperation.SUMMARIZATION,
+            estimatedInputTokens = estimatedInputTokens,
+        )
+
+        val chatModel = dynamicModelService.getChatModel(agentId)
+        val response = chatModel.call(Prompt(promptText))
+
+        val output =
+            response.result
+                ?.output
+                ?.text
+                .orEmpty()
+
+        // Accounting
+        tokenFacade.recordWithFallback(
+            ctx =
+                LlmAccountingContext(
+                    userId = userId,
+                    agentId = agentId,
+                    operation = TokenOperation.SUMMARIZATION,
+                    model = agentConfig.model,
+                    inputText = promptText,
+                    outputText = output,
+                    estimatedInputTokens = estimatedInputTokens,
+                    correlationId = correlationId,
+                ),
+            response = response,
+        )
+
+        return output.ifBlank { null }
+    }
+
+    private fun streamChatResponse(
+        userId: UUID,
+        chatClient: ChatClient,
+        advisors: List<CallAdvisor>,
+        request: ChatRequestDto,
+        accountingContext: LlmAccountingContext,
+    ): Flux<String> {
+        val accumulatedText = StringBuilder()
+        var finalResponse: ChatResponse? = null
+
+        return chatClient
+            .prompt()
+            .advisors(advisors)
             .system(
                 """
                 ${Constant.SYSTEM_PROMPT}
                 ${Constant.SEARCH_TOOL_INSTRUCTION}
                 """.trimIndent(),
-            ).toolCallbacks(createToolForAgent(request.agentId))
-            .user { u ->
-                u.text(combinedPrompt)
-                request.files
-                    ?.filter { !it.isEmpty }
-                    ?.forEach { file ->
-                        runCatching {
-                            val mime =
-                                MimeTypeUtils.parseMimeType(
-                                    file.contentType ?: Constant.PNG_CONTENT_TYPE,
-                                )
-                            val resource = InputStreamResource(file.inputStream)
-                            u.media(mime, resource)
-                        }.onFailure { ex ->
-                            logger.warn("Failed to read file ${file.originalFilename}: ${ex.message}")
-                        }
-                    }
-            }.stream()
-            .content()
+            ).toolCallbacks(
+                toolFacade.createToolCallbacks(
+                    userId = userId,
+                    agentId = request.agentId,
+                    correlationId = accountingContext.correlationId!!,
+                ),
+            ).user { u -> attachUserInput(u, accountingContext.inputText, request) }
+            .stream()
+            .chatClientResponse()
+            .flatMap { event ->
+                val response = event.chatResponse ?: return@flatMap Mono.empty()
+
+                finalResponse = response
+
+                val text =
+                    response.result
+                        ?.output
+                        ?.text
+                        ?.takeIf { it.isNotBlank() }
+
+                if (text != null) Mono.just(text) else Mono.empty()
+            }.doOnNext { chunk ->
+                accumulatedText.append(chunk)
+            }.doOnComplete {
+                tokenFacade.recordWithFallback(
+                    ctx =
+                        accountingContext.copy(
+                            outputText = accumulatedText.toString(),
+                        ),
+                    response = finalResponse ?: ChatResponse.builder().build(),
+                )
+            }
     }
 
-    fun createSummarize(
-        agentId: UUID,
-        question: String,
-    ): String? {
-        val prompt =
-            Prompt(
-                """
-                ${Constant.SUMMARY_PROMPT}
-                "$question"
-                """.trimIndent(),
-            )
+    private fun buildChatClient(agentId: UUID): ChatClient =
+        ChatClient.builder(dynamicModelService.getChatModel(agentId)).build()
 
-        val chatModel = dynamicModelService.getChatModel(agentId)
-        val response = chatModel.call(prompt)
-        return response.result.output.text
-    }
-
-    fun createRAGAdvisorForAgent(agentId: UUID): RetrievalAugmentationAdvisor? {
-        val knowledgeIds: List<String> =
-            agentKnowledgeRepo
-                .findAllByAgentIdAndActiveTrue(
-                    agentId,
-                ).map { it.id.toString() }
-
-        if (knowledgeIds.isEmpty()) {
-            return null
+    private fun buildCombinedPrompt(
+        request: ChatRequestDto,
+        history: List<String>,
+        summary: String,
+    ): String =
+        buildString {
+            if (summary.isNotBlank()) {
+                appendLine("Conversation summary so far:")
+                appendLine(summary)
+                appendLine()
+            }
+            appendLine("User question: ${request.question}")
+            if (history.isNotEmpty()) {
+                appendLine("Chat history:")
+                history.forEach { appendLine(it) }
+                appendLine()
+            }
         }
 
-        val key = Filter.Key("knowledgeId")
-        val value = Filter.Value(knowledgeIds)
+    private fun attachUserInput(
+        u: ChatClient.PromptUserSpec,
+        combinedPrompt: String,
+        request: ChatRequestDto,
+    ) {
+        u.text(combinedPrompt)
 
-        val filterExpression =
-            Filter.Expression(
-                Filter.ExpressionType.IN,
-                key,
-                value,
-            )
-
-        val documentRetriever =
-            VectorStoreDocumentRetriever
-                .builder()
-                .vectorStore(vectorStoreService.getVectorStore(agentId))
-                .topK(Constant.TOP_K)
-                .filterExpression(filterExpression)
-                .build()
-
-        val queryAugmenter: QueryAugmenter =
-            ContextualQueryAugmenter
-                .builder()
-                .allowEmptyContext(true)
-                .build()
-
-        return RetrievalAugmentationAdvisor
-            .builder()
-            .documentRetriever(documentRetriever)
-            .queryAugmenter(queryAugmenter)
-            .build()
-    }
-
-    fun createToolForAgent(agentId: UUID): List<ToolCallback?> {
-        val allowedToolNames =
-            agentToolRepository.findByAgentId(agentId).map { it.tool.name }
-
-        // Get all globally available tools
-        val allCallbacks = globalToolCallbackProvider.getToolCallbacks()
-
-        // Filter them based on agent-config
-        return filteredToolCallbackProvider.filterCallbacksByToolNames(
-            allCallbacks,
-            allowedToolNames,
-        )
-    }
-
-    fun createDynamicSummary(
-        agentId: UUID,
-        messagesToSummarize: List<String>,
-    ): String {
-        if (messagesToSummarize.isEmpty()) return ""
-
-        val joinedMessages = messagesToSummarize.joinToString("\n")
-
-        val promptText =
-            Constant.SUMMARY_UPDATE_PROMPT
-                .replace("{{latest_message}}", joinedMessages)
-
-        val prompt = Prompt(promptText)
-        val chatModel = dynamicModelService.getChatModel(agentId)
-        val chatClient = ChatClient.builder(chatModel).build()
-
-        val response =
-            chatClient
-                .prompt(prompt)
-                .call()
-
-        return response.content() ?: ""
+        request.files
+            ?.filter { !it.isEmpty }
+            ?.forEach { file ->
+                runCatching {
+                    val mime =
+                        MimeTypeUtils.parseMimeType(
+                            file.contentType ?: Constant.PNG_CONTENT_TYPE,
+                        )
+                    u.media(mime, InputStreamResource(file.inputStream))
+                }.onFailure {
+                    logger.warn(
+                        "Failed to read file ${file.originalFilename}: ${it.message}",
+                    )
+                }
+            }
     }
 }

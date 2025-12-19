@@ -73,6 +73,7 @@ class EmbeddingWorker(
      */
     private fun processJobReactive(job: EmbeddingJob): Mono<Unit> {
         val agentId = job.agent.id!!
+        val jobCorrelationId = "embed-${job.id}"
 
         return Mono
             .fromCallable {
@@ -80,9 +81,14 @@ class EmbeddingWorker(
                     ?: throw EntityNotFoundException("Chunk missing for job ${job.id}")
             }.subscribeOn(Schedulers.boundedElastic())
             .flatMap { chunk ->
+                val chunkCorrelationId = "$jobCorrelationId:chunk-${chunk.id}"
+
                 embeddingService
-                    .embedReactive(agentId, chunk.content)
-                    .map { embedding -> chunk to embedding }
+                    .embedReactive(
+                        agentId = agentId,
+                        text = chunk.content,
+                        correlationId = chunkCorrelationId,
+                    ).map { embedding -> chunk to embedding }
             }.flatMap { (chunk, embedding) ->
                 persistEmbeddingReactive(chunk, embedding)
             }.flatMap { chunk ->

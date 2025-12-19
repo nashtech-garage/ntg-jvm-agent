@@ -114,17 +114,19 @@ class TestEmbeddingConfig {
     @Bean
     @Primary
     fun fakeEmbeddingService(): EmbeddingService =
-        object : EmbeddingService(mockk(), mockk(), mockk()) {
+        object : EmbeddingService(mockk(), mockk(), mockk(), mockk()) {
             private val dims = 1536
 
             override fun embed(
                 agentId: UUID,
                 text: String,
+                correlationId: String,
             ): FloatArray = FloatArray(dims) { 0.1f }
 
             override fun embedBatch(
                 agentId: UUID,
                 texts: List<String>,
+                correlationId: String,
             ): List<FloatArray> {
                 val safeTexts = texts.ifEmpty { listOf("dummy") }
                 return safeTexts.map { FloatArray(dims) { 0.1f } }

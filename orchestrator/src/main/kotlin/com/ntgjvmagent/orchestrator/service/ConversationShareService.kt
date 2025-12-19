@@ -34,14 +34,14 @@ class ConversationShareService(
     fun shareConversation(
         conversationId: UUID,
         request: ShareConversationRequest,
-        username: String,
+        userId: UUID,
     ): ConversationShareResponseVm {
         val conversation =
             conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
 
-        if (conversation.username != username) {
+        if (conversation.createdBy?.id != userId) {
             throw BadRequestException("You don't have permission to share this conversation")
         }
 
@@ -56,7 +56,6 @@ class ConversationShareService(
         val conversationShare =
             ConversationShareEntity(
                 conversation = conversation,
-                sharedByUsername = username,
                 shareToken = shareToken,
                 isExpired = false,
                 expiresAt = expiresAt,
@@ -69,7 +68,7 @@ class ConversationShareService(
             id = savedShare.id,
             conversationId = conversation.id ?: conversationId,
             conversationTitle = conversation.title,
-            sharedByUsername = username,
+            sharedByUsername = conversation.createdBy?.username!!,
             shareToken = shareToken,
             isExpired = false,
             expiresAt = expiresAt,
@@ -115,7 +114,7 @@ class ConversationShareService(
             id = conversation.id ?: error("Conversation ID cannot be null"),
             title = conversation.title,
             createdAt = conversation.createdAt ?: Instant.now(),
-            sharedByUsername = share.sharedByUsername,
+            sharedByUsername = share.createdBy?.username!!,
             messages = messages,
         )
     }
