@@ -221,11 +221,11 @@ class DynamicModelService(
         embeddingModel: String, // Azure: deployment name for embeddings
         dimension: Int,
     ): SpringEmbeddingModel {
-
         // Disable retries maxRetries = 0
-        val retryOptions = RetryOptions(FixedDelayOptions(0, Duration.ZERO))
-            // Never retry even if policy would consider it transient
-            .setShouldRetryCondition { false }
+        val retryOptions =
+            RetryOptions(FixedDelayOptions(0, Duration.ZERO))
+                // Never retry even if policy would consider it transient
+                .setShouldRetryCondition { false }
 
         val client =
             OpenAIClientBuilder()
