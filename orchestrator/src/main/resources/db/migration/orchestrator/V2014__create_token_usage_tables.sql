@@ -1,7 +1,7 @@
 CREATE TABLE token_usage_log (
     id                  UUID PRIMARY KEY,
-    user_id             UUID REFERENCES users(id),
-    agent_id            UUID REFERENCES agent(id),
+    user_id             UUID REFERENCES users(id),-- it's NULL for background embedding jobs
+    agent_id            UUID NOT NULL REFERENCES agent(id),
     organization_id     UUID,
 
     provider            VARCHAR(32) NOT NULL,-- OPENAI, GITHUB, LOCAL
@@ -28,6 +28,9 @@ CREATE TABLE token_usage_log (
     )
 );
 
+-- correlation_id represents a single logical execution.
+-- Retries MUST reuse the same correlation_id and MUST NOT
+-- produce additional token usage rows.
 CREATE UNIQUE INDEX uniq_token_usage_corr_op
 ON token_usage_log (correlation_id, operation);
 

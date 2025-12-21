@@ -5,8 +5,8 @@ import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.embedding.SpringAiEmbeddingModelAdapter
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
-import com.ntgjvmagent.orchestrator.model.Quadruple
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.utils.Quadruple
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode

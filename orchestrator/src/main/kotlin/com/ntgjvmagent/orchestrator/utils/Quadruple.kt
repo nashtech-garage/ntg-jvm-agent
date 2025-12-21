@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.model
+package com.ntgjvmagent.orchestrator.utils
 
 data class Quadruple<out A, out B, out C, out D>(
     val first: A,

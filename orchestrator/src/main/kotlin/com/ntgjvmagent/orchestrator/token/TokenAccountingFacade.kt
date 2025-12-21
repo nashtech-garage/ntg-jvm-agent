@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.token
 
-import com.ntgjvmagent.orchestrator.model.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.utils.Constant
 import org.springframework.ai.chat.metadata.Usage
@@ -16,6 +15,20 @@ class TokenAccountingFacade(
     /* =========================================================
      * Token estimation
      * ========================================================= */
+
+    fun estimatePromptInput(
+        model: String,
+        promptText: String,
+    ): Int {
+        val estimator = tokenEstimatorSelector.select(model)
+        return estimator.estimateInputTokens(
+            model = model,
+            systemPrompt = Constant.SYSTEM_PROMPT,
+            userPrompt = promptText,
+            history = emptyList(),
+            summary = "",
+        )
+    }
 
     fun estimateInput(
         model: String,
@@ -98,7 +111,8 @@ class TokenAccountingFacade(
             userId = ctx.userId,
             agentId = ctx.agentId,
             operation = ctx.operation,
-            estimatedTokens = ctx.estimatedInputTokens + estimatedOutputTokens,
+            estimatedPromptTokens = ctx.estimatedInputTokens,
+            estimatedCompletionTokens = estimatedOutputTokens,
             correlationId = ctx.correlationId,
         )
     }

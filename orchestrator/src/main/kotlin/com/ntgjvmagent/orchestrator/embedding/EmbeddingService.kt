@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.embedding
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import reactor.core.publisher.SignalType
 import reactor.core.scheduler.Schedulers
 import java.time.Duration
 import java.util.UUID
@@ -62,6 +63,32 @@ class EmbeddingService(
 
         return rateLimiter
             .apply(agentId, tier, cfg, block(model))
-            .doOnSuccess { tokenTracker.record(agentId, agentConfig.model, input, correlationId) }
+            .doFinally { signalType ->
+                when (signalType) {
+                    SignalType.ON_COMPLETE -> {
+                        // success → record normally
+                        tokenTracker.record(
+                            agentId = agentId,
+                            model = agentConfig.model,
+                            input = input,
+                            correlationId = correlationId,
+                        )
+                    }
+
+                    SignalType.ON_ERROR,
+                    SignalType.CANCEL,
+                    -> {
+                        // failure / cancel → still record estimated usage
+                        tokenTracker.record(
+                            agentId = agentId,
+                            model = agentConfig.model,
+                            input = input,
+                            correlationId = "$correlationId:attempt",
+                        )
+                    }
+
+                    else -> Unit
+                }
+            }
     }
 }

@@ -248,3 +248,4 @@ volumes:
   tempo:
   prometheus:
   loki-data:
+  redis-data:

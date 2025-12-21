@@ -133,7 +133,7 @@ class ConversationStreamingService(
                 userId = userId,
                 agentId = agentId,
                 correlationId = correlationId,
-                messagesToSummarize = older,
+                messages = older,
             )
         } else {
             ""

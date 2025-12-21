@@ -1,5 +1,6 @@
-package com.ntgjvmagent.orchestrator.model
+package com.ntgjvmagent.orchestrator.token.tool
 
+import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.TokenMeteringService
 import org.springframework.ai.chat.metadata.Usage
 import org.springframework.ai.tool.ToolCallback

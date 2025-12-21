@@ -1,5 +1,6 @@
-package com.ntgjvmagent.orchestrator.model
+package com.ntgjvmagent.orchestrator.token
 
+import com.ntgjvmagent.orchestrator.model.TokenOperation
 import java.util.UUID
 
 data class LlmAccountingContext(

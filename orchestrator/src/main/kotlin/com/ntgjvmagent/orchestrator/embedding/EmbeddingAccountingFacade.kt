@@ -21,25 +21,33 @@ class EmbeddingAccountingFacade(
         input: Any,
         correlationId: String,
     ) {
-        val estimatedTokens =
+        // Embedding operations burn prompt/input tokens only, and never completion/output tokens.
+        // Most embedding APIs do NOT return usage metadata
+        // So estimation is the only practical option today.
+        val estimatedPromptTokens =
             runCatching {
-                estimateWithModel(model, input)
+                estimatePromptTokens(model, input)
             }.getOrElse {
                 fallbackEstimate(input)
             }
 
-        if (estimatedTokens <= 0) return
+        // Embeddings never generate tokens
+        val estimatedCompletionTokens = 0
+
+        val total = estimatedPromptTokens + estimatedCompletionTokens
+        if (total <= 0) return
 
         tokenMeteringService.recordEstimated(
-            userId = null,
+            userId = null, // embeddings may run without user context
             agentId = agentId,
             operation = TokenOperation.EMBEDDING,
-            estimatedTokens = estimatedTokens,
+            estimatedPromptTokens = estimatedPromptTokens,
+            estimatedCompletionTokens = estimatedCompletionTokens,
             correlationId = correlationId,
         )
     }
 
-    private fun estimateWithModel(
+    private fun estimatePromptTokens(
         model: String,
         input: Any,
     ): Int {
@@ -47,12 +55,26 @@ class EmbeddingAccountingFacade(
 
         return when (input) {
             is String ->
-                estimator.estimateOutputTokens(model, input)
+                estimator.estimateInputTokens(
+                    model = model,
+                    systemPrompt = "",
+                    userPrompt = input,
+                    history = emptyList(),
+                    summary = "",
+                )
 
             is List<*> ->
                 input
                     .filterIsInstance<String>()
-                    .sumOf { estimator.estimateOutputTokens(model, it) }
+                    .sumOf {
+                        estimator.estimateInputTokens(
+                            model = model,
+                            systemPrompt = "",
+                            userPrompt = it,
+                            history = emptyList(),
+                            summary = "",
+                        )
+                    }
 
             else -> 0
         }

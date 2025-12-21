@@ -68,7 +68,7 @@ class ConversationShareService(
             id = savedShare.id,
             conversationId = conversation.id ?: conversationId,
             conversationTitle = conversation.title,
-            sharedByUsername = conversation.createdBy?.username!!,
+            sharedByUsername = conversation.createdBy?.username ?: "Unknown",
             shareToken = shareToken,
             isExpired = false,
             expiresAt = expiresAt,
@@ -114,7 +114,7 @@ class ConversationShareService(
             id = conversation.id ?: error("Conversation ID cannot be null"),
             title = conversation.title,
             createdAt = conversation.createdAt ?: Instant.now(),
-            sharedByUsername = share.createdBy?.username!!,
+            sharedByUsername = share.createdBy?.username ?: "Unknown",
             messages = messages,
         )
     }
