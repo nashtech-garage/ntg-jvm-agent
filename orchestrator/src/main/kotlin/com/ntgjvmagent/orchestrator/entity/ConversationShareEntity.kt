@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity
 
-import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
+import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -17,8 +17,6 @@ data class ConversationShareEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
     val conversation: ConversationEntity,
-    @Column(name = "shared_by_username", nullable = false)
-    val sharedByUsername: String,
     @Column(name = "share_token", unique = true, nullable = false, length = 255)
     val shareToken: String,
     @Column(name = "is_expired")
@@ -28,4 +26,4 @@ data class ConversationShareEntity(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "shared_message_ids", columnDefinition = "JSONB")
     val sharedMessageIds: List<String> = emptyList(), // JSONB array: ["uuid1", "uuid2", ...]
-) : BaseEntity()
+) : UserAuditedEntity()

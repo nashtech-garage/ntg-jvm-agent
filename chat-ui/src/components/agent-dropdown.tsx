@@ -64,6 +64,8 @@ export default function AgentDropdown() {
           <Image
             src={selected.avatar}
             alt={selected.name}
+            width={24}
+            height={24}
             className="h-5 w-5 rounded-full object-cover"
           />
         ) : (
@@ -90,6 +92,8 @@ export default function AgentDropdown() {
                 <Image
                   src={agent.avatar}
                   alt={agent.name}
+                  width={24}
+                  height={24}
                   className="h-8 w-8 rounded-full object-cover flex-shrink-0"
                 />
               ) : (

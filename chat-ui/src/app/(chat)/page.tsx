@@ -4,16 +4,48 @@ import { useState } from 'react';
 import ChatBox from '@/components/chat-box';
 import ChatResult from '@/components/chat-result';
 import { ChatResponse } from '@/models/chat-response';
+import { ChatMessage } from '@/models/chat-message';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/contexts/ChatContext';
 import { FileSelectInfo } from '@/models/file-select-info';
-import { customizeFetch } from '@/utils/custom-fetch';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
-import logger from '@/utils/logger';
 import { useToaster } from '@/contexts/ToasterContext';
+import { useChatStream } from '@/hooks/use-chat-stream';
+
+function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
+  return {
+    id: `${Date.now()}`,
+    content: q,
+    medias: files.map((f) => ({
+      contentType: f.file.type,
+      data: f.url,
+      fileName: f.file.name,
+    })),
+    createdAt: new Date().toISOString(),
+    type: 1,
+  };
+}
+
+function buildStreamingMessage() {
+  return {
+    id: 'streaming',
+    content: '',
+    medias: [],
+    createdAt: new Date().toISOString(),
+    type: 2,
+  };
+}
+
+function cleanupStreamingMessage(
+  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
+) {
+  setChatMessages((prev) => prev.filter((m) => m.id !== 'streaming'));
+}
 
 export default function Page() {
+  const { ask } = useChatStream();
+
   const {
     chatMessages,
     activeConversationId,
@@ -25,95 +57,6 @@ export default function Page() {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const router = useRouter();
   const { showError } = useToaster();
-
-  const askQuestion = async (
-    question: string,
-    conversationId: string | null,
-    files: FileSelectInfo[],
-    onToken: (token: string) => void,
-    onComplete: (finalResult: ChatResponse) => void
-  ): Promise<ChatResponse | Error> => {
-    const formData = new FormData();
-    formData.append('question', question);
-    if (conversationId) {
-      formData.append('conversationId', conversationId);
-    }
-    if (files?.length) {
-      for (const file of files) {
-        formData.append('files', file.file);
-      }
-    }
-    if (selectedAgent?.id) {
-      formData.append('agentId', selectedAgent.id);
-    }
-
-    const res = await customizeFetch(`/api/chat`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.body) {
-      let errorMessage = `Request failed with status ${res.status}`;
-      try {
-        const errorText = await res.text();
-        if (errorText) {
-          errorMessage += `: ${errorText}`;
-        }
-      } catch (err) {
-        logger.error('Failed to parse error response body', err);
-      }
-      showError(errorMessage);
-      return new Error(errorMessage);
-    }
-
-    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-    let buffer = '';
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-
-      buffer += value;
-
-      const events = buffer.split('\n\n');
-
-      buffer = events.pop() || '';
-
-      for (const event of events) {
-        const lines = event.split('\n');
-        let eventName = '';
-        const dataLines: string[] = [];
-
-        for (const line of lines) {
-          if (line.startsWith('event:')) {
-            eventName = line.replace('event:', '').trim();
-          } else if (line.startsWith('data:')) {
-            dataLines.push(line.slice(5));
-          }
-        }
-
-        const data = dataLines.join('\n');
-
-        if (eventName === 'message') {
-          onToken(data);
-        }
-
-        if (eventName === 'complete') {
-          const finalJson = JSON.parse(data);
-          onComplete(finalJson);
-          return finalJson;
-        }
-
-        if (eventName === 'error') {
-          showError(data || 'Unexpected server error');
-          return new Error(data);
-        }
-      }
-    }
-
-    return new Error('Stream ended without complete event');
-  };
 
   const handleTokenUpdate = (token: string) => {
     setChatMessages((prev) =>
@@ -142,42 +85,35 @@ export default function Page() {
 
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
     setIsTyping(true);
-    const question = {
-      id: `${Date.now()}`,
-      content: q,
-      medias: files.map((f) => ({
-        contentType: f.file.type,
-        data: f.url,
-        fileName: f.file.name,
-      })),
-      createdAt: new Date().toISOString(),
-      type: 1,
-    };
-    /* Show question in screen immediately */
-    setChatMessages([...chatMessages, question]);
 
-    const tempMessage = {
-      id: 'streaming',
-      content: '',
-      medias: [],
-      createdAt: new Date().toISOString(),
-      type: 2,
-    };
+    // Show question immediately
+    const questionMessage = buildQuestionMessage(q, files);
+    setChatMessages((prev) => [...prev, questionMessage]);
 
-    setChatMessages((prev) => [...prev, tempMessage]);
+    // Show streaming placeholder
+    setChatMessages((prev) => [...prev, buildStreamingMessage()]);
 
-    /* Call to Orchestrator */
-    const result = await askQuestion(
-      q,
-      activeConversationId,
-      files,
-      handleTokenUpdate,
-      handleFinalResponse
-    );
-    if (result instanceof Error) {
-      showError(result.message);
+    try {
+      // Start streaming
+      await ask(
+        {
+          question: q,
+          conversationId: activeConversationId,
+          files,
+          agentId: selectedAgent?.id,
+        },
+        {
+          onToken: handleTokenUpdate,
+          onComplete: handleFinalResponse,
+          onError: (msg: string) => {
+            showError(msg);
+            cleanupStreamingMessage(setChatMessages);
+          },
+        }
+      );
+    } finally {
+      // Always reset typing state
       setIsTyping(false);
-      setChatMessages((prev) => prev.filter((msg) => msg.id !== 'streaming'));
     }
   };
 
@@ -194,7 +130,7 @@ export default function Page() {
           <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="hidden items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-success sm:flex">
               <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_6px_color-mix(in_oklab,var(--color-success)_20%,transparent)]" />
-              Live
+              <span>Live</span>
             </div>
             <AgentDropdown />
           </div>
