@@ -105,7 +105,7 @@ export default function ChatResult({
 
                   <span className="flex items-center gap-2">
                     <button
-                      onClick={() => onReaction?.(r.id, 'LIKE')}
+                      onClick={() => onReaction?.(r.id, Reaction.LIKE)}
                       className={clsx('transition hover:text-sky-600', {
                         'text-sky-600': r.reaction === 'LIKE',
                       })}
@@ -113,7 +113,7 @@ export default function ChatResult({
                       <ThumbsUp size={16} strokeWidth={2} />
                     </button>
                     <button
-                      onClick={() => onReaction?.(r.id, 'DISLIKE')}
+                      onClick={() => onReaction?.(r.id, Reaction.DISLIKE)}
                       className={clsx('transition hover:text-rose-600', {
                         'text-rose-600': r.reaction === 'DISLIKE',
                       })}

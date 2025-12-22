@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.unit.message
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
@@ -25,7 +26,7 @@ class MessageServiceTest {
     private val messageService = MessageService(messageRepo)
 
     private val messageId: UUID = UUID.randomUUID()
-    private val username = "1ccb35fb-f0ae-4cc4-91fc-8474b3e07475"
+    private val userid = UUID.fromString("1ccb35fb-f0ae-4cc4-91fc-8474b3e07475")
     private val reaction = MessageReaction.LIKE
 
     @BeforeEach
@@ -34,11 +35,10 @@ class MessageServiceTest {
     }
 
     private fun createMessage(
-        conversationUsername: String,
+        createdBy: UUID?,
         type: Int,
     ): ChatMessageEntity {
         val conversation = mockk<ConversationEntity>(relaxed = true)
-        every { conversation.username } returns conversationUsername
 
         return ChatMessageEntity(
             content = "hello",
@@ -54,12 +54,12 @@ class MessageServiceTest {
 
     @Test
     fun `reactMessage should update reaction when valid`() {
-        val message = createMessage(username, Constant.ANSWER_TYPE)
+        val message = createMessage(userid, Constant.ANSWER_TYPE)
 
         every { messageRepo.findById(messageId) } returns Optional.of(message)
         every { messageRepo.save(message) } returns message
 
-        val result = messageService.reactMessage(messageId, reaction, username)
+        val result = messageService.reactMessage(messageId, reaction, userid)
 
         assertEquals(messageId, result.id)
         assertEquals("hello", result.content)
@@ -74,7 +74,7 @@ class MessageServiceTest {
         every { messageRepo.findById(messageId) } returns Optional.empty()
 
         assertThrows<ResourceNotFoundException> {
-            messageService.reactMessage(messageId, reaction, username)
+            messageService.reactMessage(messageId, reaction, userid)
         }
 
         verify(exactly = 1) { messageRepo.findById(messageId) }
@@ -82,12 +82,12 @@ class MessageServiceTest {
 
     @Test
     fun `reactMessage should throw when message type is invalid`() {
-        val message = createMessage(username, Constant.QUESTION_TYPE)
+        val message = createMessage(userid, Constant.QUESTION_TYPE)
 
         every { messageRepo.findById(messageId) } returns Optional.of(message)
 
         assertThrows<BadRequestException> {
-            messageService.reactMessage(messageId, reaction, username)
+            messageService.reactMessage(messageId, reaction, userid)
         }
 
         verify(exactly = 1) { messageRepo.findById(messageId) }
