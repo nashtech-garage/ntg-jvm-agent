@@ -2,7 +2,6 @@ package com.ntgjvmagent.orchestrator.unit.message
 
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
-import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
