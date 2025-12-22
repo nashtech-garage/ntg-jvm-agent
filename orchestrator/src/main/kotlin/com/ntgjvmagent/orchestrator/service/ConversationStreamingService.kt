@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import org.slf4j.LoggerFactory

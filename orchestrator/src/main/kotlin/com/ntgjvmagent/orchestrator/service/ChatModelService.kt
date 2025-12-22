@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.component.PromptBuilder
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.TokenAccountingFacade

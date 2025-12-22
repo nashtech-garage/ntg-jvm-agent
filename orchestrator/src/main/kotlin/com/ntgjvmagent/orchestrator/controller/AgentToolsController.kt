@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.dto.AgentToolStatusDto
+import com.ntgjvmagent.orchestrator.dto.request.AgentToolStatusRequestDto
 import com.ntgjvmagent.orchestrator.service.AgentToolService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -39,7 +39,7 @@ class AgentToolsController(
     fun updateStatus(
         @PathVariable agentId: UUID,
         @PathVariable toolId: UUID,
-        @RequestBody agentToolStatus: AgentToolStatusDto,
+        @RequestBody agentToolStatus: AgentToolStatusRequestDto,
     ) = agentToolService.updateStatus(agentId, toolId, agentToolStatus.status)
 
     @DeleteMapping("/{toolId}")

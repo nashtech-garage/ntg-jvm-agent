@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.response
 
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm

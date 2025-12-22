@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.component.CurrentUserProvider
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import com.ntgjvmagent.orchestrator.service.ConversationCommandService
 import com.ntgjvmagent.orchestrator.service.ConversationQueryService
 import com.ntgjvmagent.orchestrator.service.ConversationStreamingService

@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import com.ntgjvmagent.orchestrator.token.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant

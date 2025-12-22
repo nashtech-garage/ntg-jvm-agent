@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
-import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.ChatResponseDto
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity

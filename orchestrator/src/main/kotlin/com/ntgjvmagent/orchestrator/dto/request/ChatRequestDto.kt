@@ -1,4 +1,4 @@
-package com.ntgjvmagent.orchestrator.dto
+package com.ntgjvmagent.orchestrator.dto.request
 
 import com.ntgjvmagent.orchestrator.validation.ValidChatFile
 import jakarta.validation.constraints.NotBlank

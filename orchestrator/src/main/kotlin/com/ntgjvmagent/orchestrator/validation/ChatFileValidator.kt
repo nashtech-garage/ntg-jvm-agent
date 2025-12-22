@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.validation
 
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import com.ntgjvmagent.orchestrator.utils.Constant
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext

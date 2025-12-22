@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.component
 
-import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ChatRequestDto
 import org.springframework.stereotype.Component
 
 @Component

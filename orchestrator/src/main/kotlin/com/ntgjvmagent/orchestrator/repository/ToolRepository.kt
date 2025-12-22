@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.repository
 
-import com.ntgjvmagent.orchestrator.dto.ExternalToolDto
+import com.ntgjvmagent.orchestrator.dto.internal.ExternalToolDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
