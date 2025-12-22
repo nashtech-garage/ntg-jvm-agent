@@ -45,8 +45,6 @@ class ChatModelService(
                     appendLine()
                 }
 
-                appendLine("User question: ${request.question}")
-
                 if (history.isNotEmpty()) {
                     appendLine("Chat history:")
                     history.forEach { item ->
@@ -54,13 +52,20 @@ class ChatModelService(
                     }
                     appendLine()
                 }
+
+                appendLine("User question: ${request.question}")
             }
 
         val model = dynamicModelService.getChatModel(request.agentId)
         val chatClient = ChatClient.builder(model).build()
         val ragAdvisor = createRAGAdvisorForAgent(request.agentId)
+        val vectorStoreChatMemoryAdvisor = createVectorStoreChatMemoryAdvisor(request.agentId, request.conversationId)
 
-        var promptBuilder = chatClient.prompt()
+        var promptBuilder =
+            chatClient
+                .prompt()
+                .advisors(vectorStoreChatMemoryAdvisor)
+
         if (ragAdvisor != null) {
             promptBuilder = promptBuilder.advisors(ragAdvisor)
         }
@@ -186,5 +191,48 @@ class ChatModelService(
                 .call()
 
         return response.content() ?: ""
+    }
+
+    fun createVectorStoreChatMemoryAdvisor(
+        agentId: UUID,
+        conversationId: UUID?,
+    ): RetrievalAugmentationAdvisor {
+        val agentExpr =
+            Filter.Expression(
+                Filter.ExpressionType.EQ,
+                Filter.Key("agentId"),
+                Filter.Value(agentId.toString()),
+            )
+
+        val filter =
+            if (conversationId != null) {
+                val convoExpr =
+                    Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        Filter.Key("conversationId"),
+                        Filter.Value(conversationId.toString()),
+                    )
+
+                Filter.Expression(
+                    Filter.ExpressionType.AND,
+                    agentExpr,
+                    convoExpr,
+                )
+            } else {
+                agentExpr
+            }
+
+        val retriever =
+            VectorStoreDocumentRetriever
+                .builder()
+                .vectorStore(vectorStoreService.getVectorStore(agentId))
+                .topK(5)
+                .filterExpression(filter)
+                .build()
+
+        return RetrievalAugmentationAdvisor
+            .builder()
+            .documentRetriever(retriever)
+            .build()
     }
 }

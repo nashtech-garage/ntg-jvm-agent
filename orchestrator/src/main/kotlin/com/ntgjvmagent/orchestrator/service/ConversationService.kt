@@ -29,6 +29,7 @@ class ConversationService(
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
     private val messageMediaRepo: ChatMessageMediaRepository,
+    private val chatMemoryService: ChatMemoryService,
     private val historyLimit: Int = 5,
 ) {
     private val logger = LoggerFactory.getLogger(ChatModelService::class.java)
@@ -82,22 +83,33 @@ class ConversationService(
             this.conversationRepo
                 .findById(conversationId)
                 .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
-        // Save question into DB first
-        val questionMsg =
-            ChatMessageEntity(
-                content = request.question,
-                conversation = conversation,
-                type = Constant.QUESTION_TYPE,
+
+        val questionEntity =
+            this.messageRepo.save(
+                ChatMessageEntity(
+                    content = request.question,
+                    conversation = conversation,
+                    type = Constant.QUESTION_TYPE,
+                ),
             )
-        val questionEntity = this.messageRepo.save(questionMsg)
+
         saveMessageMedia(request, questionEntity)
+
+        chatMemoryService.onMessageSaved(
+            agentId = request.agentId,
+            conversationId = conversation.id!!,
+            role = Constant.QUESTION_TYPE,
+            content = questionEntity.content,
+        )
+
         val conversationResponse: ConversationResponseVm =
             ConversationResponseVmImpl(
                 conversationId,
                 conversation.title,
                 conversation.createdAt!!,
             )
-        return buildChatResponse(answer, conversationResponse, conversation)
+
+        return buildChatResponse(answer, conversationResponse, conversation, request)
     }
 
     @Transactional
@@ -162,6 +174,7 @@ class ConversationService(
         answer: String?,
         conversationResponse: ConversationResponseVm,
         conversation: ConversationEntity,
+        chatRequest: ChatRequestVm,
     ): ChatResponseVm =
         // Only save reply if it has actual reply
         if (answer != null) {
@@ -173,6 +186,14 @@ class ConversationService(
                         type = Constant.ANSWER_TYPE,
                     ),
                 )
+
+            chatMemoryService.onMessageSaved(
+                agentId = chatRequest.agentId,
+                conversationId = conversation.id!!,
+                role = Constant.ANSWER_TYPE,
+                content = answerEntity.content,
+            )
+
             ChatResponseVm(
                 conversationResponse,
                 ChatMessageResponseVm(
