@@ -102,29 +102,25 @@ class DynamicModelService(
         // Use ChatModelProvider to create chat model
         val chatModel =
             chatModelProvider.createChatModel(
-                providerType = agentConfig.provider,
-                baseUrl = agentConfig.baseUrl,
-                apiKey = agentConfig.apiKey,
-                modelName = agentConfig.model,
-                temperature = agentConfig.temperature,
-                topP = agentConfig.topP,
-                maxTokens = agentConfig.maxTokens,
-                frequencyPenalty = agentConfig.frequencyPenalty,
-                presencePenalty = agentConfig.presencePenalty,
-                chatCompletionsPath = agentConfig.chatCompletionsPath,
-                embeddingsPath = agentConfig.embeddingsPath,
+                providerType = agent.provider,
+                baseUrl = agent.baseUrl,
+                apiKey = agent.apiKey,
+                modelName = agent.model,
+                temperature = agent.temperature,
+                topP = agent.topP,
+                maxTokens = agent.maxTokens,
+                frequencyPenalty = agent.frequencyPenalty,
+                presencePenalty = agent.presencePenalty,
+                chatCompletionsPath = agent.chatCompletionsPath,
+                embeddingsPath = agent.embeddingsPath,
             )
 
-        val chatModel = createChatModel(api, agent.model)
         val springEmbeddingModel = createSpringEmbeddingModel(api, agent.embeddingModel, agent.dimension)
         // Create embedding model based on provider type
-        val springEmbeddingModel = createEmbeddingModel(agentConfig)
-
         val wrappedEmbeddingModel = SpringAiEmbeddingModelAdapter(springEmbeddingModel)
         val agentConfig = AgentMapper.toResponse(agent)
 
         return Quadruple(chatModel, wrappedEmbeddingModel, springEmbeddingModel, agentConfig)
-        return Triple(chatModel, wrappedEmbeddingModel, springEmbeddingModel)
     }
 
     // =====================================================================

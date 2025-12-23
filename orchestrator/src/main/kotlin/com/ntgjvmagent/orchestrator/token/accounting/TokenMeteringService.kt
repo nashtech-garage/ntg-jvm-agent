@@ -123,7 +123,7 @@ class TokenMeteringService(
                     userId = userId,
                     agentId = agentId,
                     organizationId = null,
-                    provider = agentConfig.provider,
+                    provider = agentConfig.provider.toString(),
                     model = agentConfig.model,
                     operation = operation,
                     toolName = toolName,
