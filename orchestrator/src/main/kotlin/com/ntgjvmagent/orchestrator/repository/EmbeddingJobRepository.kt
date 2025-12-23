@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.repository
 
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingJobStatus
+import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.EmbeddingJob
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

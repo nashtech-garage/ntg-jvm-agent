@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.component
 
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
-import com.ntgjvmagent.orchestrator.token.TokenMeteringService
-import com.ntgjvmagent.orchestrator.token.tool.MeteredToolCallback
+import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
+import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.stereotype.Component
 import java.util.UUID

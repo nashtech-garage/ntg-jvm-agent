@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.repository
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.IngestionJob
-import com.ntgjvmagent.orchestrator.ingestion.IngestionJobStatus
+import com.ntgjvmagent.orchestrator.ingestion.job.IngestionJobStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

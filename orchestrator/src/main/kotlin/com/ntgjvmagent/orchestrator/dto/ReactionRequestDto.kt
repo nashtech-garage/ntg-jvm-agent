@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.dto
 
-import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
+import com.ntgjvmagent.orchestrator.model.MessageReaction
 import org.jetbrains.annotations.NotNull
 
 data class ReactionRequestDto(

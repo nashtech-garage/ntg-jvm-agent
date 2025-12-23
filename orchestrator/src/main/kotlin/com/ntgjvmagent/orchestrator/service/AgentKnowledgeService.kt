@@ -3,7 +3,7 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeListResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
-import com.ntgjvmagent.orchestrator.ingestion.IngestionLifecycleService
+import com.ntgjvmagent.orchestrator.ingestion.orchestrator.IngestionLifecycleService
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
 import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus

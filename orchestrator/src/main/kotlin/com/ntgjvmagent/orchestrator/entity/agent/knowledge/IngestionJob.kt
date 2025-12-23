@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.entity.agent.knowledge
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
-import com.ntgjvmagent.orchestrator.ingestion.IngestionJobStatus
+import com.ntgjvmagent.orchestrator.ingestion.job.IngestionJobStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

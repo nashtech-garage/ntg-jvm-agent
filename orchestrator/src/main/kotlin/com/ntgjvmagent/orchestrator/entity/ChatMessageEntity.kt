@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
-import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
+import com.ntgjvmagent.orchestrator.model.MessageReaction
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
