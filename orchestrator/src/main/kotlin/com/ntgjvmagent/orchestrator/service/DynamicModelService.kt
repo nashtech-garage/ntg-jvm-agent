@@ -92,13 +92,6 @@ class DynamicModelService(
     > {
         val agent = agentRepo.findById(agentId).orElseThrow()
 
-        val api =
-            createOpenAiApi(
-                baseUrl = agent.baseUrl,
-                apiKey = agent.apiKey,
-                chatCompletionsPath = agent.chatCompletionsPath,
-                embeddingsPath = agent.embeddingsPath,
-            )
         // Use ChatModelProvider to create chat model
         val chatModel =
             chatModelProvider.createChatModel(
@@ -115,8 +108,8 @@ class DynamicModelService(
                 embeddingsPath = agent.embeddingsPath,
             )
 
-        val springEmbeddingModel = createSpringEmbeddingModel(api, agent.embeddingModel, agent.dimension)
-        // Create embedding model based on provider type
+        // Create embedding model based on provider type (not using OpenAiApi)
+        val springEmbeddingModel = createEmbeddingModel(agent)
         val wrappedEmbeddingModel = SpringAiEmbeddingModelAdapter(springEmbeddingModel)
         val agentConfig = AgentMapper.toResponse(agent)
 
@@ -228,7 +221,7 @@ class DynamicModelService(
                 .credential(AzureKeyCredential(apiKey))
                 .endpoint(baseUrl)
                 .retryOptions(retryOptions)
-                .buildClient()
+                .buildClient() // Use sync client for Spring AI
 
         // 2) Options for embedding
         val options =
