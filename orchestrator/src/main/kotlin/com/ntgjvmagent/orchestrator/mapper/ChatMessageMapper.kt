@@ -32,5 +32,6 @@ object ChatMessageMapper {
                         data = "data:${mm.contentType};base64,$base64",
                     )
                 },
+            reaction = chatMessage.reaction,
         )
 }
