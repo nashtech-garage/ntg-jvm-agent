@@ -3,8 +3,8 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.component.PromptBuilder
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.model.TokenOperation
-import com.ntgjvmagent.orchestrator.token.LlmAccountingContext
-import com.ntgjvmagent.orchestrator.token.TokenAccountingFacade
+import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
+import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import java.util.UUID

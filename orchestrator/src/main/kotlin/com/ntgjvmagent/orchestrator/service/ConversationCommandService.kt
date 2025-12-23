@@ -5,9 +5,9 @@ import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
 import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
 import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
 import com.ntgjvmagent.orchestrator.entity.ConversationEntity
-import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.model.ConversationStatus
+import com.ntgjvmagent.orchestrator.model.MessageReaction
 import com.ntgjvmagent.orchestrator.repository.ChatMessageMediaRepository
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository

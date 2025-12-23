@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.request.FileKnowledgeImportConfigRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeImportResponseDto
-import com.ntgjvmagent.orchestrator.ingestion.FileImportWorker
+import com.ntgjvmagent.orchestrator.ingestion.worker.FileImportWorker
 import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import jakarta.validation.Valid

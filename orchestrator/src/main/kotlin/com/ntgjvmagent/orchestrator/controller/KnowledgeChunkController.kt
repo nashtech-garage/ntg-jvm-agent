@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.request.KnowledgeChunkRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
-import com.ntgjvmagent.orchestrator.ingestion.FileImportWorker
+import com.ntgjvmagent.orchestrator.ingestion.worker.FileImportWorker
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

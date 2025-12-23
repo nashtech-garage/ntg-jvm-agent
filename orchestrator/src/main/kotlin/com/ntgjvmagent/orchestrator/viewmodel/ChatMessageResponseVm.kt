@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
-import com.ntgjvmagent.orchestrator.entity.enums.MessageReaction
+import com.ntgjvmagent.orchestrator.model.MessageReaction
 import java.time.Instant
 import java.util.UUID
 

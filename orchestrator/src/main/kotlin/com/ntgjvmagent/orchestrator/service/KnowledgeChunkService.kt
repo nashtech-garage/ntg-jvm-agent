@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingQueueService
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
+import com.ntgjvmagent.orchestrator.embedding.queue.EmbeddingQueueService
+import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
