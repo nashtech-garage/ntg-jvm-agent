@@ -26,11 +26,16 @@ class CustomUserDetails
     @JsonProperty("password")
     private val password: String,
 
+    @JsonProperty("name")
+    private val name: String,
+
     @JsonProperty("authorities")
     private val authorities: Collection<GrantedAuthority>
 ) : UserDetails {
 
     override fun getUsername() = username
+
+    fun getName() = name
 
     override fun getPassword() = password
 

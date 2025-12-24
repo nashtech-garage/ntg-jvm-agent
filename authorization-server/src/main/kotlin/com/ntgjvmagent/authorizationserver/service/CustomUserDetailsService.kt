@@ -24,6 +24,7 @@ class CustomUserDetailsService(
             username = user.username,
             password = user.password,
             authorities = authorities,
+            name = user.name
         )
     }
 }

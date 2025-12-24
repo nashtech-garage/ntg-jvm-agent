@@ -42,13 +42,13 @@ import java.security.interfaces.RSAPublicKey
 @EnableWebSecurity
 class SecurityConfig(
     private val userRepository: UserRepository,
-    @Value("\${jwt.issuer}") private val issuer: String
+    @Value("\${jwt.issuer}") private val issuer: String,
 ) {
     @Bean
     @Order(1) // Run this filter chain first
     fun authorizationServerSecurityFilterChain(
         http: HttpSecurity,
-        customAuthProvider: AuthenticationProvider
+        customAuthProvider: AuthenticationProvider,
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
         val endpointsMatcher: RequestMatcher = authorizationServerConfigurer.endpointsMatcher
@@ -59,7 +59,7 @@ class SecurityConfig(
                     // Allow discovery endpoints
                     .requestMatchers(
                         "/.well-known/oauth-authorization-server",
-                        "/.well-known/openid-configuration" // only if OIDC enabled
+                        "/.well-known/openid-configuration", // only if OIDC enabled
                     ).permitAll()
                     // Anything else requires authentication
                     .anyRequest().authenticated()
@@ -74,10 +74,10 @@ class SecurityConfig(
 
         http.exceptionHandling { exceptions ->
             exceptions.defaultAuthenticationEntryPointFor(
-                BearerTokenAuthenticationEntryPoint()
+                BearerTokenAuthenticationEntryPoint(),
             ) { req -> req.requestURI == "/userinfo" }
             exceptions.defaultAuthenticationEntryPointFor(
-                LoginUrlAuthenticationEntryPoint("/login")
+                LoginUrlAuthenticationEntryPoint("/login"),
             ) { true }
         }
         http.formLogin(Customizer.withDefaults())
@@ -147,6 +147,10 @@ class SecurityConfig(
                 else -> error("Cannot determine userId")
             }
             val authorities: Collection<GrantedAuthority> = principal.authorities
+            val name = when (val p = principal.principal) {
+                is CustomUserDetails -> p.getName()
+                else -> error("Cannot determine name")
+            }
 
             // Extract roles from authorities (remove ROLE_ prefix for cleaner claims)
             val roles = authorities.map { authority ->
@@ -157,6 +161,7 @@ class SecurityConfig(
             if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
                 context.claims.subject(userId.toString())
                 context.claims.claim("user_id", userId.toString())
+                context.claims.claim("name", name)
                 context.claims.claim("roles", roles)
                 context.claims.claim("authorities", authorities.map { it.authority })
             }
@@ -166,6 +171,7 @@ class SecurityConfig(
                 context.claims.subject(userId.toString())
                 context.claims.claim("user_id", userId.toString())
                 context.claims.claim("roles", roles)
+                context.claims.claim("name", name)
             }
         }
     }
