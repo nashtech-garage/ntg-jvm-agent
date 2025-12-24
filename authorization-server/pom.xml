@@ -186,7 +186,9 @@
         </executions>
         <configuration>
           <kotlin>
-            <ktlint/>
+            <ktlint>
+              <version>1.8.0</version>
+            </ktlint>
           </kotlin>
         </configuration>
       </plugin>

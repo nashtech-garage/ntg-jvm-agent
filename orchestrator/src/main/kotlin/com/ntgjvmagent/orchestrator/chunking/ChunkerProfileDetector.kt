@@ -51,9 +51,13 @@ class ChunkerProfileDetector {
 
         return when {
             looksLikeMarkdown(trimmed) -> "markdown"
+
             looksLikeCode(trimmed) -> "code"
+
             looksLikeCsv(trimmed) -> "semantic"
+
             looksLikeJson(trimmed) -> "semantic"
+
             looksLikeXml(trimmed) -> "semantic"
 
             // Very short text → treat as semantic (safe)

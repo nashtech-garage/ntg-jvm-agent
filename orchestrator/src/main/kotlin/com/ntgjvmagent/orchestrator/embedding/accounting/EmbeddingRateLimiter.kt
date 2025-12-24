@@ -89,15 +89,31 @@ class EmbeddingRateLimiter {
 
     private fun shouldRetry(ex: Throwable): Boolean =
         when (ex) {
-            is RequestNotPermitted -> true
-            is IOException -> true
-            is WebClientResponseException ->
+            is RequestNotPermitted -> {
+                true
+            }
+
+            is IOException -> {
+                true
+            }
+
+            is WebClientResponseException -> {
                 ex.statusCode.value() == STATUS_TOO_MANY_REQUESTS ||
                     ex.statusCode.value() == STATUS_UNAUTHORIZED ||
                     ex.statusCode.is5xxServerError
-            is HttpClientErrorException.TooManyRequests -> true
-            is HttpClientErrorException.Unauthorized -> true
-            else -> false
+            }
+
+            is HttpClientErrorException.TooManyRequests -> {
+                true
+            }
+
+            is HttpClientErrorException.Unauthorized -> {
+                true
+            }
+
+            else -> {
+                false
+            }
         }
 
     private fun computeBackoffDelay(
@@ -105,18 +121,30 @@ class EmbeddingRateLimiter {
         fallbackMs: Long,
     ): Long =
         when (throwable) {
-            is WebClientResponseException ->
+            is WebClientResponseException -> {
                 parseRetryAfterHeader(throwable.headers.getFirst("Retry-After"))
-            is HttpClientErrorException ->
+            }
+
+            is HttpClientErrorException -> {
                 parseRetryAfterHeader(throwable.responseHeaders?.getFirst("Retry-After"))
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         } ?: fallbackMs
 
     private fun parseRetryAfterHeader(header: String?): Long? =
         when {
-            header == null -> null
-            header.toLongOrNull() != null -> header.toLong() * MILLIS_PER_SECOND
-            else ->
+            header == null -> {
+                null
+            }
+
+            header.toLongOrNull() != null -> {
+                header.toLong() * MILLIS_PER_SECOND
+            }
+
+            else -> {
                 try {
                     max(
                         Duration
@@ -129,5 +157,6 @@ class EmbeddingRateLimiter {
                 } catch (_: Exception) {
                     null
                 }
+            }
         }
 }

@@ -90,7 +90,9 @@ class EmbeddingService(
                         )
                     }
 
-                    else -> Unit
+                    else -> {
+                        Unit
+                    }
                 }
             }
     }
