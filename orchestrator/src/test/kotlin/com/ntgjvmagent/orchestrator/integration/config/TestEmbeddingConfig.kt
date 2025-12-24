@@ -2,8 +2,6 @@ package com.ntgjvmagent.orchestrator.integration.config
 
 import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
-import com.ntgjvmagent.orchestrator.embedding.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.provider.ChatModelProvider
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.DynamicModelService

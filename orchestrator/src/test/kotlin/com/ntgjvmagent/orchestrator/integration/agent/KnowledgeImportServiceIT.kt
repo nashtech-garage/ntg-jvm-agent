@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
