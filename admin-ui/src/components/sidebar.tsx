@@ -214,8 +214,6 @@ export default function Sidebar({ user }: Readonly<SidebarProps>) {
         >
           <div className="text-sm text-gray-300">Logged in as:</div>
           <div className="font-medium truncate">{user.name}</div>
-          <div className="font-medium truncate">{user.sub}</div>
-          <div className="text-xs text-gray-400 truncate">{user.email}</div>
           <div className="text-xs text-blue-400">Roles: {user.roles.join(', ')}</div>
         </div>
         <button

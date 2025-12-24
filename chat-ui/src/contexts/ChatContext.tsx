@@ -19,7 +19,7 @@ interface ChatContextType {
   conversations: Conversation[];
   chatMessages: ChatMessage[];
   activeConversationId: string | null;
-  userName: string;
+  name: string;
   agents: Agent[];
   selectedAgent: Agent | null;
   setConversations: Dispatch<SetStateAction<Conversation[]>>;
@@ -42,13 +42,13 @@ const fetchAll = async () => {
       conversationsRes.json(),
     ]);
     return {
-      userName: userInfoData?.sub || 'Unknown user',
+      name: userInfoData?.name || 'Unknown user',
       conversations: conversationsData,
     };
   } catch (error) {
     return {
       error: `Error fetching user information or conversations: ${error}`,
-      userName: 'Unknown user',
+      name: 'Unknown user',
       conversations: [] as Conversation[],
     };
   }
@@ -59,17 +59,17 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>('Unknown');
+  const [name, setName] = useState<string>('Unknown');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // Load user info and all conversations on mount
   useEffect(() => {
-    fetchAll().then(({ userName, conversations, error }) => {
+    fetchAll().then(({ name, conversations, error }) => {
       if (error) {
         showError(error);
       } else {
-        setUserName(userName);
+        setName(name);
         setConversations(conversations);
       }
     });
@@ -80,7 +80,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       conversations,
       chatMessages,
       activeConversationId,
-      userName,
+      name,
       agents,
       selectedAgent,
       setConversations,
@@ -89,7 +89,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setAgents,
       setSelectedAgent,
     }),
-    [conversations, chatMessages, activeConversationId, userName, agents, selectedAgent]
+    [conversations, chatMessages, activeConversationId, name, agents, selectedAgent]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
