@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
@@ -30,24 +29,27 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class KnowledgeImportServiceIT
-    @Autowired
-    constructor(
-        private val service: KnowledgeImportService,
-        private val knowledgeRepo: AgentKnowledgeRepository,
-        private val chunkRepo: KnowledgeChunkRepository,
-        private val agentRepo: AgentRepository,
-    ) : BaseIntegrationTest() {
-        private lateinit var agent: Agent
-        private lateinit var knowledge: AgentKnowledge
+@Autowired
+constructor(
+    private val service: KnowledgeImportService,
+    private val knowledgeRepo: AgentKnowledgeRepository,
+    private val chunkRepo: KnowledgeChunkRepository,
+    private val agentRepo: AgentRepository,
+    private val embeddingJobRepo: EmbeddingJobRepository,
+) : BaseIntegrationTest() {
+    private lateinit var agent: Agent
+    private lateinit var knowledge: AgentKnowledge
 
-        @BeforeEach
-        fun setUp() {
-            chunkRepo.deleteAll()
-            knowledgeRepo.deleteAll()
-            agentRepo.deleteAll()
-            agentRepo.flush()
-            knowledgeRepo.flush()
-            chunkRepo.flush()
+    @BeforeEach
+    fun setUp() {
+        embeddingJobRepo.deleteAll()
+        chunkRepo.deleteAll()
+        knowledgeRepo.deleteAll()
+        agentRepo.deleteAll()
+
+        agentRepo.flush()
+        knowledgeRepo.flush()
+        chunkRepo.flush()
 
         agent =
             agentRepo.save(
