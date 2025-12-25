@@ -93,7 +93,7 @@ class ConversationCommandService(
 
         saveMessageMedia(chatReq, question)
 
-        // Call to save User Question into vector store if condition is met
+        // Call to save User Question into vector store if condition is met, currently we have not save the LLM answer yet
         chatMemoryService.onMessageSaved(
             agentId = chatReq.agentId,
             conversationId = conversation.id!!,
@@ -110,14 +110,6 @@ class ConversationCommandService(
                     type = Constant.ANSWER_TYPE,
                 ),
             )
-
-        // Call to save LLM Answer into vector store if condition is met
-        chatMemoryService.onMessageSaved(
-            agentId = chatReq.agentId,
-            conversationId = conversation.id!!,
-            role = Constant.ANSWER_TYPE,
-            content = chatReq.question,
-        )
 
         // Generate & update title once (after first answer)
         if (conversation.status == ConversationStatus.DRAFT) {

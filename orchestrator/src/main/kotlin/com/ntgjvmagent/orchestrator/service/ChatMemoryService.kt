@@ -8,6 +8,7 @@ import java.util.UUID
 @Service
 class ChatMemoryService(
     private val vectorStoreService: VectorStoreService,
+    private val MIN_CONTENT_LENGTH: Int = 20,
 ) {
     fun onMessageSaved(
         agentId: UUID,
@@ -37,19 +38,31 @@ class ChatMemoryService(
         role: Int,
         content: String,
     ): Boolean {
-        if (role != Constant.QUESTION_TYPE) return false
-
-        if (content.length < 20) return false
-
         val lower = content.lowercase()
 
-        if (lower in listOf("hi", "hello", "ok", "thanks")) return false
+        val isEligible =
+            role == Constant.QUESTION_TYPE &&
+                content.length >= MIN_CONTENT_LENGTH &&
+                !isGreetingNoise(lower)
 
-        if ('?' in content) return true
+        val hasSignal =
+            hasQuestionSignal(content) ||
+                hasTechnicalSignal(lower) ||
+                hasMemorySignal(lower)
 
+        return isEligible && hasSignal
+    }
+
+    private fun isGreetingNoise(lower: String): Boolean = lower in listOf("hi", "hello", "ok", "thanks")
+
+    private fun hasQuestionSignal(content: String): Boolean = '?' in content
+
+    private fun hasTechnicalSignal(lower: String): Boolean {
         val keywords = listOf("thread", "vector", "embedding", "spring", "java")
-        if (keywords.any { lower.contains(it) }) return true
+        return keywords.any(lower::contains)
+    }
 
+    private fun hasMemorySignal(lower: String): Boolean {
         val memorySignals =
             listOf(
                 "i am ",
@@ -59,8 +72,6 @@ class ChatMemoryService(
                 "i prefer",
                 "i care about",
             )
-        if (memorySignals.any { lower.contains(it) }) return true
-
-        return false
+        return memorySignals.any(lower::contains)
     }
 }
