@@ -65,19 +65,29 @@ class TokenAccountingFacade(
         estimatedInputTokens: Int,
     ) {
         when (operation) {
-            TokenOperation.CHAT ->
+            TokenOperation.CHAT -> {
                 tokenMeteringService.assertWithinBudget(userId, estimatedInputTokens)
+            }
 
-            TokenOperation.SUMMARIZATION ->
+            TokenOperation.SUMMARIZATION -> {
                 tokenMeteringService.assertWithinBudget(
                     userId,
                     // system overhead is cheaper but still bounded
                     (estimatedInputTokens * SUMMARY_WEIGHT).toInt(),
                 )
+            }
 
-            TokenOperation.EMBEDDING -> Unit
-            TokenOperation.TOOL -> Unit
-            TokenOperation.RERANK -> Unit
+            TokenOperation.EMBEDDING -> {
+                Unit
+            }
+
+            TokenOperation.TOOL -> {
+                Unit
+            }
+
+            TokenOperation.RERANK -> {
+                Unit
+            }
         }
     }
 

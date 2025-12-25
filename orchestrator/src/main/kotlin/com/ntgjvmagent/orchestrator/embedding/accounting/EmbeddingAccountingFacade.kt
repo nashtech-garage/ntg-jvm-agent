@@ -54,7 +54,7 @@ class EmbeddingAccountingFacade(
         val estimator = tokenEstimatorSelector.select(model)
 
         return when (input) {
-            is String ->
+            is String -> {
                 estimator.estimateInputTokens(
                     model = model,
                     systemPrompt = "",
@@ -62,8 +62,9 @@ class EmbeddingAccountingFacade(
                     history = emptyList(),
                     summary = "",
                 )
+            }
 
-            is List<*> ->
+            is List<*> -> {
                 input
                     .filterIsInstance<String>()
                     .sumOf {
@@ -75,8 +76,11 @@ class EmbeddingAccountingFacade(
                             summary = "",
                         )
                     }
+            }
 
-            else -> 0
+            else -> {
+                0
+            }
         }
     }
 
@@ -87,15 +91,19 @@ class EmbeddingAccountingFacade(
      */
     private fun fallbackEstimate(input: Any): Int =
         when (input) {
-            is String ->
+            is String -> {
                 input.length / FALLBACK_CHARS_PER_TOKEN
+            }
 
-            is List<*> ->
+            is List<*> -> {
                 input
                     .filterIsInstance<String>()
                     .sumOf { it.length / FALLBACK_CHARS_PER_TOKEN }
+            }
 
-            else -> 0
+            else -> {
+                0
+            }
         }
 
     private companion object {

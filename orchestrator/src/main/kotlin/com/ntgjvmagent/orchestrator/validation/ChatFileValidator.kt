@@ -20,10 +20,12 @@ class ChatFileValidator : ConstraintValidator<ValidChatFile, ChatRequestDto> {
                     addViolation(context, "File must not be empty")
                     isValid = false
                 }
+
                 file.contentType?.startsWith("image/") != true -> {
                     addViolation(context, "Only image files are allowed")
                     isValid = false
                 }
+
                 file.size > Constant.MAXIMUM_UPLOAD_FILE_SIZE -> {
                     addViolation(context, "File size must not exceed 5MB")
                     isValid = false
