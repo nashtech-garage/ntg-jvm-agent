@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.response.KnowledgeChunkResponseDto
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingQueueService
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
+import com.ntgjvmagent.orchestrator.embedding.queue.EmbeddingQueueService
+import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
@@ -68,7 +68,15 @@ class KnowledgeChunkService(
                 ?: throw EntityNotFoundException("Knowledge $knowledgeId not found for agent $agentId")
 
         val order = chunkOrder ?: getNextChunkOrderForKnowledge(agentId, knowledgeId)
-        val embedding = embeddingService.embed(agentId, content)
+
+        val correlationId = "knowledge-$knowledgeId:add-chunk:$order"
+
+        val embedding =
+            embeddingService.embed(
+                agentId = agentId,
+                text = content,
+                correlationId = correlationId,
+            )
 
         val chunk =
             KnowledgeChunk(
@@ -104,7 +112,14 @@ class KnowledgeChunkService(
         require(chunk.knowledge.id == knowledgeId)
         require(chunk.knowledge.agent.id == agentId)
 
-        val embedding = embeddingService.embed(agentId, newContent)
+        val correlationId = "knowledge-$knowledgeId:update-chunk:$chunkId"
+
+        val embedding =
+            embeddingService.embed(
+                agentId = agentId,
+                text = newContent,
+                correlationId = correlationId,
+            )
 
         chunk.apply {
             content = newContent

@@ -1,9 +1,12 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.component.SimpleApiKey
-import com.ntgjvmagent.orchestrator.embedding.ReactiveEmbeddingModel
-import com.ntgjvmagent.orchestrator.embedding.SpringAiEmbeddingModelAdapter
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
+import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
+import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
+import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.utils.Quadruple
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode
@@ -36,7 +39,8 @@ class DynamicModelService(
      *  2) Wrapped reactive EmbeddingModel
      *  3) Raw Spring AI EmbeddingModel (needed for PgVectorStore)
      */
-    private val cache = ConcurrentHashMap<UUID, Triple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel>>()
+    private val cache =
+        ConcurrentHashMap<UUID, Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, AgentResponseDto>>()
 
     fun getChatModel(agentId: UUID): ChatModel = cache.computeIfAbsent(agentId) { createModels(it) }.first
 
@@ -47,6 +51,8 @@ class DynamicModelService(
     /** Raw Spring AI embedding model used by PgVectorStore */
     fun getRawSpringEmbeddingModel(agentId: UUID): SpringEmbeddingModel =
         cache.computeIfAbsent(agentId) { createModels(it) }.third
+
+    fun getAgentConfig(agentId: UUID): AgentResponseDto = cache.computeIfAbsent(agentId) { createModels(it) }.fourth
 
     /**
      * Atomic reload of caching entry for a given agent.
@@ -71,26 +77,28 @@ class DynamicModelService(
     // ---------------------------------------------------------------------
     private fun createModels(
         agentId: UUID,
-    ): Triple<
+    ): Quadruple<
         ChatModel,
         ReactiveEmbeddingModel,
         SpringEmbeddingModel,
+        AgentResponseDto,
     > {
-        val agentConfig = agentRepo.findById(agentId).orElseThrow()
+        val agent = agentRepo.findById(agentId).orElseThrow()
 
         val api =
             createOpenAiApi(
-                baseUrl = agentConfig.baseUrl,
-                apiKey = agentConfig.apiKey,
-                chatCompletionsPath = agentConfig.chatCompletionsPath,
-                embeddingsPath = agentConfig.embeddingsPath,
+                baseUrl = agent.baseUrl,
+                apiKey = agent.apiKey,
+                chatCompletionsPath = agent.chatCompletionsPath,
+                embeddingsPath = agent.embeddingsPath,
             )
 
-        val chatModel = createChatModel(api, agentConfig.model)
-        val springEmbeddingModel = createSpringEmbeddingModel(api, agentConfig.embeddingModel, agentConfig.dimension)
+        val chatModel = createChatModel(api, agent.model)
+        val springEmbeddingModel = createSpringEmbeddingModel(api, agent.embeddingModel, agent.dimension)
         val wrappedEmbeddingModel = SpringAiEmbeddingModelAdapter(springEmbeddingModel)
+        val agentConfig = AgentMapper.toResponse(agent)
 
-        return Triple(chatModel, wrappedEmbeddingModel, springEmbeddingModel)
+        return Quadruple(chatModel, wrappedEmbeddingModel, springEmbeddingModel, agentConfig)
     }
 
     // ---------------------------------------------------------------------

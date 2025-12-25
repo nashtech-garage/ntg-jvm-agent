@@ -16,7 +16,7 @@ export default function Sidebar() {
   const {
     conversations,
     activeConversationId,
-    userName,
+    name,
     setActiveConversationId,
     setChatMessages,
     setConversations,
@@ -289,7 +289,7 @@ export default function Sidebar() {
         >
           <div className="flex text-sm">
             Welcome:
-            <p className="ml-1 font-semibold text-foreground">{userName}</p>
+            <p className="ml-1 font-semibold text-foreground">{name}</p>
           </div>
         </div>
         <Button

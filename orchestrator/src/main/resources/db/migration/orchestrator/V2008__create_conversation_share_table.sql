@@ -7,7 +7,6 @@
 CREATE TABLE IF NOT EXISTS conversation_share (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id         UUID NOT NULL,
-    shared_by_username      VARCHAR(255) NOT NULL,
     share_token             VARCHAR(255) UNIQUE NOT NULL,
     is_expired              BOOLEAN DEFAULT FALSE,
     expires_at              TIMESTAMPTZ,

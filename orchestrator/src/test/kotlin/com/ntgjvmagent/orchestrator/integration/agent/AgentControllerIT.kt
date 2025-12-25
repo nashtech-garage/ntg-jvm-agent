@@ -75,6 +75,6 @@ class AgentControllerIT
                 .perform(
                     getAuth("/api/agents/$randomId", scopes = listOf("SCOPE_chatbot.read")),
                 ).andExpect(status().isNotFound)
-                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.error").value("ENTITY_NOT_FOUND"))
         }
     }

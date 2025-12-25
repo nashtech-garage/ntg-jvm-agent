@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.integration.config
 
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingService
-import com.ntgjvmagent.orchestrator.embedding.ReactiveEmbeddingModel
+import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
+import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import io.micrometer.observation.ObservationRegistry
@@ -114,17 +114,19 @@ class TestEmbeddingConfig {
     @Bean
     @Primary
     fun fakeEmbeddingService(): EmbeddingService =
-        object : EmbeddingService(mockk(), mockk(), mockk()) {
+        object : EmbeddingService(mockk(), mockk(), mockk(), mockk()) {
             private val dims = 1536
 
             override fun embed(
                 agentId: UUID,
                 text: String,
+                correlationId: String,
             ): FloatArray = FloatArray(dims) { 0.1f }
 
             override fun embedBatch(
                 agentId: UUID,
                 texts: List<String>,
+                correlationId: String,
             ): List<FloatArray> {
                 val safeTexts = texts.ifEmpty { listOf("dummy") }
                 return safeTexts.map { FloatArray(dims) { 0.1f } }

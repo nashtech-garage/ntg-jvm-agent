@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.ingestion.handlers
 
 import com.ntgjvmagent.orchestrator.chunking.DocumentChunker
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.ingestion.IngestionHandler
+import com.ntgjvmagent.orchestrator.ingestion.orchestrator.IngestionHandler
 import com.ntgjvmagent.orchestrator.ingestion.utils.ContentExtractor
 import com.ntgjvmagent.orchestrator.ingestion.utils.WebPageFetcher
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType

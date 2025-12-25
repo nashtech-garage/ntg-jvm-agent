@@ -69,6 +69,7 @@ services:
       - loki-data:/loki
     networks:
       - ntg-network
+
   tempo:
     image: grafana/tempo:2.3.0
     container_name: orchestrator-tempo
@@ -80,6 +81,17 @@ services:
       - tempo:/tmp/tempo
       - ./docker/tempo/tempo-local.yaml:/etc/tempo/config.yaml
     command: [ "-config.file=/etc/tempo/config.yaml" ]
+    networks:
+      - ntg-network
+
+  redis:
+    image: redis:7
+    container_name: orchestrator-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
     networks:
       - ntg-network
 
@@ -134,6 +146,7 @@ services:
       - postgres
       - auth-server
       - mcp-server
+      - redis
     ports:
       - "9001:9001"
     environment:
@@ -165,6 +178,9 @@ services:
       MANAGEMENT_TRACING_ENABLED: "true"
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-1.0}
       MANAGEMENT_OTLP_TRACING_ENDPOINT: "http://tempo:4318/v1/traces"
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     networks:
       - ntg-network
 
@@ -232,3 +248,4 @@ volumes:
   tempo:
   prometheus:
   loki-data:
+  redis-data:

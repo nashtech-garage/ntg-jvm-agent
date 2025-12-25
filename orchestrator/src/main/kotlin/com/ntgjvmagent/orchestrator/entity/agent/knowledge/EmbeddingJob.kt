@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.entity.agent.knowledge
 
-import com.ntgjvmagent.orchestrator.embedding.EmbeddingJobStatus
+import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.base.BaseEntity
 import jakarta.persistence.Column

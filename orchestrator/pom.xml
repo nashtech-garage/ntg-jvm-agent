@@ -245,6 +245,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.ninja-squad</groupId>
       <artifactId>springmockk</artifactId>
       <version>4.0.0</version>
@@ -303,19 +308,24 @@
         </dependencies>
       </plugin>
       <plugin>
-        <groupId>com.github.gantsign.maven</groupId>
-        <artifactId>ktlint-maven-plugin</artifactId>
-        <version>3.3.0</version>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <id>check</id>
             <goals>
               <goal>check</goal>
             </goals>
+            <phase>verify</phase>
           </execution>
         </executions>
         <configuration>
-          <verbose>true</verbose>
+          <kotlin>
+            <ktlint>
+              <version>1.8.0</version>
+            </ktlint>
+          </kotlin>
         </configuration>
       </plugin>
 

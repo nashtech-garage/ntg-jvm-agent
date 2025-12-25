@@ -1,9 +1,12 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
+import com.ntgjvmagent.orchestrator.model.MessageReaction
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -26,4 +29,6 @@ data class ChatMessageEntity(
         orphanRemoval = true,
     )
     val messageMedias: MutableList<ChatMessageMediaEntity> = mutableListOf(),
+    @Enumerated(EnumType.STRING)
+    var reaction: MessageReaction = MessageReaction.NONE,
 ) : UserAuditedEntity()

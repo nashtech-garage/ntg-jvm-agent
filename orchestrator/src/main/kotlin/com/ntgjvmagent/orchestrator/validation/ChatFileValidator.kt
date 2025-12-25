@@ -1,13 +1,13 @@
 package com.ntgjvmagent.orchestrator.validation
 
+import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.utils.Constant
-import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
-class ChatFileValidator : ConstraintValidator<ValidChatFile, ChatRequestVm> {
+class ChatFileValidator : ConstraintValidator<ValidChatFile, ChatRequestDto> {
     override fun isValid(
-        value: ChatRequestVm?,
+        value: ChatRequestDto?,
         context: ConstraintValidatorContext?,
     ): Boolean {
         if (value == null || value.files == null) return true
@@ -20,10 +20,12 @@ class ChatFileValidator : ConstraintValidator<ValidChatFile, ChatRequestVm> {
                     addViolation(context, "File must not be empty")
                     isValid = false
                 }
+
                 file.contentType?.startsWith("image/") != true -> {
                     addViolation(context, "Only image files are allowed")
                     isValid = false
                 }
+
                 file.size > Constant.MAXIMUM_UPLOAD_FILE_SIZE -> {
                     addViolation(context, "File size must not exceed 5MB")
                     isValid = false

@@ -1,238 +1,76 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
-import com.ntgjvmagent.orchestrator.component.GlobalToolCallbackProvider
-import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
-import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
-import com.ntgjvmagent.orchestrator.utils.Constant
-import com.ntgjvmagent.orchestrator.viewmodel.ChatRequestVm
-import org.slf4j.LoggerFactory
-import org.springframework.ai.chat.client.ChatClient
-import org.springframework.ai.chat.prompt.Prompt
-import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor
-import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter
-import org.springframework.ai.rag.generation.augmentation.QueryAugmenter
-import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever
-import org.springframework.ai.tool.ToolCallback
-import org.springframework.ai.vectorstore.filter.Filter
-import org.springframework.core.io.InputStreamResource
+import com.ntgjvmagent.orchestrator.component.PromptBuilder
+import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.model.TokenOperation
+import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
+import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import org.springframework.stereotype.Service
-import org.springframework.util.MimeTypeUtils
 import reactor.core.publisher.Flux
 import java.util.UUID
 
 @Service
 class ChatModelService(
-    private val vectorStoreService: VectorStoreService,
-    private val agentKnowledgeRepo: AgentKnowledgeRepository,
-    private val agentToolRepository: AgentToolRepository,
-    private val filteredToolCallbackProvider: FilteredToolCallbackProvider,
-    private val globalToolCallbackProvider: GlobalToolCallbackProvider,
+    private val chatStreamService: ChatStreamService,
+    private val summarizationService: SummarizationService,
+    private val promptBuilder: PromptBuilder,
     private val dynamicModelService: DynamicModelService,
+    private val tokenFacade: TokenAccountingFacade,
 ) {
-    private val logger = LoggerFactory.getLogger(ChatModelService::class.java)
-
     fun call(
-        request: ChatRequestVm,
+        userId: UUID,
+        request: ChatRequestDto,
         history: List<String> = emptyList(),
         summary: String = "",
     ): Flux<String> {
-        val combinedPrompt =
-            buildString {
-                if (summary.isNotBlank()) {
-                    appendLine("Conversation summary so far:")
-                    appendLine(summary)
-                    appendLine()
-                }
+        val combinedPrompt = promptBuilder.build(request, history, summary)
+        val agentConfig = dynamicModelService.getAgentConfig(request.agentId)
 
-                if (history.isNotEmpty()) {
-                    appendLine("Chat history:")
-                    history.forEach { item ->
-                        appendLine(item)
-                    }
-                    appendLine()
-                }
-
-                appendLine("User question: ${request.question}")
-            }
-
-        val model = dynamicModelService.getChatModel(request.agentId)
-        val chatClient = ChatClient.builder(model).build()
-        val ragAdvisor = createRAGAdvisorForAgent(request.agentId)
-        val vectorStoreChatMemoryAdvisor = createVectorStoreChatMemoryAdvisor(request.agentId, request.conversationId)
-
-        var promptBuilder =
-            chatClient
-                .prompt()
-                .advisors(vectorStoreChatMemoryAdvisor)
-
-        if (ragAdvisor != null) {
-            promptBuilder = promptBuilder.advisors(ragAdvisor)
-        }
-        return promptBuilder
-            .system(
-                """
-                ${Constant.SYSTEM_PROMPT}
-                ${Constant.SEARCH_TOOL_INSTRUCTION}
-                """.trimIndent(),
-            ).toolCallbacks(createToolForAgent(request.agentId))
-            .user { u ->
-                u.text(combinedPrompt)
-                request.files
-                    ?.filter { !it.isEmpty }
-                    ?.forEach { file ->
-                        runCatching {
-                            val mime =
-                                MimeTypeUtils.parseMimeType(
-                                    file.contentType ?: Constant.PNG_CONTENT_TYPE,
-                                )
-                            val resource = InputStreamResource(file.inputStream)
-                            u.media(mime, resource)
-                        }.onFailure { ex ->
-                            logger.warn("Failed to read file ${file.originalFilename}: ${ex.message}")
-                        }
-                    }
-            }.stream()
-            .content()
-    }
-
-    fun createSummarize(
-        agentId: UUID,
-        question: String,
-    ): String? {
-        val prompt =
-            Prompt(
-                """
-                ${Constant.SUMMARY_PROMPT}
-                "$question"
-                """.trimIndent(),
+        // Estimate + enforce CHAT input budget
+        val estimatedInputTokens =
+            tokenFacade.estimateInput(
+                model = agentConfig.model,
+                combinedPrompt = combinedPrompt,
+                history = history,
+                summary = summary,
             )
 
-        val chatModel = dynamicModelService.getChatModel(agentId)
-        val response = chatModel.call(prompt)
-        return response.result.output.text
-    }
+        tokenFacade.assertInputBudget(
+            userId = userId,
+            operation = TokenOperation.CHAT,
+            estimatedInputTokens = estimatedInputTokens,
+        )
 
-    fun createRAGAdvisorForAgent(agentId: UUID): RetrievalAugmentationAdvisor? {
-        val knowledgeIds: List<String> =
-            agentKnowledgeRepo
-                .findAllByAgentIdAndActiveTrue(
-                    agentId,
-                ).map { it.id.toString() }
-
-        if (knowledgeIds.isEmpty()) {
-            return null
-        }
-
-        val key = Filter.Key("knowledgeId")
-        val value = Filter.Value(knowledgeIds)
-
-        val filterExpression =
-            Filter.Expression(
-                Filter.ExpressionType.IN,
-                key,
-                value,
+        val accountingContext =
+            LlmAccountingContext(
+                userId = userId,
+                agentId = request.agentId,
+                operation = TokenOperation.CHAT,
+                model = agentConfig.model,
+                inputText = combinedPrompt,
+                outputText = "",
+                estimatedInputTokens = estimatedInputTokens,
+                correlationId = request.correlationId,
             )
 
-        val documentRetriever =
-            VectorStoreDocumentRetriever
-                .builder()
-                .vectorStore(vectorStoreService.getVectorStore(agentId))
-                .topK(Constant.TOP_K)
-                .filterExpression(filterExpression)
-                .build()
-
-        val queryAugmenter: QueryAugmenter =
-            ContextualQueryAugmenter
-                .builder()
-                .allowEmptyContext(true)
-                .build()
-
-        return RetrievalAugmentationAdvisor
-            .builder()
-            .documentRetriever(documentRetriever)
-            .queryAugmenter(queryAugmenter)
-            .build()
-    }
-
-    fun createToolForAgent(agentId: UUID): List<ToolCallback?> {
-        val allowedToolNames =
-            agentToolRepository.findByAgentId(agentId).map { it.tool.name }
-
-        // Get all globally available tools
-        val allCallbacks = globalToolCallbackProvider.getToolCallbacks()
-
-        // Filter them based on agent-config
-        return filteredToolCallbackProvider.filterCallbacksByToolNames(
-            allCallbacks,
-            allowedToolNames,
+        return chatStreamService.stream(
+            userId = userId,
+            request = request,
+            accountingContext = accountingContext,
         )
     }
 
+    fun createSummarize(
+        userId: UUID,
+        agentId: UUID,
+        correlationId: String,
+        question: String,
+    ): String? = summarizationService.create(userId, agentId, correlationId, question)
+
     fun createDynamicSummary(
+        userId: UUID,
         agentId: UUID,
-        messagesToSummarize: List<String>,
-    ): String {
-        if (messagesToSummarize.isEmpty()) return ""
-
-        val joinedMessages = messagesToSummarize.joinToString("\n")
-
-        val promptText =
-            Constant.SUMMARY_UPDATE_PROMPT
-                .replace("{{latest_message}}", joinedMessages)
-
-        val prompt = Prompt(promptText)
-        val chatModel = dynamicModelService.getChatModel(agentId)
-        val chatClient = ChatClient.builder(chatModel).build()
-
-        val response =
-            chatClient
-                .prompt(prompt)
-                .call()
-
-        return response.content() ?: ""
-    }
-
-    fun createVectorStoreChatMemoryAdvisor(
-        agentId: UUID,
-        conversationId: UUID?,
-    ): RetrievalAugmentationAdvisor {
-        val agentExpr =
-            Filter.Expression(
-                Filter.ExpressionType.EQ,
-                Filter.Key("agentId"),
-                Filter.Value(agentId.toString()),
-            )
-
-        val filter =
-            if (conversationId != null) {
-                val convoExpr =
-                    Filter.Expression(
-                        Filter.ExpressionType.EQ,
-                        Filter.Key("conversationId"),
-                        Filter.Value(conversationId.toString()),
-                    )
-
-                Filter.Expression(
-                    Filter.ExpressionType.AND,
-                    agentExpr,
-                    convoExpr,
-                )
-            } else {
-                agentExpr
-            }
-
-        val retriever =
-            VectorStoreDocumentRetriever
-                .builder()
-                .vectorStore(vectorStoreService.getVectorStore(agentId))
-                .topK(5)
-                .filterExpression(filter)
-                .build()
-
-        return RetrievalAugmentationAdvisor
-            .builder()
-            .documentRetriever(retriever)
-            .build()
-    }
+        correlationId: String,
+        messages: List<String>,
+    ): String = summarizationService.update(userId, agentId, correlationId, messages)
 }

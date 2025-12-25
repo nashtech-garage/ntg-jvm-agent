@@ -6,17 +6,22 @@ import { ChatMessage } from '@/models/chat-message';
 import RichTextPresenter from '@/components/ui/rich-text-presenter';
 import TypingIndicator from '@/components/ui/typing-indicator';
 import { Constants } from '@/constants/constant';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Reaction } from '@/types/reaction';
+import clsx from 'clsx';
 
 export default function ChatResult({
   results,
   isTyping = false,
   agentAvatar,
   agentName,
+  onReaction,
 }: Readonly<{
   results: ChatMessage[];
   isTyping: boolean;
   agentAvatar?: string;
   agentName?: string;
+  onReaction?: (messageId: string, reaction: Reaction) => void;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -95,8 +100,27 @@ export default function ChatResult({
               </div>
               <div className="max-w-[80%] rounded-2xl border border-border bg-surface px-4 py-3 text-foreground shadow-md shadow-[0_10px_26px_color-mix(in_oklab,var(--color-border)_60%,transparent)]">
                 <RichTextPresenter content={r.content} />
-                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Responded - {formatTime(r.createdAt)}
+                <p className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  <span>Responded - {formatTime(r.createdAt)}</span>
+
+                  <span className="flex items-center gap-2">
+                    <button
+                      onClick={() => onReaction?.(r.id, Reaction.LIKE)}
+                      className={clsx('transition hover:text-sky-600', {
+                        'text-sky-600': r.reaction === 'LIKE',
+                      })}
+                    >
+                      <ThumbsUp size={16} strokeWidth={2} />
+                    </button>
+                    <button
+                      onClick={() => onReaction?.(r.id, Reaction.DISLIKE)}
+                      className={clsx('transition hover:text-rose-600', {
+                        'text-rose-600': r.reaction === 'DISLIKE',
+                      })}
+                    >
+                      <ThumbsDown size={16} strokeWidth={2} />
+                    </button>
+                  </span>
                 </p>
               </div>
             </div>
@@ -109,6 +133,8 @@ export default function ChatResult({
             <Image
               src={agentAvatar}
               alt={agentName || 'Agent'}
+              width={24}
+              height={24}
               className="h-6 w-6 rounded-full object-cover flex-shrink-0"
             />
           ) : (
