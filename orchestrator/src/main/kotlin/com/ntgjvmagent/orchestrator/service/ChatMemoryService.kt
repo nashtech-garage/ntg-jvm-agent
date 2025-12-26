@@ -8,7 +8,6 @@ import java.util.UUID
 @Service
 class ChatMemoryService(
     private val vectorStoreService: VectorStoreService,
-    private val MIN_CONTENT_LENGTH: Int = 20,
 ) {
     fun onMessageSaved(
         agentId: UUID,
@@ -42,7 +41,7 @@ class ChatMemoryService(
 
         val isEligible =
             role == Constant.QUESTION_TYPE &&
-                content.length >= MIN_CONTENT_LENGTH &&
+                content.length >= Constant.MIN_CONTENT_LENGTH_FOR_VECTORIZATION &&
                 !isGreetingNoise(lower)
 
         val hasSignal =

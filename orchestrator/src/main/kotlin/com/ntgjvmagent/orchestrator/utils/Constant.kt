@@ -10,7 +10,7 @@ object Constant {
     const val CHAT_MEMORY_ADVISOR_ORDER = 50
     const val PNG_CONTENT_TYPE = "image/png"
     const val MAXIMUM_UPLOAD_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-
+    const val MIN_CONTENT_LENGTH_FOR_VECTORIZATION = 20
     const val SEARCH_TOOL_INSTRUCTION = """
         When the tool response contains search results (titles, snippets, links):
         1. Use the snippets as factual evidence ONLY IF they are relevant to the user's question.
