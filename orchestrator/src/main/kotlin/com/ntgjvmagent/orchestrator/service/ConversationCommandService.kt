@@ -37,7 +37,8 @@ class ConversationCommandService(
 
         return conversationRepo
             .save(conversation)
-            .id ?: error("Can't create conversation")
+            .id
+            ?: error("Can't create conversation")
     }
 
     @Transactional
@@ -56,7 +57,9 @@ class ConversationCommandService(
         val conversation = findConversation(conversationId)
 
         if (conversation.createdBy?.id != userId) {
-            throw ResourceNotFoundException("Conversation not found: $conversationId")
+            throw ResourceNotFoundException(
+                "Conversation not found: $conversationId",
+            )
         }
 
         conversation.title = newTitle.trim()
@@ -81,7 +84,6 @@ class ConversationCommandService(
 
         val conversation = findConversation(conversationId)
 
-        // Save question
         val question =
             messageRepo.save(
                 ChatMessageEntity(
@@ -93,7 +95,6 @@ class ConversationCommandService(
 
         saveMessageMedia(chatReq, question)
 
-        // Call to save User Question into vector store if condition is met, currently we have not save the LLM answer yet
         chatMemoryService.onMessageSaved(
             agentId = chatReq.agentId,
             conversationId = conversation.id!!,
@@ -101,7 +102,6 @@ class ConversationCommandService(
             content = chatReq.question,
         )
 
-        // Save answer
         val answerEntity =
             messageRepo.save(
                 ChatMessageEntity(
@@ -111,15 +111,16 @@ class ConversationCommandService(
                 ),
             )
 
-        // Generate & update title once (after first answer)
         if (conversation.status == ConversationStatus.DRAFT) {
             val title =
-                chatModelService.createSummarize(
-                    userId,
-                    chatReq.agentId,
-                    chatReq.correlationId,
-                    chatReq.question,
-                ) ?: chatReq.question
+                chatModelService
+                    .createSummarize(
+                        userId,
+                        chatReq.agentId,
+                        chatReq.correlationId,
+                        chatReq.question,
+                    )
+                    ?: chatReq.question
 
             conversation.title = title
             conversation.status = ConversationStatus.ACTIVE
@@ -143,8 +144,6 @@ class ConversationCommandService(
         )
     }
 
-    // ---------------- private helpers ----------------
-
     private fun saveMessageMedia(
         chatReq: ChatRequestDto,
         questionEntity: ChatMessageEntity,
@@ -156,7 +155,8 @@ class ConversationCommandService(
             files.map {
                 ChatMessageMediaEntity(
                     fileName = it.originalFilename ?: it.name,
-                    contentType = it.contentType ?: Constant.PNG_CONTENT_TYPE,
+                    contentType =
+                        it.contentType ?: Constant.PNG_CONTENT_TYPE,
                     chatMessage = questionEntity,
                     data = it.bytes,
                     fileSize = it.size,
@@ -169,5 +169,9 @@ class ConversationCommandService(
     private fun findConversation(id: UUID): ConversationEntity =
         conversationRepo
             .findById(id)
-            .orElseThrow { ResourceNotFoundException("Conversation not found: $id") }
+            .orElseThrow {
+                ResourceNotFoundException(
+                    "Conversation not found: $id",
+                )
+            }
 }
