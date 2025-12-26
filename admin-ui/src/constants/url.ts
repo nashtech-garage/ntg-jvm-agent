@@ -30,3 +30,8 @@ export const BACKEND_PATH = {
   },
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
 } as const;
+
+export const PROVIDER_PATH = {
+  PROVIDERS: '/api/providers',
+  PROVIDER_DETAIL: (id: string) => `/api/providers/${id}`,
+} as const;
