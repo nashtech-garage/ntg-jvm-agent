@@ -61,31 +61,6 @@ export default async function UsagePage({ searchParams }: Readonly<UsagePageProp
   );
 }
 
-/**
- * Returns YYYY-MM-DD strings for the current calendar month.
- * Safe for backend LocalDate usage.
- */
-function getCurrentMonthRange(): { from: string; to: string } {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const month = now.getMonth(); // 0-based
-
-  const from = new Date(year, month, 1);
-  const to = new Date(year, month + 1, 0);
-
-  const format = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(
-      2,
-      '0'
-    )}`;
-
-  return {
-    from: format(from),
-    to: format(to),
-  };
-}
-
 function getMonthRangeFromDate(date: string): { from: string; to: string } {
   const [year, month] = date.split('-').map(Number);
 
