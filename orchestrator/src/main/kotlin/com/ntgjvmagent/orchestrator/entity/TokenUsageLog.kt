@@ -1,12 +1,14 @@
 package com.ntgjvmagent.orchestrator.entity
 
 import com.ntgjvmagent.orchestrator.model.TokenOperation
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -23,9 +25,20 @@ class TokenUsageLog(
     @Enumerated(EnumType.STRING)
     val operation: TokenOperation,
     val toolName: String?,
-    val promptTokens: Int,
-    val completionTokens: Int,
-    val totalTokens: Int,
+    val promptTokens: Long,
+    val completionTokens: Long,
+    val totalTokens: Long,
     val correlationId: String?,
     val createdAt: Instant = Instant.now(),
+    /**
+     * Derived by DB:
+     * (created_at AT TIME ZONE 'UTC')::DATE
+     */
+    @Column(
+        name = "usage_date",
+        nullable = false,
+        insertable = false,
+        updatable = false,
+    )
+    val usageDate: LocalDate? = null,
 )

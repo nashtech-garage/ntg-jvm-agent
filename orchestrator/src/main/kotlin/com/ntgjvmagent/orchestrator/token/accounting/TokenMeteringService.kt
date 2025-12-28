@@ -8,6 +8,7 @@ import com.ntgjvmagent.orchestrator.repository.TokenUsageLogRepository
 import com.ntgjvmagent.orchestrator.repository.UserTokenQuotaRepository
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
 import com.ntgjvmagent.orchestrator.token.cache.DailyTokenUsageCache
+import com.ntgjvmagent.orchestrator.utils.toNormalizedUsage
 import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.metadata.Usage
@@ -114,6 +115,7 @@ class TokenMeteringService(
         if (usage.totalTokens <= 0) return
 
         try {
+            val normalized = usage.toNormalizedUsage()
             val agentConfig = dynamicModelService.getAgentConfig(agentId)
 
             tokenUsageLogRepository.save(
@@ -125,9 +127,9 @@ class TokenMeteringService(
                     model = agentConfig.model,
                     operation = operation,
                     toolName = toolName,
-                    promptTokens = usage.promptTokens,
-                    completionTokens = usage.completionTokens,
-                    totalTokens = usage.totalTokens,
+                    promptTokens = normalized.promptTokens,
+                    completionTokens = normalized.completionTokens,
+                    totalTokens = normalized.totalTokens,
                     correlationId = correlationId,
                 ),
             )
@@ -149,7 +151,9 @@ class TokenMeteringService(
     ) {
         if (userId == null) return
 
-        val total = estimatedPromptTokens + estimatedCompletionTokens
+        val promptTokens = estimatedPromptTokens.toLong().coerceAtLeast(0L)
+        val completionTokens = estimatedCompletionTokens.toLong().coerceAtLeast(0L)
+        val total = promptTokens + completionTokens
         if (total <= 0) return
 
         try {
@@ -162,14 +166,14 @@ class TokenMeteringService(
                     model = "ESTIMATED",
                     operation = operation,
                     toolName = null,
-                    promptTokens = estimatedPromptTokens,
-                    completionTokens = estimatedCompletionTokens,
+                    promptTokens = promptTokens,
+                    completionTokens = completionTokens,
                     totalTokens = total,
                     correlationId = correlationId,
                 ),
             )
 
-            incrementDailyUsageBestEffort(userId, total.toLong())
+            incrementDailyUsageBestEffort(userId, total)
         } catch (ex: Exception) {
             handleAccountingFailure(ex, correlationId)
         }
