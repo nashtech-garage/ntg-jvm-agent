@@ -75,9 +75,17 @@ class RagAdvisorFactory(
                     Filter.Value(agentId.toString()),
                 ),
                 Filter.Expression(
-                    Filter.ExpressionType.EQ,
-                    Filter.Key("conversationId"),
-                    Filter.Value(conversationId.toString()),
+                    Filter.ExpressionType.AND,
+                    Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        Filter.Key("conversationId"),
+                        Filter.Value(conversationId.toString()),
+                    ),
+                    Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        Filter.Key("type"),
+                        Filter.Value("chat_message"),
+                    ),
                 ),
             )
 
@@ -89,9 +97,16 @@ class RagAdvisorFactory(
                 .filterExpression(filter)
                 .build()
 
+        val queryAugmenter =
+            ContextualQueryAugmenter
+                .builder()
+                .allowEmptyContext(true)
+                .build()
+
         return RetrievalAugmentationAdvisor
             .builder()
             .documentRetriever(retriever)
+            .queryAugmenter(queryAugmenter)
             .order(Constant.CHAT_MEMORY_ADVISOR_ORDER)
             .build()
     }

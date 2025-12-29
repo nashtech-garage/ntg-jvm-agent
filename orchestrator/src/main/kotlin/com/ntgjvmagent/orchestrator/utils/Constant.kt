@@ -8,6 +8,7 @@ object Constant {
     const val CHAT_MEMORY_TOP_K = 5
     const val RAG_ADVISOR_ORDER = 100
     const val CHAT_MEMORY_ADVISOR_ORDER = 50
+    const val MEMORY_EMBED_SCORE_THRESHOLD = 0.35
     const val PNG_CONTENT_TYPE = "image/png"
     const val MAXIMUM_UPLOAD_FILE_SIZE = 5 * 1024 * 1024 // 5MB
     const val MIN_CONTENT_LENGTH_FOR_VECTORIZATION = 20
@@ -72,7 +73,7 @@ object Constant {
     Return the updated summary.
     """
     const val SYSTEM_PROMPT = """
-        Use retrieved context naturally as if you remember it.
+        Use retrieved context from knowledge bases and previous conversations naturally as if you remember it.
 
         If you are unsure about an answer or the information is not available in the provided context, respond politely and constructively.
         Offer clarification, ask follow-up questions, or provide helpful guidance instead of saying “I don’t know.”
