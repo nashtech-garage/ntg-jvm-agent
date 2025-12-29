@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ChatBox from '@/components/chat-box';
 import ChatResult from '@/components/chat-result';
 import { ChatResponse } from '@/models/chat-response';
@@ -32,17 +32,6 @@ function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
   };
 }
 
-function buildStreamingMessage() {
-  return {
-    id: 'streaming',
-    content: '',
-    medias: [],
-    createdAt: new Date().toISOString(),
-    type: 2,
-    reaction: Reaction.NONE,
-  };
-}
-
 function cleanupStreamingMessage(
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
 ) {
@@ -63,8 +52,29 @@ export default function Page() {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const router = useRouter();
   const { showError } = useToaster();
+  const hasStartedStreamingRef = useRef(false);
 
   const handleTokenUpdate = (token: string) => {
+    if (!hasStartedStreamingRef.current) {
+      hasStartedStreamingRef.current = true;
+
+      setIsTyping(false);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: 'streaming',
+          content: token,
+          medias: [],
+          createdAt: new Date().toISOString(),
+          type: 2,
+          reaction: Reaction.NONE,
+        },
+      ]);
+
+      return;
+    }
+
     setChatMessages((prev) =>
       prev.map((msg) => (msg.id === 'streaming' ? { ...msg, content: msg.content + token } : msg))
     );
@@ -90,14 +100,12 @@ export default function Page() {
   };
 
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
+    hasStartedStreamingRef.current = false;
     setIsTyping(true);
 
     // Show question immediately
     const questionMessage = buildQuestionMessage(q, files);
     setChatMessages((prev) => [...prev, questionMessage]);
-
-    // Show streaming placeholder
-    setChatMessages((prev) => [...prev, buildStreamingMessage()]);
 
     try {
       // Start streaming
