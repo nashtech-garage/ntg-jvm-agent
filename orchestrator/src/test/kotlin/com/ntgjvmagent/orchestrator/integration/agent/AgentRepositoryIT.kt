@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -24,7 +25,7 @@ class AgentRepositoryIT
                 Agent(
                     name = "Repo Agent",
                     description = "Repository test",
-                    provider = "OpenAI",
+                    provider = ProviderType.OPENAI,
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
@@ -48,7 +49,7 @@ class AgentRepositoryIT
             repo.save(
                 Agent(
                     name = "Agent 1",
-                    provider = "OpenAI",
+                    provider = ProviderType.OPENAI,
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
@@ -60,7 +61,7 @@ class AgentRepositoryIT
             repo.save(
                 Agent(
                     name = "Agent 2",
-                    provider = "OpenAI",
+                    provider = ProviderType.OPENAI,
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",

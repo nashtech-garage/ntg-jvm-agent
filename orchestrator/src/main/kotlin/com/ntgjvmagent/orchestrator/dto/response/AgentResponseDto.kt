@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.dto.response
 
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import java.util.UUID
 
 data class AgentResponseDto(
@@ -8,7 +9,7 @@ data class AgentResponseDto(
     val description: String?,
     val avatar: String?,
     val active: Boolean,
-    val provider: String,
+    val provider: ProviderType,
     val baseUrl: String,
     val apiKey: String,
     val chatCompletionsPath: String,
