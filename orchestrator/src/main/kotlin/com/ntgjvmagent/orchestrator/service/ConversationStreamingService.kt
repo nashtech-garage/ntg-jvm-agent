@@ -4,6 +4,7 @@ import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
@@ -101,26 +102,40 @@ class ConversationStreamingService(
     // ---------------- helpers ----------------
 
     private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> {
-        val history =
-            request.conversationId
-                ?.let {
-                    messageRepo
-                        .listMessageByConversationId(it)
-                        .map(ChatMessageMapper::toHistoryFormat)
-                }
-                ?: emptyList()
+        val conversationId = request.conversationId ?: return emptyList<String>() to emptyList()
 
-        val split = history.size - historyLimit
+        val recentMessages =
+            messageRepo
+                .findByConversationIdOrderByCreatedAtDesc(
+                    conversationId,
+                    PageRequest.of(0, historyLimit),
+                )
+                .asReversed()
 
-        return if (split > 0) {
-            history
-                .withIndex()
-                .partition { it.index < split }
-                .let { (o, r) -> o.map { it.value } to r.map { it.value } }
-        } else {
-            emptyList<String>() to history
+        if (recentMessages.isEmpty()) {
+            return emptyList<String>() to emptyList()
         }
+
+        val cutoff =
+            recentMessages.first().createdAt
+                ?: error("ChatMessage.createdAt is null for conversation $conversationId")
+
+
+        val oldMessages =
+            messageRepo.findMessagesBefore(
+                conversationId = conversationId,
+                cutoff = cutoff,
+            )
+
+        val recentHistory =
+            recentMessages.map(ChatMessageMapper::toHistoryFormat)
+
+        val oldHistory =
+            oldMessages.map(ChatMessageMapper::toHistoryFormat)
+
+        return oldHistory to recentHistory
     }
+
 
     private fun generateSummary(
         userId: UUID,

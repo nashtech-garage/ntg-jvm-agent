@@ -23,7 +23,7 @@ class ChatModelService(
         history: List<String> = emptyList(),
         summary: String = "",
     ): Flux<String> {
-        val combinedPrompt = promptBuilder.build(request, history, summary)
+        val combinedPrompt = promptBuilder.build(request, summary)
         val agentConfig = dynamicModelService.getAgentConfig(request.agentId)
 
         // Estimate + enforce CHAT input budget

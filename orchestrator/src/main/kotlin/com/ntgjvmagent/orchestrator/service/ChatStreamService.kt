@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.ChatClientResponse
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor
+import org.springframework.ai.chat.memory.ChatMemory
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
@@ -78,6 +79,9 @@ class ChatStreamService(
         chatClient
             .prompt()
             .advisors(advisors)
+            .advisors { advisors ->
+                advisors.param(ChatMemory.CONVERSATION_ID, request.conversationId.toString())
+            }
             .system(
                 """
                 ${Constant.SYSTEM_PROMPT}
