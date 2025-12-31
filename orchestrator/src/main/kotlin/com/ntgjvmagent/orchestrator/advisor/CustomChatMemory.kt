@@ -12,21 +12,30 @@ import java.util.UUID
 
 class CustomChatMemory(
     private val chatMessageRepository: ChatMessageRepository,
-): ChatMemory {
+) : ChatMemory {
     override fun get(conversationId: String): List<Message?> {
         val conversationId = UUID.fromString(conversationId)
 
-        val recentMessages = chatMessageRepository
-            .findByConversationIdOrderByCreatedAtDesc(conversationId, PageRequest.of(0, Constant.HISTORY_LIMIT))
-            .asReversed()
+        val recentMessages =
+            chatMessageRepository
+                .findByConversationIdOrderByCreatedAtDesc(conversationId, PageRequest.of(0, Constant.HISTORY_LIMIT))
+                .asReversed()
 
         return recentMessages.mapNotNull { it.toChatMemoryMessage() }
     }
 
     // no implementation since we already do it manually
     // also implement this would not work with LLM stream calls due to its flow in Spring AI
-    override fun add(conversationId: String, messages: List<Message>) {}
-    override fun clear(conversationId: String) {}
+    override fun add(
+        conversationId: String,
+        messages: List<Message>,
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun clear(conversationId: String) {
+        TODO("Not yet implemented")
+    }
 
     fun ChatMessageEntity.toChatMemoryMessage(): Message? =
         when (this.type) {

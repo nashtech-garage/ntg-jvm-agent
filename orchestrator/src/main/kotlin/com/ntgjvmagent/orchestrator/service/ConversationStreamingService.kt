@@ -101,41 +101,40 @@ class ConversationStreamingService(
 
     // ---------------- helpers ----------------
 
-    private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> {
-        val conversationId = request.conversationId ?: return emptyList<String>() to emptyList()
+    private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> =
+        request.conversationId?.let { conversationId ->
 
-        val recentMessages =
-            messageRepo
-                .findByConversationIdOrderByCreatedAtDesc(
-                    conversationId,
-                    PageRequest.of(0, historyLimit),
-                )
-                .asReversed()
+            val recentMessages =
+                messageRepo
+                    .findByConversationIdOrderByCreatedAtDesc(
+                        conversationId,
+                        PageRequest.of(0, historyLimit),
+                    ).asReversed()
 
-        if (recentMessages.isEmpty()) {
-            return emptyList<String>() to emptyList()
+            if (recentMessages.isEmpty()) {
+                emptyList<String>() to emptyList()
+            } else {
+                val cutoff =
+                    recentMessages.first().createdAt
+                        ?: error("ChatMessage.createdAt is null for conversation $conversationId")
+
+                val oldMessages =
+                    messageRepo.findMessagesBefore(
+                        conversationId = conversationId,
+                        cutoff = cutoff,
+                    )
+
+                val recentHistory =
+                    recentMessages.map(ChatMessageMapper::toHistoryFormat)
+
+                val oldHistory =
+                    oldMessages.map(ChatMessageMapper::toHistoryFormat)
+
+                oldHistory to recentHistory
+            }
+        } ?: run {
+            emptyList<String>() to emptyList()
         }
-
-        val cutoff =
-            recentMessages.first().createdAt
-                ?: error("ChatMessage.createdAt is null for conversation $conversationId")
-
-
-        val oldMessages =
-            messageRepo.findMessagesBefore(
-                conversationId = conversationId,
-                cutoff = cutoff,
-            )
-
-        val recentHistory =
-            recentMessages.map(ChatMessageMapper::toHistoryFormat)
-
-        val oldHistory =
-            oldMessages.map(ChatMessageMapper::toHistoryFormat)
-
-        return oldHistory to recentHistory
-    }
-
 
     private fun generateSummary(
         userId: UUID,

@@ -81,8 +81,7 @@ class ChatStreamService(
             .advisors(advisors)
             .advisors { advisors ->
                 advisors.param(ChatMemory.CONVERSATION_ID, request.conversationId.toString())
-            }
-            .system(
+            }.system(
                 """
                 ${Constant.SYSTEM_PROMPT}
                 ${Constant.SEARCH_TOOL_INSTRUCTION}

@@ -24,7 +24,10 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
         @Param("conversationId") conversationId: UUID,
     ): List<ChatMessageEntity>
 
-    fun findByConversationIdOrderByCreatedAtDesc(conversationId: UUID, pageable: Pageable) : List<ChatMessageEntity>
+    fun findByConversationIdOrderByCreatedAtDesc(
+        conversationId: UUID,
+        pageable: Pageable,
+    ): List<ChatMessageEntity>
 
     @Query(
         """
@@ -33,10 +36,10 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
         WHERE m.conversation.id = :conversationId
           AND m.createdAt < :cutoff
         ORDER BY m.createdAt ASC
-        """
+        """,
     )
     fun findMessagesBefore(
         @Param("conversationId") conversationId: UUID,
-        @Param("cutoff") cutoff: Instant
+        @Param("cutoff") cutoff: Instant,
     ): List<ChatMessageEntity>
 }

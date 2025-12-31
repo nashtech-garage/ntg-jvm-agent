@@ -9,14 +9,13 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class ChatMemoryAdvisor {
     @Bean
-    fun customChatMemory(chatMessageRepository: ChatMessageRepository): CustomChatMemory {
-        return CustomChatMemory(chatMessageRepository)
-    }
+    fun customChatMemory(chatMessageRepository: ChatMessageRepository): CustomChatMemory =
+        CustomChatMemory(chatMessageRepository)
 
     @Bean
-    fun messageChatMemoryAdvisor(chatMemory: CustomChatMemory): MessageChatMemoryAdvisor {
-        return MessageChatMemoryAdvisor.builder(chatMemory)
+    fun messageChatMemoryAdvisor(chatMemory: CustomChatMemory): MessageChatMemoryAdvisor =
+        MessageChatMemoryAdvisor
+            .builder(chatMemory)
             .order(Constant.MESSAGE_HISTORY_ADVISOR_ORDER)
             .build()
-    }
 }
