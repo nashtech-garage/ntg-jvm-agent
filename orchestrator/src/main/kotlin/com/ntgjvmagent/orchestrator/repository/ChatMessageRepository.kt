@@ -24,6 +24,14 @@ interface ChatMessageRepository : JpaRepository<ChatMessageEntity, UUID> {
         @Param("conversationId") conversationId: UUID,
     ): List<ChatMessageEntity>
 
+    // NOTE: for findByConversationIdOrderByCreatedAtDesc and findMessagesBefore
+    // These queries may cause N+1 if messageMedias is accessed.
+    // In my current usage messageMedias is NOT used,
+    // so no N+1 occurs and media is intentionally not fetched to avoid
+    // loading large binary data.
+    //
+    // If this method is reused in a context that requires messageMedias,
+    // consider adding an EntityGraph or LEFT JOIN FETCH to avoid the hazard.
     fun findByConversationIdOrderByCreatedAtDesc(
         conversationId: UUID,
         pageable: Pageable,

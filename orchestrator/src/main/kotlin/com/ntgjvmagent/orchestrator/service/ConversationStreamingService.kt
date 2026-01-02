@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
+import com.ntgjvmagent.orchestrator.utils.Constant
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.codec.ServerSentEvent
@@ -16,7 +17,6 @@ class ConversationStreamingService(
     private val chatModelService: ChatModelService,
     private val messageRepo: ChatMessageRepository,
     private val commandService: ConversationCommandService,
-    private val historyLimit: Int = 5,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -101,6 +101,19 @@ class ConversationStreamingService(
 
     // ---------------- helpers ----------------
 
+    /**
+     * NOTE:
+     * At the moment, chat history is queried twice:
+     * - once by ChatMemory advisor for history prompting
+     * - once by manual token accounting logic
+     *
+     * Ideally, both should share the same history source.
+     * However, the current token accounting implementation depends on
+     * a separate, manually controlled history flow.
+     *
+     * Refactoring this would require non-trivial changes across multiple components,
+     * so the duplication is accepted for now.
+     */
     private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> =
         request.conversationId?.let { conversationId ->
 
@@ -108,7 +121,7 @@ class ConversationStreamingService(
                 messageRepo
                     .findByConversationIdOrderByCreatedAtDesc(
                         conversationId,
-                        PageRequest.of(0, historyLimit),
+                        PageRequest.of(0, Constant.HISTORY_LIMIT),
                     ).asReversed()
 
             if (recentMessages.isEmpty()) {
