@@ -10,7 +10,8 @@ import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
 import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
-import com.ntgjvmagent.orchestrator.provider.ChatModelProvider
+import com.ntgjvmagent.orchestrator.model.ChatModelConfig
+import com.ntgjvmagent.orchestrator.agent.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.utils.Quadruple
 import io.micrometer.observation.ObservationRegistry
@@ -35,7 +36,7 @@ import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 @Service
 @Suppress("TooManyFunctions")
 class DynamicModelService(
-    private val chatModelProvider: ChatModelProvider,
+    private val chatModelOrchestrator: ChatModelOrchestrator,
     private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
     private val agentRepo: AgentRepository,
@@ -92,20 +93,22 @@ class DynamicModelService(
     > {
         val agent = agentRepo.findById(agentId).orElseThrow()
 
-        // Use ChatModelProvider to create chat model
+        // Use ChatModelOrchestrator to create chat model
         val chatModel =
-            chatModelProvider.createChatModel(
-                providerType = agent.provider,
-                baseUrl = agent.baseUrl,
-                apiKey = agent.apiKey,
-                modelName = agent.model,
-                temperature = agent.temperature,
-                topP = agent.topP,
-                maxTokens = agent.maxTokens,
-                frequencyPenalty = agent.frequencyPenalty,
-                presencePenalty = agent.presencePenalty,
-                chatCompletionsPath = agent.chatCompletionsPath,
-                embeddingsPath = agent.embeddingsPath,
+            chatModelOrchestrator.createChatModel(
+                ChatModelConfig(
+                    providerType = agent.provider,
+                    baseUrl = agent.baseUrl,
+                    apiKey = agent.apiKey,
+                    modelName = agent.model,
+                    temperature = agent.temperature,
+                    topP = agent.topP,
+                    maxTokens = agent.maxTokens,
+                    frequencyPenalty = agent.frequencyPenalty,
+                    presencePenalty = agent.presencePenalty,
+                    chatCompletionsPath = agent.chatCompletionsPath,
+                    embeddingsPath = agent.embeddingsPath,
+                ),
             )
 
         // Create embedding model based on provider type (not using OpenAiApi)
