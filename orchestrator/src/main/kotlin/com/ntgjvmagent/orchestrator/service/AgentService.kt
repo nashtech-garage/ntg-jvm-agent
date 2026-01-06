@@ -1,8 +1,11 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.component.audit.Audit
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.model.AuditAction
+import com.ntgjvmagent.orchestrator.model.ResourceType
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -38,12 +41,14 @@ class AgentService(
         return AgentMapper.toResponse(entity)
     }
 
+    @Audit(action = AuditAction.CREATE, resource = ResourceType.AGENT)
     @Transactional
     fun create(request: AgentRequestDto): AgentResponseDto {
         val entity = AgentMapper.toEntity(request)
         return AgentMapper.toResponse(repo.save(entity))
     }
 
+    @Audit(action = AuditAction.UPDATE, resource = ResourceType.AGENT)
     @Transactional
     fun update(
         id: UUID,
