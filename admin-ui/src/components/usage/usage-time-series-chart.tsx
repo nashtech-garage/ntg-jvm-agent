@@ -2,10 +2,10 @@
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-import type { UsageTimeSeriesPointDto } from '@/types/usage';
+import type { UsageTimeSeriesPoint } from '@/types/usage';
 
 type Props = {
-  data: UsageTimeSeriesPointDto[];
+  data: UsageTimeSeriesPoint[];
 };
 
 export default function UsageTimeSeriesChart({ data }: Readonly<Props>) {

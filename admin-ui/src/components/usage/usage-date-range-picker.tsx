@@ -2,19 +2,33 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+type Props = {
+  from: string;
+  to: string;
+  disabled?: boolean;
+  latestAggregatedDate?: string;
+};
+
 export default function UsageDateRangePicker({
   from,
   to,
-}: Readonly<{
-  from: string;
-  to: string;
-}>) {
+  disabled = false,
+  latestAggregatedDate,
+}: Readonly<Props>) {
   const router = useRouter();
   const params = useSearchParams();
 
-  function update(key: string, value: string) {
+  function update(nextFrom: string, nextTo: string) {
+    // invalid range
+    if (nextFrom > nextTo) return;
+
+    // freshness limit
+    if (latestAggregatedDate && nextTo > latestAggregatedDate) return;
+
     const next = new URLSearchParams(params.toString());
-    next.set(key, value);
+    next.set('from', nextFrom);
+    next.set('to', nextTo);
+
     router.push(`?${next.toString()}`);
   }
 
@@ -23,14 +37,20 @@ export default function UsageDateRangePicker({
       <input
         type="date"
         value={from}
-        onChange={(e) => update('from', e.target.value)}
-        className="rounded border px-3 py-2"
+        max={to}
+        disabled={disabled}
+        onChange={(e) => update(e.target.value, to)}
+        className="rounded border px-3 py-2 disabled:cursor-not-allowed disabled:bg-muted"
       />
+
       <input
         type="date"
         value={to}
-        onChange={(e) => update('to', e.target.value)}
-        className="rounded border px-3 py-2"
+        min={from}
+        max={latestAggregatedDate}
+        disabled={disabled}
+        onChange={(e) => update(from, e.target.value)}
+        className="rounded border px-3 py-2 disabled:cursor-not-allowed disabled:bg-muted"
       />
     </div>
   );

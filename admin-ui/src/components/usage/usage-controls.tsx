@@ -4,7 +4,7 @@ import UsageFilterBar from '@/components/usage/usage-filter-bar';
 type Props = {
   from: string;
   to: string;
-  latestAggregatedDate: string;
+  latestAggregatedDate?: string;
 };
 
 export default function UsageControls({ from, to, latestAggregatedDate }: Readonly<Props>) {

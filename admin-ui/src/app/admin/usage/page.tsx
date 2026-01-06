@@ -13,6 +13,7 @@ import UsageTimeSeriesChart from '@/components/usage/usage-time-series-chart';
 import UsageByAgentTable from '@/components/usage/usage-by-agent-table';
 import UsageByUserTable from '@/components/usage/usage-by-user-table';
 import UsageControls from '@/components/usage/usage-controls';
+import UsageEmptyState from '@/components/usage/usage-empty-state';
 
 type UsagePageProps = {
   searchParams: Promise<{
@@ -25,7 +26,10 @@ export default async function UsagePage({ searchParams }: Readonly<UsagePageProp
   const params = await searchParams;
 
   const freshness = await getUsageFreshness();
-  const freshnessRange = getMonthRangeFromDate(freshness.latestAggregatedDate);
+
+  const freshnessRange = freshness.latestAggregatedDate
+    ? getMonthRangeFromDate(freshness.latestAggregatedDate)
+    : getMonthRangeFromDate(new Date().toISOString().slice(0, 10));
 
   const from = params.from ?? freshnessRange.from;
   const to = params.to ?? freshnessRange.to;
@@ -37,6 +41,8 @@ export default async function UsagePage({ searchParams }: Readonly<UsagePageProp
     getUsageByUser({ from, to }),
   ]);
 
+  const hasData = (summary?.totalTokens ?? 0) > 0;
+
   return (
     <div className="space-y-6 p-6">
       <header className="flex flex-col gap-2">
@@ -45,18 +51,29 @@ export default async function UsagePage({ searchParams }: Readonly<UsagePageProp
         <UsageControls from={from} to={to} latestAggregatedDate={freshness.latestAggregatedDate} />
 
         <p className="text-xs text-muted-foreground">
-          Usage data is aggregated daily. Latest complete date:{' '}
-          <span className="font-medium">{freshness.latestAggregatedDate}</span>.
+          Usage data is aggregated daily.
+          {freshness.latestAggregatedDate ? (
+            <>
+              {' '}
+              Latest complete date:{' '}
+              <span className="font-medium">{freshness.latestAggregatedDate}</span>.
+            </>
+          ) : (
+            <> No usage data has been aggregated yet.</>
+          )}
         </p>
       </header>
 
-      <UsageSummaryCards summary={summary} />
-
-      <UsageTimeSeriesChart data={timeSeries.points ?? []} />
-
-      <UsageByAgentTable rows={byAgent.rows} />
-
-      <UsageByUserTable rows={byUser.rows} />
+      {hasData ? (
+        <>
+          <UsageSummaryCards summary={summary} />
+          <UsageTimeSeriesChart data={timeSeries.points ?? []} />
+          <UsageByAgentTable rows={byAgent.rows ?? []} />
+          <UsageByUserTable rows={byUser.rows ?? []} />
+        </>
+      ) : (
+        <UsageEmptyState />
+      )}
     </div>
   );
 }
@@ -64,8 +81,8 @@ export default async function UsagePage({ searchParams }: Readonly<UsagePageProp
 function getMonthRangeFromDate(date: string): { from: string; to: string } {
   const [year, month] = date.split('-').map(Number);
 
-  const from = `${year}-${String(month).padStart(2, '0')}-01`;
-  const to = date; // latest aggregated date
-
-  return { from, to };
+  return {
+    from: `${year}-${String(month).padStart(2, '0')}-01`,
+    to: date,
+  };
 }
