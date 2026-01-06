@@ -134,7 +134,11 @@ class ToolControllerIT
                 ).andExpect(status().isNoContent)
 
             // Verify soft delete applied (deleted_at not null)
-            assertSoftDeleted(entityManager, Tool::class.java, entity.id!!)
+            assertSoftDeleted(
+                entityManager,
+                "tool",
+                entity.id!!,
+            )
 
             // Verify excluded from normal getAll()
             mockMvc

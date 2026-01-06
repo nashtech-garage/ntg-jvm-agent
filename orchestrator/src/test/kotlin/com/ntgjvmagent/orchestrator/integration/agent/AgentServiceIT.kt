@@ -222,7 +222,11 @@ class AgentServiceIT
 
             service.softDelete(saved.id!!)
 
-            assertSoftDeleted(entityManager, Agent::class.java, saved.id!!)
+            assertSoftDeleted(
+                entityManager,
+                "agent",
+                saved.id!!,
+            )
         }
 
         @Test

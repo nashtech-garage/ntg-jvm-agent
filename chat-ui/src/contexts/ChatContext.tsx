@@ -12,8 +12,8 @@ import {
 } from 'react';
 import { Conversation } from '@/models/conversation';
 import { ChatMessage } from '@/models/chat-message';
-import { Agent } from '../models/agent';
-import { useToaster } from './ToasterContext';
+import { Agent } from '@/models/agent';
+import { useToaster } from '@/contexts/ToasterContext';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -37,13 +37,15 @@ const fetchAll = async () => {
       fetch('/api/user'),
       fetch('/api/chat'),
     ]);
-    const [userInfoData, conversationsData] = await Promise.all([
-      userInfoRes.json(),
-      conversationsRes.json(),
-    ]);
+
+    const userInfoData = await userInfoRes.json();
+    const conversationsData = await conversationsRes.json();
+
+    const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+
     return {
       name: userInfoData?.name || 'Unknown user',
-      conversations: conversationsData,
+      conversations,
     };
   } catch (error) {
     return {

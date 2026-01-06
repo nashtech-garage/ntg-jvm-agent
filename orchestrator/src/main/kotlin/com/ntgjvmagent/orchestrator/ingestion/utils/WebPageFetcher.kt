@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.ingestion.utils
 
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -8,7 +7,6 @@ import org.springframework.web.client.RestClientException
 
 @Component
 class WebPageFetcher(
-    @Qualifier("crawlerRestClient")
     private val rest: RestClient,
     private val urlSafetyValidator: UrlSafetyValidator,
 ) {

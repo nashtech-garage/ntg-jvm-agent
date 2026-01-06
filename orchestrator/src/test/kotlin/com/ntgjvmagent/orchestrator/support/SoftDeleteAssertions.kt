@@ -9,26 +9,25 @@ import kotlin.test.assertTrue
 object SoftDeleteAssertions {
     /**
      * Verifies that a soft-deleted entity:
-     *  1. Is not visible to default repository queries (@SQLRestriction hides it)
-     *  2. Has deleted_at set in the database
+     *  1. Still exists in DB
+     *  2. Has deleted_at set
      */
-    fun <T> assertSoftDeleted(
+    fun assertSoftDeleted(
         entityManager: EntityManager,
-        entityClass: Class<T>,
+        tableName: String,
         id: UUID,
     ) {
-        val result =
+        val deletedAt =
             entityManager
-                .createQuery(
-                    "SELECT e.deletedAt FROM ${entityClass.simpleName} e WHERE e.id = :id",
-                    Instant::class.java,
+                .createNativeQuery(
+                    "SELECT deleted_at FROM $tableName WHERE id = :id",
                 ).setParameter("id", id)
-                .singleResult
+                .singleResult as Instant?
 
-        assertNotNull(result, "Expected 'deletedAt' to be set for soft-deleted record")
+        assertNotNull(deletedAt, "Expected deleted_at to be set for soft-deleted record")
         assertTrue(
-            !result.isAfter(Instant.now().plusSeconds(1)),
-            "deletedAt should not be in the future",
+            !deletedAt.isAfter(Instant.now().plusSeconds(1)),
+            "deleted_at should not be in the future",
         )
     }
 }

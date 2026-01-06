@@ -7,27 +7,26 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import com.ntgjvmagent.authorizationserver.repository.UserRepository
 import com.ntgjvmagent.authorizationserver.service.CustomUserDetailsService
-import org.springframework.beans.factory.annotation.Value
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.core.io.ClassPathResource
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.authentication.AuthenticationProvider
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint
@@ -37,78 +36,67 @@ import org.springframework.security.web.util.matcher.RequestMatcher
 import java.security.KeyStore
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
+import java.util.UUID
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
     private val userRepository: UserRepository,
-    @Value("\${jwt.issuer}") private val issuer: String,
 ) {
     @Bean
     @Order(1) // Run this filter chain first
     fun authorizationServerSecurityFilterChain(
         http: HttpSecurity,
-        customAuthProvider: AuthenticationProvider,
     ): SecurityFilterChain {
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
         val endpointsMatcher: RequestMatcher = authorizationServerConfigurer.endpointsMatcher
         // attach to SAS endpoints
         http.securityMatcher(endpointsMatcher)
-            .authorizeHttpRequests { auth ->
-                auth
-                    // Allow discovery endpoints
-                    .requestMatchers(
-                        "/.well-known/oauth-authorization-server",
-                        "/.well-known/openid-configuration", // only if OIDC enabled
-                    ).permitAll()
-                    // Anything else requires authentication
-                    .anyRequest().authenticated()
+            .authorizeHttpRequests {
+                // Allow discovery endpoints
+                it.requestMatchers(
+                    "/.well-known/oauth-authorization-server",
+                    "/.well-known/openid-configuration"
+                ).permitAll()
+                // Anything else requires authentication
+                .anyRequest().authenticated()
             }
-            .csrf { csrf ->
-                // Disable CSRF for the AS endpoints (token, JWKs, etc.)
-                csrf.ignoringRequestMatchers(endpointsMatcher)
+            // Disable CSRF for the AS endpoints (token, JWKs, etc.)
+            .csrf { it.ignoringRequestMatchers(endpointsMatcher) }
+            .exceptionHandling { exceptions ->
+                exceptions.defaultAuthenticationEntryPointFor(
+                    BearerTokenAuthenticationEntryPoint(),
+                    RequestMatcher { req -> req.requestURI == "/userinfo" }
+                )
+                exceptions.defaultAuthenticationEntryPointFor(
+                    LoginUrlAuthenticationEntryPoint("/login"),
+                    endpointsMatcher
+                )
             }
-
-        // New DSL instead of deprecated .apply()
-        http.with(authorizationServerConfigurer) { }
-
-        http.exceptionHandling { exceptions ->
-            exceptions.defaultAuthenticationEntryPointFor(
-                BearerTokenAuthenticationEntryPoint(),
-            ) { req -> req.requestURI == "/userinfo" }
-            exceptions.defaultAuthenticationEntryPointFor(
-                LoginUrlAuthenticationEntryPoint("/login"),
-            ) { true }
-        }
-        http.formLogin(Customizer.withDefaults())
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
-            .oidc { oidc ->  // Enable OpenID Connect 1.0
-                oidc.clientRegistrationEndpoint { }
+            .with(authorizationServerConfigurer) {
+                it.oidc { }
             }
-        http.oauth2ResourceServer { rs -> rs.jwt { } }
-        http.authenticationProvider(customAuthProvider)
+            .oauth2ResourceServer { it.jwt {} }
 
         return http.build()
     }
 
     @Bean
-    @Order(2) // Run this after the AS chain
+    @Order(2)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
-            // match everything ELSE, excluding SAS endpoints
-            .securityMatcher("/**")
             .authorizeHttpRequests { auth ->
-                auth.anyRequest().authenticated()
+                auth
+                    .requestMatchers(
+                        "/login",
+                        "/error",
+                        "/favicon.ico"
+                    ).permitAll()
+                    .anyRequest().authenticated()
             }
-            .formLogin { } // enables default login page
+            .formLogin { }
             .build()
     }
-
-    @Bean
-    fun authorizationServerSettings(): AuthorizationServerSettings =
-        AuthorizationServerSettings.builder()
-            .issuer(issuer)
-            .build()
 
     @Bean
     fun jwkSource(): JWKSource<SecurityContext> {
@@ -141,37 +129,27 @@ class SecurityConfig(
     @Bean
     fun jwtTokenCustomizer(): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context ->
-            val principal: Authentication = context.getPrincipal()
-            val userId = when (val p = principal.principal) {
-                is CustomUserDetails -> p.userId
-                else -> error("Cannot determine userId")
-            }
-            val authorities: Collection<GrantedAuthority> = principal.authorities
-            val name = when (val p = principal.principal) {
-                is CustomUserDetails -> p.getName()
-                else -> error("Cannot determine name")
-            }
 
-            // Extract roles from authorities (remove ROLE_ prefix for cleaner claims)
-            val roles = authorities.map { authority ->
-                authority.authority.removePrefix("ROLE_")
-            }
+            val authentication: Authentication = context.getPrincipal()
+            val userId = runCatching {
+                UUID.fromString(authentication.name)
+            }.getOrNull() ?: return@OAuth2TokenCustomizer
 
-            // Add roles to both access tokens and ID tokens
-            if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN) {
-                context.claims.subject(userId.toString())
-                context.claims.claim("user_id", userId.toString())
-                context.claims.claim("name", name)
+            val user = userRepository.findByIdOrNull(userId)
+                ?: throw EntityNotFoundException("User not found: $userId")
+
+            val roles = authentication.authorities
+                .mapNotNull { it.authority }
+                .filter { it.startsWith("ROLE_") }
+                .map { it.removePrefix("ROLE_") }
+
+            if (context.tokenType == OAuth2TokenType.ACCESS_TOKEN ||
+                context.tokenType.value == OidcParameterNames.ID_TOKEN
+            ) {
+                context.claims.subject(user.id.toString())
+                context.claims.claim("user_id", user.id.toString())
+                context.claims.claim("name", user.name)
                 context.claims.claim("roles", roles)
-                context.claims.claim("authorities", authorities.map { it.authority })
-            }
-
-            // For ID tokens (OIDC), include roles in the standard way
-            if (context.tokenType.value == OidcParameterNames.ID_TOKEN) {
-                context.claims.subject(userId.toString())
-                context.claims.claim("user_id", userId.toString())
-                context.claims.claim("roles", roles)
-                context.claims.claim("name", name)
             }
         }
     }
@@ -189,11 +167,31 @@ class SecurityConfig(
         userDetailsService: UserDetailsService,
         passwordEncoder: PasswordEncoder
     ): AuthenticationProvider {
-        val provider = DaoAuthenticationProvider(userDetailsService)
-        provider.setPasswordEncoder(passwordEncoder)
-        return provider
+        val delegate = DaoAuthenticationProvider(userDetailsService)
+        delegate.setPasswordEncoder(passwordEncoder)
+
+        return object : AuthenticationProvider {
+
+            override fun authenticate(authentication: Authentication): Authentication {
+                val result = delegate.authenticate(authentication)
+
+                val userId =
+                    (result.principal as? CustomUserDetails)
+                        ?.userId
+                        ?.toString()
+                        ?: result.name
+
+                return UsernamePasswordAuthenticationToken.authenticated(
+                    userId,
+                    null,
+                    result.authorities
+                )
+            }
+
+            override fun supports(authentication: Class<*>): Boolean {
+                return UsernamePasswordAuthenticationToken::class.java
+                    .isAssignableFrom(authentication)
+            }
+        }
     }
 }
-
-
-

@@ -17,46 +17,6 @@ export interface ExchangeAuthCodeParams {
   codeVerifier?: string;
 }
 
-export async function exchangeAuthorizationCode({
-  requestTokenUri,
-  code,
-  redirectUri,
-  codeVerifier,
-}: ExchangeAuthCodeParams): Promise<OAuthTokenResponse> {
-  const basic = Buffer.from(`${SERVER_CONFIG.CLIENT_ID}:${SERVER_CONFIG.CLIENT_SECRET}`).toString(
-    'base64'
-  );
-
-  const body = new URLSearchParams();
-  body.set('grant_type', 'authorization_code');
-  body.set('code', code);
-  body.set('redirect_uri', redirectUri);
-  if (codeVerifier) {
-    body.set('code_verifier', codeVerifier);
-  }
-
-  const tokenResponse = await fetch(requestTokenUri, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${basic}`,
-    },
-    body: body.toString(),
-    cache: 'no-store',
-  });
-
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
-    logger.error('Token exchange failed during OAuth callback', {
-      status: tokenResponse.status,
-      error: errorText,
-    });
-    throw new Error('OAuthTokenExchangeFailed');
-  }
-
-  return tokenResponse.json();
-}
-
 export async function getRefreshToken(refreshToken: string): Promise<TokenInfo | null> {
   try {
     const tokenUrl = `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`;

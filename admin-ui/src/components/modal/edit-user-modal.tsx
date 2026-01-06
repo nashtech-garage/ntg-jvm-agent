@@ -14,14 +14,19 @@ interface EditUserModalProps {
   onSubmit: (updatedUser: User) => void;
 }
 
-export default function EditUserModal({ open, onClose, user, onSubmit }: EditUserModalProps) {
+export default function EditUserModal({
+  open,
+  onClose,
+  user,
+  onSubmit,
+}: Readonly<EditUserModalProps>) {
   const initialForm = useMemo(
     () => ({
-      username: user?.username || '',
-      name: user?.name || '',
-      email: user?.email || '',
+      username: user?.username ?? '',
+      name: user?.name ?? '',
+      email: user?.email ?? '',
     }),
-    [user?.id, open]
+    [user]
   );
 
   const [form, setForm] = useState(initialForm);

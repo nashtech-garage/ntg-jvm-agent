@@ -82,13 +82,12 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     }
   }, [router]);
 
+  // logout only when truly unauthenticated
   useEffect(() => {
-    // Auto sign-out if session error
-    if (session?.error) {
-      logger.error('Session expired or refresh token invalid, signing user out');
+    if (status === 'unauthenticated') {
       void logOut();
     }
-  }, [session?.error, logOut]);
+  }, [status, logOut]);
 
   const contextValue = useMemo(
     () => ({

@@ -22,13 +22,14 @@ class DocumentChunker(
      */
     private val splitters: Map<String, TokenTextSplitter> =
         profileConfigs.mapValues { (_, cfg) ->
-            TokenTextSplitter(
-                cfg.chunkSize,
-                cfg.minChunkSizeChars,
-                cfg.minChunkLengthToEmbed,
-                cfg.maxNumChunks,
-                cfg.keepSeparator,
-            )
+            TokenTextSplitter
+                .builder()
+                .withChunkSize(cfg.chunkSize)
+                .withMinChunkSizeChars(cfg.minChunkSizeChars)
+                .withMinChunkLengthToEmbed(cfg.minChunkLengthToEmbed)
+                .withMaxNumChunks(cfg.maxNumChunks)
+                .withKeepSeparator(cfg.keepSeparator)
+                .build()
         }
 
     private fun selectProfile(

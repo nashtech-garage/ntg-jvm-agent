@@ -91,7 +91,7 @@ class UserServiceImpl(
         val encodedPassword = passwordEncoder.encode(tempPassword)
 
         // Map request to entity
-        val userEntity = request.toUserEntity(encodedPassword)
+        val userEntity = request.toUserEntity(encodedPassword!!)
 
         // Add roles to the user
         request.roles.forEach { roleName ->

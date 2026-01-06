@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
@@ -25,6 +25,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -37,8 +38,8 @@ import reactor.core.scheduler.Schedulers
 @SpringBootTest
 @ImportAutoConfiguration(
     exclude = [
-        org.springframework.ai.mcp.client.autoconfigure.McpClientAutoConfiguration::class,
-        org.springframework.ai.mcp.client.autoconfigure.McpToolCallbackAutoConfiguration::class,
+        org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration::class,
+        org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration::class,
         org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration::class,
     ],
 )
@@ -155,4 +156,9 @@ abstract class BaseIntegrationTest {
         .file(file)
         .withAuth(roles, scopes)
         .contentType(MediaType.MULTIPART_FORM_DATA)
+
+    protected fun <T : AbstractMockHttpServletRequestBuilder<T>> T.withAuth(
+        roles: List<String> = emptyList(),
+        scopes: List<String> = emptyList(),
+    ): T = this.with(jwtWith(roles, scopes))
 }

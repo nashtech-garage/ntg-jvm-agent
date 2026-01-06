@@ -23,12 +23,11 @@
       "name": "Spring Authorization Server",
       "item": [
         {
-          "name": "1. Get Authorization Code",
+          "name": "1. Get Authorization Code (Browser)",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "http://localhost:9000/oauth2/authorize?response_type=code&client_id=demo-client&scope=openid%20profile%20chatbot.read%20chatbot.write&redirect_uri=http://localhost:3000/auth/callback",
+              "raw": "http://localhost:9000/oauth2/authorize?response_type=code&client_id=demo-client&redirect_uri=http://localhost:3000/api/auth/callback/auth-server&scope=openid%20profile%20chatbot.read%20chatbot.write&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256",
               "protocol": "http",
               "host": ["localhost"],
               "port": "9000",
@@ -36,11 +35,26 @@
               "query": [
                 { "key": "response_type", "value": "code" },
                 { "key": "client_id", "value": "demo-client" },
-                { "key": "scope", "value": "openid profile chatbot.read chatbot.write" },
-                { "key": "redirect_uri", "value": "http://localhost:3000/auth/callback" }
+                {
+                  "key": "redirect_uri",
+                  "value": "http://localhost:3000/api/auth/callback/auth-server"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid profile chatbot.read chatbot.write"
+                },
+                {
+                  "key": "code_challenge",
+                  "value": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+                },
+                {
+                  "key": "code_challenge_method",
+                  "value": "S256"
+                }
               ]
             }
-          }
+          },
+          "description": "Copy URL → open in browser → login → copy `code` from redirect"
         },
         {
           "name": "2. Exchange Code for Token",
@@ -55,7 +69,14 @@
               "urlencoded": [
                 { "key": "grant_type", "value": "authorization_code" },
                 { "key": "code", "value": "{{auth_code}}" },
-                { "key": "redirect_uri", "value": "http://localhost:3000/auth/callback" }
+                {
+                  "key": "redirect_uri",
+                  "value": "http://localhost:3000/api/auth/callback/auth-server"
+                },
+                {
+                  "key": "code_verifier",
+                  "value": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+                }
               ]
             },
             "url": {
@@ -77,7 +98,8 @@
                 ]
               }
             }
-          ]
+          ],
+          "description": "Returns access_token, refresh_token, id_token"
         },
         {
           "name": "3. Refresh Token",
