@@ -12,10 +12,8 @@ import org.springframework.stereotype.Service
 class OllamaChatModelHandler : ChatModelHandler {
     override fun supports(providerType: ProviderType) = providerType == ProviderType.OLLAMA
 
-    override fun createChatModel(config: ChatModelConfig): ChatModel {
+    override fun createChatModel(config: ChatModelConfig): ChatModel =
         throw UnsupportedOperationException(
             "Ollama is not yet supported. Support will be added in future versions.",
         )
-    }
 }
-

@@ -66,4 +66,3 @@ class AzureOpenAiChatModelHandler(
             .build()
     }
 }
-

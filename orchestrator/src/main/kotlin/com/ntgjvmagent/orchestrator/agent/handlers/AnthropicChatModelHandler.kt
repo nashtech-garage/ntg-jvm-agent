@@ -12,10 +12,8 @@ import org.springframework.stereotype.Service
 class AnthropicChatModelHandler : ChatModelHandler {
     override fun supports(providerType: ProviderType) = providerType == ProviderType.ANTHROPIC
 
-    override fun createChatModel(config: ChatModelConfig): ChatModel {
+    override fun createChatModel(config: ChatModelConfig): ChatModel =
         throw UnsupportedOperationException(
             "Anthropic is not yet supported. Support will be added in future versions.",
         )
-    }
 }
-

@@ -9,4 +9,3 @@ interface ChatModelHandler {
 
     fun createChatModel(config: ChatModelConfig): ChatModel
 }
-
