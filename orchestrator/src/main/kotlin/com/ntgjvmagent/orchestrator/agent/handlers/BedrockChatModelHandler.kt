@@ -12,10 +12,8 @@ import org.springframework.stereotype.Service
 class BedrockChatModelHandler : ChatModelHandler {
     override fun supports(providerType: ProviderType) = providerType == ProviderType.BEDROCK
 
-    override fun createChatModel(config: ChatModelConfig): ChatModel {
+    override fun createChatModel(config: ChatModelConfig): ChatModel =
         throw UnsupportedOperationException(
             "Bedrock is not yet supported. Support will be added in future versions.",
         )
-    }
 }
-

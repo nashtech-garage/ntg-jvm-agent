@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.agent
 
-import com.ntgjvmagent.orchestrator.model.ChatModelConfig
 import com.ntgjvmagent.orchestrator.agent.handlers.ChatModelHandler
+import com.ntgjvmagent.orchestrator.model.ChatModelConfig
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.stereotype.Service
 
@@ -23,5 +23,3 @@ class ChatModelOrchestrator(
         return handler.createChatModel(config)
     }
 }
-
-

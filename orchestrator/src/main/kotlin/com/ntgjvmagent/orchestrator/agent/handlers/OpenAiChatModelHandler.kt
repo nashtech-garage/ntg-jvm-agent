@@ -54,4 +54,3 @@ class OpenAiChatModelHandler(
         return OpenAiChatModel(openAiApi, options, toolCallingManager, retryTemplate, observationRegistry)
     }
 }
-
