@@ -4,6 +4,7 @@ import com.azure.ai.openai.OpenAIClientBuilder
 import com.azure.core.credential.AzureKeyCredential
 import com.azure.core.http.policy.FixedDelayOptions
 import com.azure.core.http.policy.RetryOptions
+import com.ntgjvmagent.orchestrator.agent.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.component.SimpleApiKey
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
@@ -11,7 +12,6 @@ import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingM
 import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.model.ChatModelConfig
-import com.ntgjvmagent.orchestrator.agent.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.utils.Quadruple
 import io.micrometer.observation.ObservationRegistry
