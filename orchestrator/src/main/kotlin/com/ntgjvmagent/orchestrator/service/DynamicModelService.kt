@@ -126,7 +126,7 @@ class DynamicModelService(
         agentConfig: com.ntgjvmagent.orchestrator.entity.agent.Agent,
     ): SpringEmbeddingModel =
         when (agentConfig.provider) {
-            ProviderType.OPENAI ->
+            ProviderType.OPENAI -> {
                 createOpenAiEmbeddingModel(
                     baseUrl = agentConfig.baseUrl,
                     apiKey = agentConfig.apiKey,
@@ -135,29 +135,34 @@ class DynamicModelService(
                     embeddingModel = agentConfig.embeddingModel,
                     dimension = agentConfig.dimension,
                 )
+            }
 
-            ProviderType.AZURE_OPENAI ->
+            ProviderType.AZURE_OPENAI -> {
                 createAzureOpenAiEmbeddingModel(
                     baseUrl = agentConfig.baseUrl,
                     apiKey = agentConfig.apiKey,
                     embeddingModel = agentConfig.embeddingModel,
                     dimension = agentConfig.dimension,
                 )
+            }
 
-            ProviderType.OLLAMA ->
+            ProviderType.OLLAMA -> {
                 throw UnsupportedOperationException(
                     "Ollama embedding is not yet supported. Support will be added in future versions.",
                 )
+            }
 
-            ProviderType.BEDROCK ->
+            ProviderType.BEDROCK -> {
                 throw UnsupportedOperationException(
                     "Bedrock embedding is not yet supported. Support will be added in future versions.",
                 )
+            }
 
-            ProviderType.ANTHROPIC ->
+            ProviderType.ANTHROPIC -> {
                 throw UnsupportedOperationException(
                     "Anthropic embedding is not yet supported. Support will be added in future versions.",
                 )
+            }
         }
 
     // =====================================================================
