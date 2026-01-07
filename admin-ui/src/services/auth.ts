@@ -2,14 +2,6 @@ import { SERVER_CONFIG } from '@/constants/site-config';
 import { TokenInfo } from '@/models/token';
 import logger from '@/utils/logger';
 
-type OAuthTokenResponse = Record<string, unknown> & {
-  access_token?: string;
-  refresh_token?: string;
-  expires_in?: number;
-  expires_at?: number;
-  id_token?: string;
-};
-
 export interface ExchangeAuthCodeParams {
   requestTokenUri: string;
   code: string;
