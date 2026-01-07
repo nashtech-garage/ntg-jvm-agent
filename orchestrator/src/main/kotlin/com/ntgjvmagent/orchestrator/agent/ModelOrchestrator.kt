@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.agent
 
+import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
@@ -17,8 +18,7 @@ class ModelOrchestrator(
 ) {
     fun create(
         agent: com.ntgjvmagent.orchestrator.entity.agent.Agent,
-    ):
-        Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto> {
+    ): Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, AgentResponseDto> {
         val chatModel = chatModelOrchestrator.createChatModel(ChatModelConfig.fromAgent(agent))
 
         val springEmbeddingModel =
