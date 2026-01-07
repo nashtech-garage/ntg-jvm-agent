@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.model
 
+import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.enum.ProviderType
 import java.math.BigDecimal
 
@@ -19,4 +20,21 @@ data class ChatModelConfig(
     val presencePenalty: BigDecimal? = null,
     val chatCompletionsPath: String = "/v1/chat/completions",
     val embeddingsPath: String = "/v1/embeddings",
-)
+) {
+    companion object {
+        fun fromAgent(agent: Agent): ChatModelConfig =
+            ChatModelConfig(
+                providerType = agent.provider,
+                baseUrl = agent.baseUrl,
+                apiKey = agent.apiKey,
+                modelName = agent.model,
+                temperature = agent.temperature,
+                topP = agent.topP,
+                maxTokens = agent.maxTokens,
+                frequencyPenalty = agent.frequencyPenalty,
+                presencePenalty = agent.presencePenalty,
+                chatCompletionsPath = agent.chatCompletionsPath ?: "/v1/chat/completions",
+                embeddingsPath = agent.embeddingsPath ?: "/v1/embeddings",
+            )
+    }
+}
