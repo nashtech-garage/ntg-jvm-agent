@@ -6,5 +6,6 @@ import org.springframework.ai.embedding.EmbeddingModel
 
 interface EmbeddingModelHandler {
     fun supports(providerType: ProviderType): Boolean
+
     fun createEmbeddingModel(config: EmbeddingModelConfig): EmbeddingModel
 }

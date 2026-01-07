@@ -18,7 +18,6 @@ import java.time.Duration
 class AzureOpenAiEmbeddingModelHandler(
     private val observationRegistry: ObservationRegistry,
 ) : EmbeddingModelHandler {
-
     override fun supports(providerType: ProviderType) = providerType == ProviderType.AZURE_OPENAI
 
     override fun createEmbeddingModel(config: EmbeddingModelConfig): EmbeddingModel {
@@ -34,7 +33,8 @@ class AzureOpenAiEmbeddingModelHandler(
                 .buildClient()
 
         val options =
-            AzureOpenAiEmbeddingOptions.builder()
+            AzureOpenAiEmbeddingOptions
+                .builder()
                 .deploymentName(config.embeddingModel) // Azure uses deploymentName
                 .dimensions(config.dimension)
                 .build()

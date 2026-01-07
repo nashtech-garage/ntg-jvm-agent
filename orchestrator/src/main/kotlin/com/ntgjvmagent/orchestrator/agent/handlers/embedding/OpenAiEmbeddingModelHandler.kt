@@ -21,25 +21,27 @@ class OpenAiEmbeddingModelHandler(
     private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
 ) : EmbeddingModelHandler {
-
     override fun supports(providerType: ProviderType) = providerType == ProviderType.OPENAI
 
     override fun createEmbeddingModel(config: EmbeddingModelConfig): EmbeddingModel {
-        val api = OpenAiApi(
-            config.baseUrl,
-            SimpleApiKey(config.apiKey),
-            LinkedMultiValueMap(),
-            config.chatCompletionsPath,
-            config.embeddingsPath,
-            RestClient.builder(),
-            WebClient.builder(),
-            DefaultResponseErrorHandler(),
-        )
+        val api =
+            OpenAiApi(
+                config.baseUrl,
+                SimpleApiKey(config.apiKey),
+                LinkedMultiValueMap(),
+                config.chatCompletionsPath,
+                config.embeddingsPath,
+                RestClient.builder(),
+                WebClient.builder(),
+                DefaultResponseErrorHandler(),
+            )
 
-        val options = OpenAiEmbeddingOptions.builder()
-            .model(config.embeddingModel)
-            .dimensions(config.dimension)
-            .build()
+        val options =
+            OpenAiEmbeddingOptions
+                .builder()
+                .model(config.embeddingModel)
+                .dimensions(config.dimension)
+                .build()
 
         return OpenAiEmbeddingModel(
             api,

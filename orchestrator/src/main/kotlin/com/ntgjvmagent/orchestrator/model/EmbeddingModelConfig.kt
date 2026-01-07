@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.model
 
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 
 data class EmbeddingModelConfig(
     val providerType: ProviderType,
@@ -13,14 +13,15 @@ data class EmbeddingModelConfig(
     val dimension: Int,
 ) {
     companion object {
-        fun fromAgent(agent: Agent) = EmbeddingModelConfig(
-            providerType = agent.provider,
-            baseUrl = agent.baseUrl,
-            apiKey = agent.apiKey,
-            chatCompletionsPath = agent.chatCompletionsPath,
-            embeddingsPath = agent.embeddingsPath,
-            embeddingModel = agent.embeddingModel,
-            dimension = agent.dimension,
-        )
+        fun fromAgent(agent: Agent) =
+            EmbeddingModelConfig(
+                providerType = agent.provider,
+                baseUrl = agent.baseUrl,
+                apiKey = agent.apiKey,
+                chatCompletionsPath = agent.chatCompletionsPath,
+                embeddingsPath = agent.embeddingsPath,
+                embeddingModel = agent.embeddingModel,
+                dimension = agent.dimension,
+            )
     }
 }
