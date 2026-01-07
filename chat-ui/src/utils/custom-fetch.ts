@@ -12,6 +12,8 @@ export class HttpError extends Error {
 
   constructor(status: number, message: string, payload?: unknown) {
     super(message);
+    // Explicitly set the error name for clearer stack traces and logging.
+    this.name = 'HttpError';
     this.status = status;
     this.payload = payload;
   }
