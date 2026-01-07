@@ -1,23 +1,10 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.azure.ai.openai.OpenAIClientBuilder
-import com.azure.core.credential.AzureKeyCredential
-import com.azure.core.http.policy.FixedDelayOptions
-import com.azure.core.http.policy.RetryOptions
-import com.ntgjvmagent.orchestrator.agent.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.agent.ModelOrchestrator
-import com.ntgjvmagent.orchestrator.component.SimpleApiKey
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
-import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
-import com.ntgjvmagent.orchestrator.enum.ProviderType
-import com.ntgjvmagent.orchestrator.mapper.AgentMapper
-import com.ntgjvmagent.orchestrator.model.ChatModelConfig
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.utils.Quadruple
-import io.micrometer.observation.ObservationRegistry
-import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel
-import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingOptions
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode
 import org.springframework.ai.openai.OpenAiEmbeddingModel
@@ -79,9 +66,9 @@ class DynamicModelService(
         reloadModelsForAgent(agentId)
     }
 
-    private fun createModels(agentId: UUID):
-        Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, AgentResponseDto> {
-
+    private fun createModels(
+        agentId: UUID,
+    ): Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, AgentResponseDto> {
         val agent = agentRepo.findById(agentId).orElseThrow()
         return modelOrchestrator.create(agent)
     }
