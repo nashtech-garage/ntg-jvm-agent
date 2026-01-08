@@ -3,15 +3,7 @@ import { PUBLIC_CONFIG, SERVER_CONFIG } from '@/constants/site-config';
 import { decodeToken, refreshAccessToken } from '@/utils/server-utils';
 import logger from '@/utils/logger';
 import { normalizeRoles } from '@/utils/user';
-import { exchangeAuthorizationCode } from '@/services/auth';
-import { API_PATH, PAGE_PATH } from '@/constants/url';
-
-const authServerURL = {
-  // TODO: switch to SERVER_CONFIG for authorize when Auth Server is deployed in public site
-  authorize: `${PUBLIC_CONFIG.AUTH_SERVER}/oauth2/authorize`,
-  userInfo: `${SERVER_CONFIG.AUTH_SERVER}/userinfo`,
-  token: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`,
-};
+import { PAGE_PATH } from '@/constants/url';
 
 /* IMPORTANT: Need to add allowed list in redirectURI in Auth Server
   Template: <app_host>/api/auth/callback/<provider_id>
@@ -25,33 +17,14 @@ export const authOptions: NextAuthOptions = {
       type: 'oauth',
       clientId: SERVER_CONFIG.CLIENT_ID,
       clientSecret: SERVER_CONFIG.CLIENT_SECRET,
+      wellKnown: `${PUBLIC_CONFIG.AUTH_SERVER}/.well-known/openid-configuration`,
       authorization: {
-        url: authServerURL.authorize,
         params: {
           scope: PUBLIC_CONFIG.SCOPE,
-          response_type: 'code',
         },
       },
-      token: {
-        /* Authorization server does NOT support the standard OAuth token exchange that NextAuth expects
-          TODO: remove it once BE supports the standard exchange.
-         */
-        async request({ provider, params }) {
-          const redirectUri =
-            provider.callbackUrl ??
-            `${SERVER_CONFIG.NEXTAUTH_URL}${API_PATH.AUTH_CALLBACK(provider.id)}`;
-
-          const tokens = await exchangeAuthorizationCode({
-            requestTokenUri: authServerURL.token,
-            code: String(params?.code ?? ''),
-            redirectUri,
-            codeVerifier: params?.code_verifier ? String(params.code_verifier) : undefined,
-          });
-          return { tokens };
-        },
-      },
-      // fetch userInfo from Auth Server
-      userinfo: authServerURL.userInfo,
+      checks: ['pkce', 'state'],
+      idToken: true,
       // Runs once during the OAuth callback to shape the user object from userinfo/token claims
       // Return `user` object which is seen in NextAuth callbacks/session
       profile: (profile, tokens) => {
@@ -89,7 +62,6 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     // Runs on sign-in and before getSession/useSession/getServerSession/getToken to update JWT (including refresh)
-    // Account is result of request token (exchangeAuthorizationCode)
     async jwt({ token, account, user }) {
       if (account) {
         token.accessToken = account.access_token;
@@ -109,9 +81,9 @@ export const authOptions: NextAuthOptions = {
     },
     // Fields added here are returned in the session from getSession()/useSession()/getServerSession()
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined;
-      session.refreshToken = token.refreshToken as string | undefined;
-      session.error = token.error as string | undefined;
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      session.error = token.error;
       session.user = {
         ...session.user,
         id: token.sub || '',

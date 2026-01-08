@@ -12,9 +12,10 @@ class WebClientConfig {
     }
 
     @Bean("crawlerWebClient")
-    fun crawlerWebClient(builder: WebClient.Builder): WebClient =
-        builder
-            .codecs { config ->
-                config.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_BYTES)
+    fun crawlerWebClient(): WebClient =
+        WebClient
+            .builder()
+            .codecs {
+                it.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_BYTES)
             }.build()
 }

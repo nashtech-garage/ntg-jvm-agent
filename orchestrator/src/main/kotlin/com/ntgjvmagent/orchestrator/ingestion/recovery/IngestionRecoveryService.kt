@@ -26,7 +26,7 @@ class IngestionRecoveryService(
     private val log = LoggerFactory.getLogger(IngestionRecoveryService::class.java)
 
     @Transactional
-    override fun run(args: ApplicationArguments?) {
+    override fun run(args: ApplicationArguments) {
         log.info("IngestionRecoveryService starting...")
 
         val jobCount = resetRunningJobs()

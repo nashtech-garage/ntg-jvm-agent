@@ -18,7 +18,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
-class JwtAuthConverterConfig(
+class SecurityConfig(
     private val env: Environment,
 ) {
     @Bean
@@ -57,9 +57,9 @@ class JwtAuthConverterConfig(
         val user =
             User
                 .builder()
-                .username(username)
+                .username(username!!)
                 .password(passwordEncoder.encode(password))
-                .roles(role)
+                .roles(role!!)
                 .build()
         return InMemoryUserDetailsManager(user)
     }
@@ -99,7 +99,12 @@ class JwtAuthConverterConfig(
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/public/**").permitAll()
+                it
+                    .requestMatchers(
+                        "/public/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                    ).permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/share/shared-conversations/{shareToken}").permitAll()
                 it.anyRequest().authenticated()
             }.oauth2ResourceServer { rs ->

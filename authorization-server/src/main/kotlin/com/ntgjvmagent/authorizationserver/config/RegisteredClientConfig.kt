@@ -29,7 +29,6 @@ class RegisteredClientConfig {
             val existing = (registeredClientRepository as? JdbcRegisteredClientRepository)
                 ?.findByClientId(clientId)
 
-            // Create the correct client configuration
             val correctClient = RegisteredClient.withId(existing?.id ?: UUID.randomUUID().toString())
                 .clientId(clientId)
                 .clientSecret(passwordEncoder.encode("demo-secret"))
@@ -44,7 +43,12 @@ class RegisteredClientConfig {
                 .scope("chatbot.write")
                 .scope("admin.read")
                 .scope("admin.write")
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+                .clientSettings(
+                    ClientSettings.builder()
+                        .requireAuthorizationConsent(false)
+                        .requireProofKey(true)
+                        .build()
+                )
                 .build()
 
             if (existing == null) {

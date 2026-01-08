@@ -20,7 +20,7 @@ export async function refreshAccessToken(token: JWT): Promise<JWT> {
     return { ...token, error: LoginErrors.REFRESH_TOKEN_MISSING };
   }
 
-  const refreshed = await getRefreshToken(token.refreshToken!);
+  const refreshed = await getRefreshToken(token.refreshToken);
 
   if (!refreshed?.access_token) {
     logger.error('Failed to refresh access token');

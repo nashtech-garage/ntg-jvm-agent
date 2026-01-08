@@ -1,9 +1,9 @@
 'use client';
 
-import type { UsageByAgentRowDto } from '@/types/usage';
+import type { UsageByAgentRow } from '@/types/usage';
 
 type Props = {
-  rows: UsageByAgentRowDto[];
+  rows: UsageByAgentRow[];
 };
 
 export default function UsageByAgentTable({ rows }: Readonly<Props>) {

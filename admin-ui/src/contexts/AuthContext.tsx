@@ -95,6 +95,12 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     }
   }, [session?.error, logOut]);
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      void logOut();
+    }
+  }, [status, logOut]);
+
   const contextValue = useMemo(
     () => ({
       user,

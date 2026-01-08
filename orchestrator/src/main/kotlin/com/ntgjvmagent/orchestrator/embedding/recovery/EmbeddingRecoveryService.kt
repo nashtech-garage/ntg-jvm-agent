@@ -16,7 +16,7 @@ class EmbeddingRecoveryService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional
-    override fun run(args: ApplicationArguments?) {
+    override fun run(args: ApplicationArguments) {
         resetRunningEmbeddingJobs()
     }
 

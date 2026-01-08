@@ -1,97 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.6</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <version>4.0.1</version>
+    <relativePath/>
   </parent>
+
   <groupId>com.ntg-jvm-agent</groupId>
   <artifactId>mcp-server</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>mcp-server</name>
   <description>mcp-server</description>
-  <url/>
-  <licenses>
-    <license/>
-  </licenses>
-  <developers>
-    <developer/>
-  </developers>
-  <scm>
-    <connection/>
-    <developerConnection/>
-    <tag/>
-    <url/>
-  </scm>
+
   <properties>
     <java.version>21</java.version>
-    <kotlin.version>1.9.25</kotlin.version>
+    <kotlin.version>2.3.0</kotlin.version>
   </properties>
 
   <dependencies>
+
+    <!-- Web / Actuator -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-kotlin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-reflect</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib</artifactId>
-    </dependency>
+
+    <!-- Spring AI MCP Server -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
       <version>1.0.0</version>
     </dependency>
 
+    <!-- Kotlin / Jackson -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-kotlin</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-reflect</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib</artifactId>
+    </dependency>
+
+    <!-- Tests -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-test-junit5</artifactId>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>
     <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
     <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
+
     <plugins>
+
+      <!-- Spring Boot -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+
+      <!-- Kotlin -->
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>
+        <version>${kotlin.version}</version>
+
         <configuration>
           <args>
             <arg>-Xjsr305=strict</arg>
+            <arg>-Xannotation-default-target=param-property</arg>
           </args>
+
           <compilerPlugins>
             <plugin>spring</plugin>
             <plugin>all-open</plugin>
           </compilerPlugins>
+
+          <pluginOptions>
+            <!-- Spring -->
+            <option>all-open:annotation=org.springframework.context.annotation.Configuration</option>
+            <option>all-open:annotation=org.springframework.stereotype.Component</option>
+            <option>all-open:annotation=org.springframework.transaction.annotation.Transactional</option>
+
+            <!-- JPA-safe even if unused -->
+            <option>all-open:annotation=jakarta.persistence.Entity</option>
+            <option>all-open:annotation=jakarta.persistence.MappedSuperclass</option>
+            <option>all-open:annotation=jakarta.persistence.Embeddable</option>
+          </pluginOptions>
         </configuration>
+
         <dependencies>
           <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-maven-allopen</artifactId>
             <version>${kotlin.version}</version>
           </dependency>
+
           <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-maven-noarg</artifactId>
@@ -99,6 +130,8 @@
           </dependency>
         </dependencies>
       </plugin>
+
+      <!-- Formatting -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
@@ -120,6 +153,8 @@
           </kotlin>
         </configuration>
       </plugin>
+
+      <!-- Static analysis -->
       <plugin>
         <groupId>com.github.ozsie</groupId>
         <artifactId>detekt-maven-plugin</artifactId>
@@ -134,10 +169,11 @@
           </execution>
         </executions>
         <configuration>
-          <config>${project.basedir}/detekt.yml</config> <!-- Optional: custom rules -->
+          <config>${project.basedir}/detekt.yml</config>
           <input>${project.basedir}/src/main/kotlin</input>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
 

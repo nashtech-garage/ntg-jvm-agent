@@ -1,9 +1,9 @@
 'use client';
 
-import type { UsageByUserRowDto } from '@/types/usage';
+import type { UsageByUserRow } from '@/types/usage';
 
 type Props = {
-  rows: UsageByUserRowDto[];
+  rows: UsageByUserRow[];
 };
 
 export default function UsageByUserTable({ rows }: Readonly<Props>) {

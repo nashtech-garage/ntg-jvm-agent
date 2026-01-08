@@ -16,7 +16,7 @@ import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
-import org.springframework.retry.support.RetryTemplate
+import org.springframework.core.retry.RetryTemplate
 import reactor.core.publisher.Mono
 import java.util.UUID
 import kotlin.collections.map

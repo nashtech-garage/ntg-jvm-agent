@@ -171,17 +171,19 @@ class AgentKnowledgeControllerIT
                 ).andExpect(status().isNoContent)
 
             // Verify DB deleted flag
-            assertSoftDeleted(entityManager, AgentKnowledge::class.java, entity.id!!)
+            assertSoftDeleted(
+                entityManager,
+                tableName = "agent_knowledge",
+                id = entity.id!!,
+            )
 
-            // GET still returns but should show active=false
             mockMvc
                 .perform(
                     getAuth(
                         "/api/agents/${agent.id}/knowledge/${entity.id}",
                         roles = listOf("ROLE_ADMIN"),
                     ),
-                ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.active").value(false))
+                ).andExpect(status().isNotFound)
         }
 
         @Test

@@ -34,7 +34,11 @@ interface CreateUserModalProps {
   onUserCreated: () => void;
 }
 
-export default function CreateUserModal({ isOpen, onClose, onUserCreated }: CreateUserModalProps) {
+export default function CreateUserModal({
+  isOpen,
+  onClose,
+  onUserCreated,
+}: Readonly<CreateUserModalProps>) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 

@@ -16,9 +16,9 @@ import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.OpenAiEmbeddingModel
 import org.springframework.ai.openai.OpenAiEmbeddingOptions
 import org.springframework.ai.openai.api.OpenAiApi
-import org.springframework.retry.support.RetryTemplate
+import org.springframework.core.retry.RetryTemplate
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
@@ -160,7 +160,7 @@ class DynamicModelService(
         OpenAiApi(
             baseUrl,
             SimpleApiKey(apiKey),
-            LinkedMultiValueMap(),
+            HttpHeaders(),
             chatCompletionsPath,
             embeddingsPath,
             RestClient.builder(),

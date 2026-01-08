@@ -35,7 +35,7 @@ class UsageQueryService(
         to: LocalDate,
     ): UsageTimeSeriesResponseDto {
         require(!from.isAfter(to)) {
-            "`from` must be before or equal to `to`"
+            INVALID_DATE_RANGE_MESSAGE
         }
 
         val points =
@@ -61,7 +61,7 @@ class UsageQueryService(
         to: LocalDate,
     ): UsageByAgentResponseDto {
         require(!from.isAfter(to)) {
-            "`from` must be before or equal to `to`"
+            INVALID_DATE_RANGE_MESSAGE
         }
 
         val rows =
@@ -89,7 +89,7 @@ class UsageQueryService(
         to: LocalDate,
     ): UsageByUserResponseDto {
         require(!from.isAfter(to)) {
-            "`from` must be before or equal to `to`"
+            INVALID_DATE_RANGE_MESSAGE
         }
 
         val rows =
@@ -113,12 +113,15 @@ class UsageQueryService(
     }
 
     fun getFreshness(): UsageFreshnessDto {
-        val latest =
-            usageRepository.findLatestAggregatedDate()
-                ?: error("No usage data available yet")
+        val latest = usageRepository.findLatestAggregatedDate()
 
         return UsageFreshnessDto(
             latestAggregatedDate = latest,
         )
+    }
+
+    companion object {
+        const val INVALID_DATE_RANGE_MESSAGE =
+            "`from` must be before or equal to `to`"
     }
 }
