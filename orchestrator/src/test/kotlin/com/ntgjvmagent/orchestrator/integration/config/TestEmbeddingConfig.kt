@@ -1,11 +1,9 @@
 package com.ntgjvmagent.orchestrator.integration.config
 
-import com.ntgjvmagent.orchestrator.agent.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.DynamicModelService
-import io.micrometer.observation.ObservationRegistry
 import io.mockk.mockk
 import org.springframework.ai.document.Document
 import org.springframework.ai.embedding.BatchingStrategy
@@ -17,7 +15,6 @@ import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
-import org.springframework.core.retry.RetryTemplate
 import reactor.core.publisher.Mono
 import java.util.UUID
 import kotlin.collections.map
@@ -93,15 +90,12 @@ class TestEmbeddingConfig {
     @Bean
     @Primary
     fun testDynamicModelService(
-        chatModelOrchestrator: ChatModelOrchestrator,
         fakeReactiveEmbeddingModel: ReactiveEmbeddingModel,
         fakeSpringEmbeddingModel: SpringEmbeddingModel,
         agentRepo: AgentRepository, // REAL repository
     ): DynamicModelService =
         object : DynamicModelService(
-            chatModelOrchestrator = chatModelOrchestrator,
-            noRetryTemplate = RetryTemplate(),
-            observationRegistry = ObservationRegistry.create(),
+            modelOrchestrator = mockk(relaxed = true),
             agentRepo = agentRepo,
         ) {
             override fun getEmbeddingModel(agentId: UUID): ReactiveEmbeddingModel = fakeReactiveEmbeddingModel
