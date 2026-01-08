@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ninjasquad.springmockk.MockkBean
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
@@ -39,7 +40,7 @@ class AgentServiceIT
             name = name,
             description = "integration test agent",
             active = active,
-            provider = "openai",
+            provider = ProviderType.OPENAI,
             baseUrl = "https://models.github.ai/inference",
             apiKey = "fake-github-token",
             chatCompletionsPath = "/v1/chat/completions",
@@ -69,7 +70,7 @@ class AgentServiceIT
             val saved = repo.findById(created.id).orElseThrow()
             assertEquals("gpt-4o-mini", saved.model)
             assertTrue(saved.active)
-            assertEquals("openai", saved.provider)
+            assertEquals(ProviderType.OPENAI, saved.provider)
         }
 
         // ---------------------------
@@ -82,7 +83,7 @@ class AgentServiceIT
                     .save(
                         Agent(
                             name = "AgentGet",
-                            provider = "OpenAI",
+                            provider = ProviderType.OPENAI,
                             baseUrl = "https://models.github.ai/inference",
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
@@ -117,7 +118,7 @@ class AgentServiceIT
             repo.save(
                 Agent(
                     name = "ActiveA",
-                    provider = "OpenAI",
+                    provider = ProviderType.OPENAI,
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
@@ -129,7 +130,7 @@ class AgentServiceIT
             repo.save(
                 Agent(
                     name = "InactiveB",
-                    provider = "OpenAI",
+                    provider = ProviderType.OPENAI,
                     baseUrl = "https://models.github.ai/inference",
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
@@ -156,7 +157,7 @@ class AgentServiceIT
                     .save(
                         Agent(
                             name = "BeforeUpdate",
-                            provider = "OpenAI",
+                            provider = ProviderType.OPENAI,
                             baseUrl = "https://models.github.ai/inference",
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
@@ -210,7 +211,7 @@ class AgentServiceIT
                 repo.save(
                     Agent(
                         name = "SoftDelete",
-                        provider = "OpenAI",
+                        provider = ProviderType.OPENAI,
                         baseUrl = "https://models.github.ai/inference",
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
