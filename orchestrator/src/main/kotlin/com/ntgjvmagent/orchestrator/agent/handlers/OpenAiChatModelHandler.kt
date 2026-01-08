@@ -10,9 +10,9 @@ import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.retry.support.RetryTemplate
+import org.springframework.core.retry.RetryTemplate
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
@@ -37,7 +37,7 @@ class OpenAiChatModelHandler(
             OpenAiApi(
                 config.baseUrl,
                 SimpleApiKey(config.apiKey),
-                LinkedMultiValueMap(),
+                HttpHeaders(),
                 config.chatCompletionsPath,
                 config.embeddingsPath,
                 RestClient.builder(),
