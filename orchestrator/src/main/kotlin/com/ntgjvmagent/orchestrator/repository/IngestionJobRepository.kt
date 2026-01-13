@@ -11,18 +11,29 @@ import java.util.UUID
 interface IngestionJobRepository : JpaRepository<IngestionJob, UUID> {
     @Query(
         """
-    SELECT j
+    SELECT j.id
     FROM IngestionJob j
-    JOIN FETCH j.knowledge k
-    JOIN FETCH k.agent a
     WHERE j.status = :status
     ORDER BY j.createdAt ASC
     """,
     )
-    fun findOldestByStatusWithFetch(
+    fun findOldestIdByStatus(
         @Param("status") status: IngestionJobStatus,
         pageable: Pageable,
-    ): List<IngestionJob>
+    ): List<UUID>
+
+    @Query(
+        """
+    SELECT j
+    FROM IngestionJob j
+    JOIN FETCH j.knowledge k
+    JOIN FETCH k.agent a
+    WHERE j.id = :id
+    """,
+    )
+    fun findByIdWithFetch(
+        @Param("id") id: UUID,
+    ): IngestionJob?
 
     fun findAllByStatus(status: IngestionJobStatus): List<IngestionJob>
 }

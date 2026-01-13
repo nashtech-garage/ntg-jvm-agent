@@ -50,7 +50,7 @@ class AgentKnowledgeImportController(
             }
 
         return AgentKnowledgeImportResponseDto(
-            knowledges = results.map { it.first },
+            knowledge = results.map { it.first },
             fileNames = results.map { it.second },
         )
     }

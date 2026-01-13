@@ -95,6 +95,8 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     } catch (error) {
       logger.error('Logout failed', error);
       return false;
+    } finally {
+      isLoggingOutRef.current = false;
     }
   }, [router]);
 

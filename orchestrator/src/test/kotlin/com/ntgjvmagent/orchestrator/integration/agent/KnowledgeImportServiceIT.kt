@@ -161,6 +161,7 @@ class KnowledgeImportServiceIT
                     agent.id!!,
                 )
 
+            assertEquals(response, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("PDF test content") })
             assertKnowledgeLifecycle(knowledge.id!!)
             assertEmbeddingJobLifecycle(agent.id!!, knowledge.id!!, savedChunks.size)

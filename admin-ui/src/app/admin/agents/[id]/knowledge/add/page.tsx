@@ -35,8 +35,10 @@ import { SitemapImportForm } from '@/components/knowledge/forms/sitemap-import-f
 import { InlineImportForm } from '@/components/knowledge/forms/inline-import-form';
 import { DatabaseImportForm } from '@/components/knowledge/forms/database-import-form';
 import { ApiImportForm } from '@/components/knowledge/forms/api-import-form';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AddKnowledgePage() {
+  const { showError } = useToaster();
   const router = useRouter();
   const { id: agentId } = useParams();
 
@@ -136,7 +138,10 @@ export default function AddKnowledgePage() {
       body: formData,
     });
 
-    if (!res.ok) throw new Error('Failed to upload file knowledge');
+    if (!res.ok) {
+      showError('Failed to upload file knowledge');
+      throw new Error('Failed to upload file knowledge');
+    }
 
     router.push(`/admin/agents/${agentId}/knowledge`);
   };
@@ -162,7 +167,10 @@ export default function AddKnowledgePage() {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error('Failed to create knowledge');
+    if (!res.ok) {
+      showError('Failed to create knowledge');
+      throw new Error('Failed to create knowledge');
+    }
 
     router.push(`/admin/agents/${agentId}/knowledge`);
   };

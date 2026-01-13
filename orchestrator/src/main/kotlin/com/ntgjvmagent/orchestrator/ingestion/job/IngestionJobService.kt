@@ -63,6 +63,13 @@ class IngestionJobService(
     }
 
     @Transactional(readOnly = true)
-    fun nextPending(): IngestionJob? =
-        repo.findOldestByStatusWithFetch(IngestionJobStatus.PENDING, PageRequest.of(0, 1)).firstOrNull()
+    fun nextPending(): IngestionJob? {
+        val id =
+            repo
+                .findOldestIdByStatus(IngestionJobStatus.PENDING, PageRequest.of(0, 1))
+                .firstOrNull()
+                ?: return null
+
+        return repo.findByIdWithFetch(id)
+    }
 }

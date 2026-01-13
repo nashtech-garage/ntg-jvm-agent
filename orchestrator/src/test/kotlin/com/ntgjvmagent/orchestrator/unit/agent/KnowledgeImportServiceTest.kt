@@ -192,5 +192,6 @@ class KnowledgeImportServiceTest {
 
         assertTrue(chunks >= 1)
         assertEquals(KnowledgeStatus.EMBEDDING_PENDING, knowledge.status)
+        assertNull(knowledge.errorMessage)
     }
 }

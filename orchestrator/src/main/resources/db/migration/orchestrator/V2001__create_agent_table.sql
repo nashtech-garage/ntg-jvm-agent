@@ -182,7 +182,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_status ON agent_knowledge(status);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_updated_at ON agent_knowledge(updated_at);
 
--- Only one active knowledge per URL
+-- Ensures each agent may have at most one active (non-deleted) knowledge per source URI
 CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_active
 ON agent_knowledge(agent_id, source_uri)
 WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
