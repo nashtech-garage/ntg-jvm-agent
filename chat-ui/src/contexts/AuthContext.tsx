@@ -52,11 +52,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
 
     return {
       sub: rawUser.id ?? 'unknown',
-      name:
-        rawUser.name ??
-        rawUser.preferred_username ??
-        rawUser.email ??
-        'Unknown User',
+      name: rawUser.name ?? rawUser.preferred_username ?? rawUser.email ?? 'Unknown User',
       email: rawUser.email ?? '',
       roles: rawUser.roles ?? [],
       preferred_username: rawUser.preferred_username,
@@ -69,9 +65,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
 
     return {
       access_token: session.accessToken,
-      ...(session.refreshToken
-        ? { refresh_token: session.refreshToken }
-        : {}),
+      ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
     };
   }, [session]);
 
@@ -104,9 +98,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     if (session?.error !== 'RefreshAccessTokenError') return;
     if (isLoggingOutRef.current) return;
 
-    logger.error(
-      'Refresh token invalid or expired. Forcing logout.'
-    );
+    logger.error('Refresh token invalid or expired. Forcing logout.');
 
     void logOut();
   }, [session?.error, logOut]);
@@ -124,11 +116,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     [user, token, status, logOut]
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
