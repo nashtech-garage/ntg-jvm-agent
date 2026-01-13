@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.dto.response
 
 data class AgentKnowledgeImportResponseDto(
-    val knowledge: AgentKnowledgeResponseDto,
+    val knowledges: List<AgentKnowledgeResponseDto> = emptyList(),
     val fileNames: List<String> = emptyList(),
 )

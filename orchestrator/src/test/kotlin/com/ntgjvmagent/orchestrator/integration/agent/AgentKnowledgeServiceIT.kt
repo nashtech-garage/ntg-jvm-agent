@@ -5,10 +5,13 @@ import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import jakarta.persistence.EntityNotFoundException
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -54,7 +57,7 @@ class AgentKnowledgeServiceIT
                 repo.save(
                     AgentKnowledge(
                         agent = agent,
-                        name = "Stealth Training",
+                        name = "Inline Content",
                         sourceType = KnowledgeSourceType.INLINE,
                         sourceUri = null,
                         metadata = mapOf("content" to "Some stealth instructions"),
@@ -77,36 +80,44 @@ class AgentKnowledgeServiceIT
         }
 
         @Test
-        fun `create should save new knowledge for agent`() {
+        fun `create should save new INLINE knowledge for agent`() {
             val request =
                 InlineKnowledgeRequestDto(
-                    name = "Combat Training",
                     inlineContent = "Hand-to-hand combat guide",
                 )
 
             val result = service.create(agent.id!!, request)
 
-            assertEquals(request.name, result.name)
-            assertTrue(repo.existsById(result.id))
-            assertEquals("Hand-to-hand combat guide", result.metadata["content"])
-            assertEquals(KnowledgeSourceType.INLINE, result.sourceType)
-            assertEquals(true, result.active)
+            val saved = repo.findById(result.id).get()
+
+            assertEquals(KnowledgeSourceType.INLINE, saved.sourceType)
+            assertEquals("Hand-to-hand combat guide", saved.metadata["content"])
+            assertTrue(saved.active)
+            assertNotNull(saved.name) // auto-generated
+            assertTrue(saved.name.isNotBlank())
         }
 
         @Test
-        fun `update should modify existing knowledge for agent`() {
+        fun `update should modify metadata and trigger re-ingestion`() {
             val updateRequest =
                 InlineKnowledgeRequestDto(
-                    name = "Stealth Mastery",
                     inlineContent = "Advanced stealth techniques",
                 )
 
             val result = service.update(agent.id!!, knowledge.id!!, updateRequest)
 
-            assertEquals("Stealth Mastery", result.name)
-            assertEquals("Advanced stealth techniques", result.metadata["content"])
-            assertEquals(KnowledgeSourceType.INLINE, result.sourceType)
-            assertEquals(true, result.active) // update does NOT toggle active
+            val updated = repo.findById(knowledge.id!!).get()
+
+            // Name must NOT change
+            assertEquals(knowledge.name, updated.name)
+
+            // Metadata changed
+            assertEquals("Advanced stealth techniques", updated.metadata["content"])
+            assertEquals(KnowledgeSourceType.INLINE, updated.sourceType)
+
+            // Re-ingestion state
+            assertEquals(KnowledgeStatus.PENDING, updated.status)
+            assertTrue(updated.active)
         }
 
         @Test
@@ -114,8 +125,9 @@ class AgentKnowledgeServiceIT
             service.softDelete(agent.id!!, knowledge.id!!)
 
             val deleted = repo.findById(knowledge.id!!).get()
-            assertTrue(deleted.deletedAt != null)
-            assertEquals(false, deleted.active)
+
+            assertNotNull(deleted.deletedAt)
+            assertFalse(deleted.active)
         }
 
         @Test

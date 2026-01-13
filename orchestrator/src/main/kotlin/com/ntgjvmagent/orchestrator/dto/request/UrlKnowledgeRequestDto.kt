@@ -6,8 +6,6 @@ import jakarta.validation.constraints.Pattern
 
 data class UrlKnowledgeRequestDto(
     @field:NotBlank
-    override val name: String,
-    @field:NotBlank
     @field:Pattern(regexp = "https?://.*", message = "Must be a valid URL")
     val url: String,
 ) : AgentKnowledgeRequestDto {

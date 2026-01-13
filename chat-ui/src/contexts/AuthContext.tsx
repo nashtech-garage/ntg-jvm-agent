@@ -4,16 +4,17 @@ import React, {
   createContext,
   useContext,
   useMemo,
-  ReactNode,
   useCallback,
   useEffect,
+  useRef,
+  ReactNode,
 } from 'react';
 import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { TokenInfo, UserInfo } from '@/models/token';
 import { PAGE_PATH } from '@/constants/url';
-import { useRouter } from 'next/navigation';
-import logger from '@/utils/logger';
 import { clearSession } from '@/actions/session';
+import logger from '@/utils/logger';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -27,11 +28,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider');
   }
-  return context;
+  return ctx;
 }
 
 interface AuthProviderProps {
@@ -41,62 +42,77 @@ interface AuthProviderProps {
 function AuthStateProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const isLoggingOutRef = useRef(false);
+
+  /* ---------------- User ---------------- */
   const rawUser = session?.user;
 
   const user: UserInfo | null = useMemo(() => {
-    if (!rawUser) {
-      return null;
-    }
+    if (!rawUser) return null;
 
     return {
       sub: rawUser.id ?? 'unknown',
-      name: rawUser.name ?? rawUser.preferred_username ?? rawUser.email ?? 'Unknown User',
+      name:
+        rawUser.name ??
+        rawUser.preferred_username ??
+        rawUser.email ??
+        'Unknown User',
       email: rawUser.email ?? '',
       roles: rawUser.roles ?? [],
       preferred_username: rawUser.preferred_username,
     };
   }, [rawUser]);
 
-  const token: TokenInfo | null = useMemo(
-    () =>
-      session?.accessToken && session.accessToken.length > 0
-        ? {
-            access_token: session.accessToken,
-            ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
-          }
-        : null,
-    [session]
-  );
+  /* ---------------- Token ---------------- */
+  const token: TokenInfo | null = useMemo(() => {
+    if (!session?.accessToken) return null;
 
+    return {
+      access_token: session.accessToken,
+      ...(session.refreshToken
+        ? { refresh_token: session.refreshToken }
+        : {}),
+    };
+  }, [session]);
+
+  /* ---------------- Logout (ONE WAY ONLY) ---------------- */
   const logOut = useCallback(async () => {
+    if (isLoggingOutRef.current) return false;
+    isLoggingOutRef.current = true;
+
     try {
-      const result = await signOut({ redirect: false, callbackUrl: PAGE_PATH.LOGIN });
+      const result = await signOut({
+        redirect: false,
+        callbackUrl: PAGE_PATH.LOGIN,
+      });
+
       await clearSession();
+
       if (result?.url) {
         router.push(result.url);
       }
+
       return true;
-    } catch (error) {
-      logger.error('Logout failed:', error);
+    } catch (err) {
+      logger.error('Logout failed', err);
       return false;
     }
   }, [router]);
 
+  /* ---------------- Refresh-token failure ---------------- */
   useEffect(() => {
-    // Auto sign-out if session error
-    if (session?.error) {
-      logger.error('Session expired or refresh token invalid, signing user out');
-      void logOut();
-    }
+    if (session?.error !== 'RefreshAccessTokenError') return;
+    if (isLoggingOutRef.current) return;
+
+    logger.error(
+      'Refresh token invalid or expired. Forcing logout.'
+    );
+
+    void logOut();
   }, [session?.error, logOut]);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      void logOut();
-    }
-  }, [status, logOut]);
-
-  const contextValue = useMemo(
+  /* ---------------- Context ---------------- */
+  const value = useMemo<AuthContextType>(
     () => ({
       user,
       token,
@@ -108,7 +124,11 @@ function AuthStateProvider({ children }: AuthProviderProps) {
     [user, token, status, logOut]
   );
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {

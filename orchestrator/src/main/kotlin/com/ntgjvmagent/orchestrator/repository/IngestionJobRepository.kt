@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.repository
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.IngestionJob
 import com.ntgjvmagent.orchestrator.ingestion.job.IngestionJobStatus
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -16,11 +17,12 @@ interface IngestionJobRepository : JpaRepository<IngestionJob, UUID> {
     JOIN FETCH k.agent a
     WHERE j.status = :status
     ORDER BY j.createdAt ASC
-""",
+    """,
     )
-    fun findFirstWithFetch(
+    fun findOldestByStatusWithFetch(
         @Param("status") status: IngestionJobStatus,
-    ): IngestionJob?
+        pageable: Pageable,
+    ): List<IngestionJob>
 
     fun findAllByStatus(status: IngestionJobStatus): List<IngestionJob>
 }

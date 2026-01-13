@@ -5,6 +5,7 @@ import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.IngestionJobRepository
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -62,5 +63,6 @@ class IngestionJobService(
     }
 
     @Transactional(readOnly = true)
-    fun nextPending(): IngestionJob? = repo.findFirstWithFetch(IngestionJobStatus.PENDING)
+    fun nextPending(): IngestionJob? =
+        repo.findOldestByStatusWithFetch(IngestionJobStatus.PENDING, PageRequest.of(0, 1)).firstOrNull()
 }

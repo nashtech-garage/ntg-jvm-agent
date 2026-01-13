@@ -17,7 +17,6 @@ import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
     JsonSubTypes.Type(ApiKnowledgeRequestDto::class, name = "API"),
 )
 sealed interface AgentKnowledgeRequestDto {
-    val name: String
     val sourceType: KnowledgeSourceType
     val sourceUri: String?
     val metadata: Map<String, Any?>

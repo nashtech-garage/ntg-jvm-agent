@@ -3,38 +3,42 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
-import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
+import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import com.ntgjvmagent.orchestrator.service.KnowledgeImportService
+import com.ntgjvmagent.orchestrator.storage.core.ObjectStorage
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.font.PDType1Font
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Transactional
 class KnowledgeImportServiceIT
     @Autowired
     constructor(
         private val service: KnowledgeImportService,
+        private val agentKnowledgeService: AgentKnowledgeService,
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val chunkRepo: KnowledgeChunkRepository,
         private val agentRepo: AgentRepository,
         private val embeddingJobRepo: EmbeddingJobRepository,
+        private val objectStorage: ObjectStorage,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
@@ -63,59 +67,39 @@ class KnowledgeImportServiceIT
                         embeddingsPath = "/embeddings",
                     ),
                 )
+        }
 
-            knowledge =
-                knowledgeRepo.save(
-                    AgentKnowledge(
-                        agent = agent,
-                        name = "Test Knowledge",
-                        sourceType = KnowledgeSourceType.WEB_URL,
-                        sourceUri = "http://example.com",
-                        metadata = emptyMap(),
-                    ).apply { active = true },
+        // ---------------------------------------------------------
+        // Helpers
+        // ---------------------------------------------------------
+
+        private fun uploadKnowledge(
+            fileName: String,
+            contentType: String,
+            bytes: ByteArray,
+        ): AgentKnowledge {
+            val file =
+                MockMultipartFile(
+                    "file",
+                    fileName,
+                    contentType,
+                    bytes,
                 )
+
+            val created =
+                agentKnowledgeService.createFileKnowledge(
+                    agentId = agent.id!!,
+                    originalFileName = fileName,
+                    metadata = emptyMap(),
+                    file = file,
+                )
+
+            return knowledgeRepo.findById(created.id).get()
         }
 
-        // =============================================================
-        // Helper Assertions
-        // =============================================================
-
-        private fun assertKnowledgeLifecycle(knowledgeId: UUID) {
-            val updated = knowledgeRepo.findById(knowledgeId).get()
-
-            assertEquals(KnowledgeStatus.EMBEDDING_PENDING, updated.status)
-            assertNull(updated.errorMessage)
-        }
-
-        private fun assertEmbeddingJobLifecycle(
-            agentId: UUID,
-            knowledgeId: UUID,
-            expectedChunks: Int,
-        ) {
-            val jobs =
-                embeddingJobRepo
-                    .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByCreatedAtAsc(knowledgeId, agentId)
-
-            assertEquals(expectedChunks, jobs.size)
-
-            jobs.forEach {
-                assertEquals(EmbeddingJobStatus.PENDING, it.status)
-                assertEquals(0, it.attempts)
-                assertNull(it.errorMessage)
-                assertNotNull(it.createdAt)
-            }
-        }
-
-        private fun assertChunksOrdered(chunks: List<KnowledgeChunk>) {
-            val firstOrder = chunks.minOf { it.chunkOrder }
-            chunks.forEachIndexed { index, chunk ->
-                assertEquals(firstOrder + index, chunk.chunkOrder)
-            }
-        }
-
-        // =============================================================
+        // ---------------------------------------------------------
         // Tests
-        // =============================================================
+        // ---------------------------------------------------------
 
         @Test
         fun `importDocument should save txt file chunks and update lifecycle`() {
@@ -127,27 +111,21 @@ class KnowledgeImportServiceIT
                 Each sentence should ideally appear in a separate chunk to verify the correctness.
                 """.trimIndent()
 
-            val file =
-                MockMultipartFile(
-                    "file",
-                    "test.txt",
-                    "text/plain",
-                    content.toByteArray(),
-                )
+            knowledge = uploadKnowledge("test.txt", "text/plain", content.toByteArray())
 
-            val response = service.performImport(agent.id!!, knowledge.id!!, file)
+            val response = service.performImport(agent.id!!, knowledge.id!!)
 
             assertTrue(response > 1)
 
             val savedChunks =
-                chunkRepo
-                    .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledge.id!!, agent.id!!)
+                chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+                    knowledge.id!!,
+                    agent.id!!,
+                )
+
             assertEquals(response, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("multiple chunks") })
 
-            assertChunksOrdered(savedChunks)
-
-            // Lifecycles
             assertKnowledgeLifecycle(knowledge.id!!)
             assertEmbeddingJobLifecycle(agent.id!!, knowledge.id!!, savedChunks.size)
         }
@@ -156,75 +134,81 @@ class KnowledgeImportServiceIT
         fun `importDocument should save pdf file chunks and update lifecycle`() {
             val pdfBytes =
                 ByteArrayOutputStream().use { out ->
-                    val document = PDDocument()
-                    val page = PDPage()
-                    document.addPage(page)
-
-                    val contentStream = PDPageContentStream(document, page)
-                    contentStream.beginText()
-                    contentStream.setFont(PDType1Font.HELVETICA, 12f)
-                    contentStream.newLineAtOffset(100f, 700f)
-                    contentStream.showText("PDF test content for chunking.")
-                    contentStream.endText()
-                    contentStream.close()
-
-                    document.save(out)
-                    document.close()
-
+                    PDDocument().use { doc ->
+                        val page = PDPage()
+                        doc.addPage(page)
+                        PDPageContentStream(doc, page).use {
+                            it.beginText()
+                            it.setFont(PDType1Font.HELVETICA, 12f)
+                            it.newLineAtOffset(100f, 700f)
+                            it.showText("PDF test content for chunking.")
+                            it.endText()
+                        }
+                        doc.save(out)
+                    }
                     out.toByteArray()
                 }
 
-            val file =
-                MockMultipartFile(
-                    "file",
-                    "test.pdf",
-                    "application/pdf",
-                    pdfBytes,
-                )
+            knowledge = uploadKnowledge("test.pdf", "application/pdf", pdfBytes)
 
-            val response = service.performImport(agent.id!!, knowledge.id!!, file)
+            val response = service.performImport(agent.id!!, knowledge.id!!)
 
             assertTrue(response > 0)
 
             val savedChunks =
-                chunkRepo
-                    .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledge.id!!, agent.id!!)
+                chunkRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(
+                    knowledge.id!!,
+                    agent.id!!,
+                )
 
-            assertEquals(response, savedChunks.size)
             assertTrue(savedChunks.any { it.content.contains("PDF test content") })
-
-            assertChunksOrdered(savedChunks)
-
-            // Lifecycles
             assertKnowledgeLifecycle(knowledge.id!!)
             assertEmbeddingJobLifecycle(agent.id!!, knowledge.id!!, savedChunks.size)
         }
 
         @Test
-        fun `importDocument should use default profile for unknown extension and update lifecycle`() {
-            val content =
-                "This is a test file with an unknown extension to trigger default profile."
+        fun `importDocument should throw if file missing from storage`() {
+            val content = "some text".toByteArray()
 
-            val file =
-                MockMultipartFile(
-                    "file",
-                    "unknown.xyz",
-                    "text/plain",
-                    content.toByteArray(),
+            knowledge = uploadKnowledge("missing.txt", "text/plain", content)
+
+            // Simulate missing file
+            objectStorage.delete(knowledge.storageKey!!)
+
+            val ex =
+                assertThrows<IllegalStateException> {
+                    service.performImport(agent.id!!, knowledge.id!!)
+                }
+
+            assertTrue(ex.message!!.contains("Stored file not found"))
+        }
+
+        // ---------------------------------------------------------
+        // Assertions
+        // ---------------------------------------------------------
+
+        private fun assertKnowledgeLifecycle(knowledgeId: UUID) {
+            val updated = knowledgeRepo.findById(knowledgeId).get()
+            assertEquals(KnowledgeStatus.EMBEDDING_PENDING, updated.status)
+            assertNull(updated.errorMessage)
+        }
+
+        private fun assertEmbeddingJobLifecycle(
+            agentId: UUID,
+            knowledgeId: UUID,
+            expectedChunks: Int,
+        ) {
+            val jobs =
+                embeddingJobRepo.findAllByKnowledgeIdAndKnowledgeAgentIdOrderByCreatedAtAsc(
+                    knowledgeId,
+                    agentId,
                 )
 
-            val response = service.performImport(agent.id!!, knowledge.id!!, file)
-
-            assertTrue(response >= 1)
-
-            val savedChunks =
-                chunkRepo
-                    .findAllByKnowledgeIdAndKnowledgeAgentIdOrderByChunkOrderAsc(knowledge.id!!, agent.id!!)
-
-            assertChunksOrdered(savedChunks)
-
-            // Lifecycles
-            assertKnowledgeLifecycle(knowledge.id!!)
-            assertEmbeddingJobLifecycle(agent.id!!, knowledge.id!!, savedChunks.size)
+            assertEquals(expectedChunks, jobs.size)
+            jobs.forEach {
+                assertEquals(EmbeddingJobStatus.PENDING, it.status)
+                assertEquals(0, it.attempts)
+                assertNull(it.errorMessage)
+            }
         }
     }

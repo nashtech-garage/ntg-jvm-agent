@@ -42,4 +42,17 @@ interface AgentKnowledgeRepository : JpaRepository<AgentKnowledge, UUID> {
         @Param("status") status: KnowledgeStatus,
         @Param("error") error: String?,
     )
+
+    @Query(
+        """
+        select ak.name
+        from AgentKnowledge ak
+        where ak.agent.id = :agentId
+          and ak.name like concat(:prefix, '%')
+        """,
+    )
+    fun findNamesByAgentIdAndNamePrefix(
+        agentId: UUID,
+        prefix: String,
+    ): List<String>
 }

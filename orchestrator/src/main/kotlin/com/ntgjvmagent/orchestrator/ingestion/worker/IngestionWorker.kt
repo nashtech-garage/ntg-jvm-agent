@@ -32,7 +32,7 @@ class IngestionWorker(
 
     @Scheduled(fixedDelay = WORKER_FIXED_DELAY_MS)
     fun processQueue() {
-        val job = jobRepo.findFirstWithFetch(IngestionJobStatus.PENDING) ?: return
+        val job = jobService.nextPending() ?: return
         execute(job)
     }
 
@@ -47,64 +47,50 @@ class IngestionWorker(
             )
             executeJob(job)
         } catch (ex: Exception) {
-            log.error("Unexpected error: ${ex.message}", ex)
+            log.error("Unexpected ingestion error: ${ex.message}", ex)
             handleFailure(job, job.knowledge, ex.message)
         }
     }
 
     /**
      * Main ingestion pipeline.
-     * NO LONG-LIVED TRANSACTION HERE.
+     * IMPORTANT: No long-lived DB transaction.
      */
     private fun executeJob(job: IngestionJob) {
         val knowledge = job.knowledge
         val agentId = knowledge.agent.id!!
         val knowledgeId = knowledge.id!!
 
-        // ---------------- STEP 1: Mark job RUNNING ----------------
+        // STEP 1: Mark job RUNNING
         transactional {
             jobService.markRunning(job)
         }
 
-        // ---------------- STEP 2: Mark knowledge INGESTING --------
+        // STEP 2: Mark knowledge INGESTING
         transactional {
-            updateKnowledgeIngesting(knowledge)
+            knowledge.markIngesting()
+            knowledgeRepo.save(knowledge)
         }
 
-        // ---------------- STEP 3: Delete old chunks ---------------
+        // STEP 3: Delete old chunks
         transactional {
             knowledgeChunkService.deleteAllChunks(agentId, knowledgeId)
         }
 
-        // ---------------- STEP 4: Long-running ingestion ----------
-        // This MUST NOT be inside a DB transaction.
+        // STEP 4: Long-running ingestion (NO TX)
         orchestrator.process(knowledge)
 
-        // ---------------- STEP 5: Mark success + enqueue embedding
+        // STEP 5: Mark success
         transactional {
             jobService.markSuccess(job)
-            updateKnowledgeEmbeddingPending(knowledge)
+            knowledge.markEmbeddingPending()
+            knowledgeRepo.save(knowledge)
         }
     }
 
-    // ----------------------------------------------------------------
-    // Transaction helper for DB-only units of work
-    // ----------------------------------------------------------------
-    private fun <T> transactional(block: () -> T): T {
-        val tmpl = TransactionTemplate(txManager)
-        return tmpl.execute { block() }!!
-    }
-
-    private fun updateKnowledgeIngesting(k: AgentKnowledge) {
-        k.markIngesting()
-        knowledgeRepo.save(k)
-    }
-
-    private fun updateKnowledgeEmbeddingPending(k: AgentKnowledge) {
-        k.markEmbeddingPending()
-        knowledgeRepo.save(k)
-    }
-
+    // ------------------------------------------------------------
+    // Failure handling
+    // ------------------------------------------------------------
     private fun handleFailure(
         job: IngestionJob,
         knowledge: AgentKnowledge,
@@ -118,16 +104,35 @@ class IngestionWorker(
             val exceeded = job.attempts >= job.maxAttempts
 
             if (exceeded) {
-                // Permanently failed
+                log.error(
+                    "Ingestion permanently failed: job={}, knowledge={}, reason={}",
+                    job.id,
+                    knowledge.id,
+                    truncated,
+                )
+
                 jobService.markFailed(job, truncated ?: "Unknown error")
                 knowledge.markFailed(truncated)
                 knowledgeRepo.save(knowledge)
             } else {
-                // Requeue
+                log.warn(
+                    "Requeuing ingestion job {} (attempt {})",
+                    job.id,
+                    job.attempts,
+                )
+
                 job.status = IngestionJobStatus.PENDING
                 job.errorMessage = truncated
                 jobRepo.save(job)
             }
         }
+    }
+
+    // ------------------------------------------------------------
+    // Transaction helper
+    // ------------------------------------------------------------
+    private fun <T> transactional(block: () -> T): T {
+        val tmpl = TransactionTemplate(txManager)
+        return tmpl.execute { block() }!!
     }
 }

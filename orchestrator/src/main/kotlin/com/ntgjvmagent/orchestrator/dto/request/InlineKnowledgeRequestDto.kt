@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank
 
 data class InlineKnowledgeRequestDto(
     @field:NotBlank
-    override val name: String,
-    @field:NotBlank
     val inlineContent: String,
 ) : AgentKnowledgeRequestDto {
     override val sourceType = KnowledgeSourceType.INLINE
