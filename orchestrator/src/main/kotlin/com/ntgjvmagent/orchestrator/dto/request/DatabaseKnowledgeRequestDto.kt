@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank
 
 data class DatabaseKnowledgeRequestDto(
     @field:NotBlank
-    override val name: String,
-    @field:NotBlank
     val dbHost: String,
     @field:NotBlank
     val dbPort: String,

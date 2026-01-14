@@ -100,24 +100,45 @@ CREATE INDEX IF NOT EXISTS idx_agent_tool_active ON agent_tool(active);
 -- 4. agent_knowledge
 -- =======================
 CREATE TABLE IF NOT EXISTS agent_knowledge (
-    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id         UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
-    name             VARCHAR(100) NOT NULL,
-    source_type      VARCHAR(50) NOT NULL,
-    source_uri       TEXT,
-    metadata         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    status            VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-    last_processed_at TIMESTAMPTZ,
-    error_message     TEXT,
+    -- Ownership
+    agent_id            UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
 
-    active           BOOLEAN NOT NULL DEFAULT TRUE,
-    deleted_at       TIMESTAMPTZ,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    created_by       UUID REFERENCES users(id),
-    updated_at       TIMESTAMPTZ,
-    updated_by       UUID REFERENCES users(id),
+    -- Identity
+    name                VARCHAR(120) NOT NULL,
 
+    -- Source
+    source_type         VARCHAR(50) NOT NULL,
+    source_uri          TEXT,
+
+    -- FILE-specific
+    original_file_name  TEXT,
+    storage_key         TEXT,
+    checksum_sha256     CHAR(64),
+    file_size_bytes     BIGINT,
+
+    -- Flexible source metadata
+    metadata            JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    -- Ingestion lifecycle
+    status              VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    last_processed_at   TIMESTAMPTZ,
+    error_message       TEXT,
+
+    -- Soft delete + visibility
+    active              BOOLEAN NOT NULL DEFAULT TRUE,
+    deleted_at          TIMESTAMPTZ,
+
+    -- Auditing
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    created_by          UUID REFERENCES users(id),
+    updated_at          TIMESTAMPTZ,
+    updated_by          UUID REFERENCES users(id),
+
+    -- -------------------------
+    -- Constraints
+    -- -------------------------
     CONSTRAINT chk_agent_knowledge_status CHECK (
         status IN (
             'PENDING',
@@ -126,6 +147,28 @@ CREATE TABLE IF NOT EXISTS agent_knowledge (
             'READY',
             'FAILED',
             'OUTDATED'
+        )
+    ),
+
+    -- FILE knowledge must have storage
+    CONSTRAINT chk_file_fields_present CHECK (
+        source_type <> 'FILE'
+        OR (
+            storage_key IS NOT NULL
+            AND original_file_name IS NOT NULL
+            AND checksum_sha256 IS NOT NULL
+            AND file_size_bytes IS NOT NULL
+        )
+    ),
+
+    -- Non-file knowledge must not have file storage
+    CONSTRAINT chk_non_file_has_no_storage CHECK (
+        source_type = 'FILE'
+        OR (
+            storage_key IS NULL
+            AND original_file_name IS NULL
+            AND checksum_sha256 IS NULL
+            AND file_size_bytes IS NULL
         )
     )
 );
@@ -136,11 +179,23 @@ CREATE INDEX IF NOT EXISTS idx_agent_knowledge_source_type ON agent_knowledge(so
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_deleted_at ON agent_knowledge(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_active_not_deleted ON agent_knowledge (active) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_metadata_jsonb ON agent_knowledge USING gin (metadata);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_name_per_agent ON agent_knowledge (agent_id, name) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_per_agent ON agent_knowledge (agent_id, source_uri) WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_status ON agent_knowledge(status);
 CREATE INDEX IF NOT EXISTS idx_agent_knowledge_updated_at ON agent_knowledge(updated_at);
 
+-- Ensures each agent may have at most one active (non-deleted) knowledge per source URI
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_source_uri_active
+ON agent_knowledge(agent_id, source_uri)
+WHERE deleted_at IS NULL AND source_uri IS NOT NULL;
+
+-- Storage key is always unique
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_storage_key
+ON agent_knowledge(storage_key)
+WHERE storage_key IS NOT NULL;
+
+-- Prevent duplicate file uploads for the same agent
+CREATE UNIQUE INDEX IF NOT EXISTS uk_agent_knowledge_checksum_per_agent
+ON agent_knowledge(agent_id, checksum_sha256)
+WHERE checksum_sha256 IS NOT NULL AND deleted_at IS NULL;
 
 -- =======================
 -- 5. knowledge_chunk (pgvector)

@@ -7,6 +7,7 @@ import React, {
   ReactNode,
   useCallback,
   useEffect,
+  useRef,
 } from 'react';
 import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
 import { TokenInfo, UserInfo } from '@/models/token';
@@ -43,12 +44,13 @@ interface AuthProviderProps {
 function AuthStateProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const isLoggingOutRef = useRef(false);
+
   const rawUser = session?.user;
 
+  /* ------------------ User ------------------ */
   const user: UserInfo | null = useMemo(() => {
-    if (!rawUser) {
-      return null;
-    }
+    if (!rawUser) return null;
 
     return {
       sub: rawUser.id ?? 'unknown',
@@ -62,46 +64,54 @@ function AuthStateProvider({ children }: AuthProviderProps) {
   const roles = useMemo(() => user?.roles ?? [], [user]);
   const hasAdminRole = hasAdmin(roles);
 
-  const token: TokenInfo | null = useMemo(
-    () =>
-      session?.accessToken && session.accessToken.length > 0
-        ? {
-            access_token: session.accessToken,
-            ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
-          }
-        : null,
-    [session]
-  );
+  /* ------------------ Token ------------------ */
+  const token: TokenInfo | null = useMemo(() => {
+    if (!session?.accessToken) return null;
 
+    return {
+      access_token: session.accessToken,
+      ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
+    };
+  }, [session]);
+
+  /* ------------------ Logout ------------------ */
   const logOut = useCallback(async () => {
+    if (isLoggingOutRef.current) return false;
+    isLoggingOutRef.current = true;
+
     try {
-      const result = await signOut({ redirect: false, callbackUrl: PAGE_PATH.LOGIN });
+      const result = await signOut({
+        redirect: false,
+        callbackUrl: PAGE_PATH.LOGIN,
+      });
+
       await clearSession();
+
       if (result?.url) {
         router.push(result.url);
       }
+
       return true;
     } catch (error) {
-      logger.error('Logout failed:', error);
+      logger.error('Logout failed', error);
       return false;
+    } finally {
+      isLoggingOutRef.current = false;
     }
   }, [router]);
 
+  /* ------------------ Force logout on refresh failure ------------------ */
   useEffect(() => {
-    // Auto sign-out if session error
-    if (session?.error) {
-      logger.error('Session expired or refresh token invalid, signing user out');
-      void logOut();
-    }
+    if (session?.error !== 'RefreshAccessTokenError') return;
+    if (isLoggingOutRef.current) return;
+
+    logger.error('Session expired or refresh token invalid, forcing logout');
+
+    void logOut();
   }, [session?.error, logOut]);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      void logOut();
-    }
-  }, [status, logOut]);
-
-  const contextValue = useMemo(
+  /* ------------------ Context value ------------------ */
+  const contextValue = useMemo<AuthContextType>(
     () => ({
       user,
       token,
@@ -117,6 +127,7 @@ function AuthStateProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
+/* ------------------ Provider ------------------ */
 export function AuthProvider({ children }: AuthProviderProps) {
   return (
     <SessionProvider>

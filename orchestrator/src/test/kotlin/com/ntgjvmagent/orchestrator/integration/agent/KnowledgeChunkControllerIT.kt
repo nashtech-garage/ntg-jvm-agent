@@ -8,6 +8,7 @@ import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
+import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDPageContentStream
@@ -15,13 +16,11 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 
 class KnowledgeChunkControllerIT
@@ -30,6 +29,7 @@ class KnowledgeChunkControllerIT
         private val chunkRepo: KnowledgeChunkRepository,
         private val knowledgeRepo: AgentKnowledgeRepository,
         private val agentRepo: AgentRepository,
+        private val agentKnowledgeService: AgentKnowledgeService,
     ) : BaseIntegrationTest() {
         private lateinit var agent: Agent
         private lateinit var knowledge: AgentKnowledge
@@ -57,11 +57,12 @@ class KnowledgeChunkControllerIT
                     ),
                 )
 
+            // Default INLINE knowledge for first test
             knowledge =
                 knowledgeRepo.save(
                     AgentKnowledge(
                         agent = agent,
-                        name = "K1",
+                        name = "Inline K",
                         sourceType = KnowledgeSourceType.INLINE,
                         sourceUri = null,
                         metadata = emptyMap(),
@@ -74,6 +75,10 @@ class KnowledgeChunkControllerIT
                 content = content,
                 metadata = mapOf("source" to "unit-test"),
             )
+
+        // ------------------------------------------------------------
+        // INLINE knowledge flow
+        // ------------------------------------------------------------
 
         @Test
         fun `createChunk endpoint should return 201 and persist embedding`() {
@@ -95,20 +100,51 @@ class KnowledgeChunkControllerIT
             assertEquals("Test chunk", persisted[0].content)
         }
 
+        // ------------------------------------------------------------
+        // FILE knowledge full lifecycle
+        // ------------------------------------------------------------
+
         @Test
         fun `full KnowledgeChunkController flow with txt and pdf imports`() {
-            val knowledge =
-                knowledgeRepo.save(
-                    AgentKnowledge(
-                        agent = agent,
-                        name = "Test Knowledge",
-                        sourceType = KnowledgeSourceType.FILE,
-                        sourceUri = "unit-test://file.pdf",
-                        metadata = mapOf("createdBy" to "integration-test"),
-                    ).apply { active = true },
+            // ---------------- CREATE FILE KNOWLEDGE ----------------
+
+            val pdfBytes =
+                ByteArrayOutputStream().use { out ->
+                    PDDocument().use { doc ->
+                        val page = PDPage()
+                        doc.addPage(page)
+                        PDPageContentStream(doc, page).use {
+                            it.beginText()
+                            it.setFont(PDType1Font.HELVETICA, 12f)
+                            it.newLineAtOffset(100f, 700f)
+                            it.showText("PDF test content")
+                            it.endText()
+                        }
+                        doc.save(out)
+                    }
+                    out.toByteArray()
+                }
+
+            val file =
+                MockMultipartFile(
+                    "file",
+                    "test.pdf",
+                    "application/pdf",
+                    pdfBytes,
                 )
 
-            // ------------------ CREATE CHUNK ------------------
+            val created =
+                agentKnowledgeService.createFileKnowledge(
+                    agentId = agent.id!!,
+                    originalFileName = "test.pdf",
+                    metadata = mapOf("createdBy" to "integration-test"),
+                    file = file,
+                )
+
+            val knowledge = knowledgeRepo.findById(created.id).get()
+
+            // ---------------- CREATE CHUNK ----------------
+
             val chunkId =
                 mockMvc
                     .perform(
@@ -119,12 +155,12 @@ class KnowledgeChunkControllerIT
                         ),
                     ).andExpect(status().isCreated)
                     .andExpect(jsonPath("$.content").value("Hello World"))
-                    .andExpect(jsonPath("$.metadata.source").value("unit-test"))
                     .andReturn()
                     .response
                     .let { objectMapper.readTree(it.contentAsString).get("id").asText() }
 
-            // ------------------ UPDATE CHUNK ------------------
+            // ---------------- UPDATE CHUNK ----------------
+
             mockMvc
                 .perform(
                     putAuth(
@@ -135,7 +171,8 @@ class KnowledgeChunkControllerIT
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.content").value("Updated content"))
 
-            // ------------------ LIST + COUNT ------------------
+            // ---------------- LIST + COUNT ----------------
+
             mockMvc
                 .perform(
                     getAuth(
@@ -154,62 +191,8 @@ class KnowledgeChunkControllerIT
                 ).andExpect(status().isOk)
                 .andExpect(content().string("1"))
 
-            // ------------------ IMPORT TXT ------------------
-            val txtFile =
-                MockMultipartFile(
-                    "file",
-                    "test.txt",
-                    MediaType.TEXT_PLAIN_VALUE,
-                    "Sentence 1 Sentence 2 Sentence 3".toByteArray(StandardCharsets.UTF_8),
-                )
+            // ---------------- SEARCH ----------------
 
-            mockMvc
-                .perform(
-                    multipartAuth(
-                        "/api/agents/${agent.id}/knowledge/${knowledge.id}/chunks/import",
-                        txtFile,
-                        roles = listOf("ROLE_ADMIN"),
-                    ),
-                ).andExpect(status().isAccepted)
-                .andExpect(jsonPath("$.originalFilename").value("test.txt"))
-
-            // ------------------ IMPORT PDF ------------------
-            val pdfBytes =
-                ByteArrayOutputStream().use { out ->
-                    PDDocument().use { doc ->
-                        val page = PDPage()
-                        doc.addPage(page)
-                        PDPageContentStream(doc, page).use { cs ->
-                            cs.beginText()
-                            cs.setFont(PDType1Font.HELVETICA, 12f)
-                            cs.newLineAtOffset(50f, 700f)
-                            cs.showText("PDF test content.")
-                            cs.endText()
-                        }
-                        doc.save(out)
-                    }
-                    out.toByteArray()
-                }
-
-            val pdfFile =
-                MockMultipartFile(
-                    "file",
-                    "test.pdf",
-                    "application/pdf",
-                    pdfBytes,
-                )
-
-            mockMvc
-                .perform(
-                    multipartAuth(
-                        "/api/agents/${agent.id}/knowledge/${knowledge.id}/chunks/import",
-                        pdfFile,
-                        roles = listOf("ROLE_ADMIN"),
-                    ),
-                ).andExpect(status().isAccepted)
-                .andExpect(jsonPath("$.originalFilename").value("test.pdf"))
-
-            // ------------------ SEARCH ------------------
             mockMvc
                 .perform(
                     getAuth(

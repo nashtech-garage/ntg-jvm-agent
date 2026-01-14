@@ -1,20 +1,23 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.component.KnowledgeNameGenerator
 import com.ntgjvmagent.orchestrator.dto.request.AgentKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeListResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeResponseDto
 import com.ntgjvmagent.orchestrator.ingestion.orchestrator.IngestionLifecycleService
 import com.ntgjvmagent.orchestrator.mapper.AgentKnowledgeMapper
-import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
+import com.ntgjvmagent.orchestrator.storage.core.ObjectStorage
+import com.ntgjvmagent.orchestrator.storage.facade.SecureObjectStorage
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
 @Service
@@ -22,6 +25,9 @@ class AgentKnowledgeService(
     private val repo: AgentKnowledgeRepository,
     private val agentRepo: AgentRepository,
     private val ingestionLifecycleService: IngestionLifecycleService,
+    private val knowledgeNameGenerator: KnowledgeNameGenerator,
+    private val objectStorage: ObjectStorage,
+    private val secureObjectStorage: SecureObjectStorage,
 ) {
     @Transactional(readOnly = true)
     fun getByAgent(agentId: UUID): List<AgentKnowledgeListResponseDto> =
@@ -52,9 +58,9 @@ class AgentKnowledgeService(
         val agent =
             agentRepo.findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
-
+        val name = knowledgeNameGenerator.generate(agentId, request)
         val entity =
-            AgentKnowledgeMapper.toEntity(agent, request).copy(
+            AgentKnowledgeMapper.toEntity(agent, name, request).copy(
                 status = KnowledgeStatus.PENDING,
                 errorMessage = null,
                 lastProcessedAt = null,
@@ -73,20 +79,38 @@ class AgentKnowledgeService(
     @Transactional
     fun createFileKnowledge(
         agentId: UUID,
-        request: FileKnowledgeInternalRequest,
+        originalFileName: String,
+        metadata: Map<String, Any?>,
+        file: MultipartFile,
     ): AgentKnowledgeResponseDto {
         val agent =
             agentRepo.findByIdOrNull(agentId)
                 ?: throw EntityNotFoundException("Agent not found: $agentId")
 
+        val name = knowledgeNameGenerator.generateForFile(agentId, originalFileName)
+        val storageKey = generateStorageKey(agentId)
+
+        // 1️ STORE FILE FIRST (checksum + size)
+        val stored =
+            secureObjectStorage.store(
+                storageKey = storageKey,
+                file = file,
+            )
+
+        // 2️ PERSIST KNOWLEDGE WITH STORAGE METADATA
         val entity =
-            AgentKnowledgeMapper.toEntity(agent, request).copy(
-                status = KnowledgeStatus.INGESTING,
-                errorMessage = null,
-                lastProcessedAt = null,
+            AgentKnowledgeMapper.toFileEntity(
+                agent = agent,
+                name = name,
+                originalFileName = originalFileName,
+                storageKey = storageKey,
+                stored = stored,
+                metadata = metadata,
             )
 
         val saved = repo.save(entity)
+
+        scheduleIngestionAfterCommit(agentId, saved.id!!)
 
         return AgentKnowledgeMapper.toResponse(saved)
     }
@@ -107,7 +131,6 @@ class AgentKnowledgeService(
                 existing.metadata != request.metadata
 
         existing.apply {
-            name = request.name
             sourceType = request.sourceType
             sourceUri = request.sourceUri
             metadata = request.metadata
@@ -138,7 +161,10 @@ class AgentKnowledgeService(
 
         existing.markDeleted()
         repo.save(existing)
+        existing.storageKey?.let { objectStorage.delete(it) }
     }
+
+    private fun generateStorageKey(agentId: UUID): String = "agents/$agentId/knowledge/${UUID.randomUUID()}/original"
 
     private fun scheduleIngestionAfterCommit(
         agentId: UUID,

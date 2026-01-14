@@ -34,3 +34,4 @@ build/
 
 ### Environment Files ###
 .env.local
+/orchestrator/data/

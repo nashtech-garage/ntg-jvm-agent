@@ -3,27 +3,33 @@ package com.ntgjvmagent.orchestrator.chunking
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
 import org.springframework.stereotype.Component
-import org.springframework.web.multipart.MultipartFile
+import java.io.InputStream
 import java.nio.charset.StandardCharsets
 
 @Component
 class DocumentTextExtractor {
     fun extract(
-        file: MultipartFile,
+        input: InputStream,
         ext: String,
     ): String =
-        when (ext) {
-            "pdf" -> extractPdf(file)
-            "docx" -> extractDocx(file)
-            else -> extractPlainText(file)
+        when (ext.lowercase()) {
+            "pdf" -> extractPdf(input)
+            "docx" -> extractDocx(input)
+            else -> extractPlainText(input)
         }
 
-    private fun extractPdf(file: MultipartFile): String =
-        PDDocument.load(file.inputStream).use { PDFTextStripper().getText(it) }
+    private fun extractPdf(input: InputStream): String =
+        input.use { stream ->
+            PDDocument.load(stream).use { doc ->
+                PDFTextStripper().getText(doc)
+            }
+        }
 
-    private fun extractPlainText(file: MultipartFile): String =
-        file.inputStream.bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
+    private fun extractPlainText(input: InputStream): String =
+        input.bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
 
-    private fun extractDocx(file: MultipartFile): String =
-        "[DOCX text extraction not implemented] - ${file.originalFilename}"
+    private fun extractDocx(input: InputStream): String =
+        input.use { _ ->
+            "[DOCX text extraction not implemented]"
+        }
 }

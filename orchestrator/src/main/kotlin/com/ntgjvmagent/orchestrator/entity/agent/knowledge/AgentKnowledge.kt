@@ -22,8 +22,16 @@ data class AgentKnowledge(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agent_id", nullable = false)
     var agent: Agent,
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, updatable = false, length = 100)
     var name: String,
+    @Column(name = "original_file_name")
+    var originalFileName: String? = null,
+    @Column(name = "checksum_sha256")
+    var checksumSha256: String? = null,
+    @Column(name = "file_size_bytes")
+    var fileSizeBytes: Long? = null,
+    @Column(name = "storage_key")
+    var storageKey: String? = null,
     @Column(name = "source_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     var sourceType: KnowledgeSourceType,

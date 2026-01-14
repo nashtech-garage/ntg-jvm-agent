@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank
 
 data class ApiKnowledgeRequestDto(
     @field:NotBlank
-    override val name: String,
-    @field:NotBlank
     val apiUrl: String,
     @field:NotBlank
     val apiMethod: String,

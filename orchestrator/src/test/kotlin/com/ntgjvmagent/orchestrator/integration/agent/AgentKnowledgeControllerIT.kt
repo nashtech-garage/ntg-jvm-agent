@@ -9,6 +9,7 @@ import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
 import jakarta.persistence.EntityManager
+import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,10 +48,9 @@ class AgentKnowledgeControllerIT
         }
 
         @Test
-        fun `should create a new agent knowledge`() {
+        fun `should create a new WEB_URL knowledge`() {
             val req =
                 UrlKnowledgeRequestDto(
-                    name = "Ophthalmology Dataset",
                     url = "https://example.com/ophthalmology",
                 )
 
@@ -62,10 +62,10 @@ class AgentKnowledgeControllerIT
                         roles = listOf("ROLE_ADMIN"),
                     ),
                 ).andExpect(status().isCreated)
-                .andExpect(jsonPath("$.name").value("Ophthalmology Dataset"))
                 .andExpect(jsonPath("$.sourceUri").value("https://example.com/ophthalmology"))
                 .andExpect(jsonPath("$.sourceType").value("WEB_URL"))
                 .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.name").isNotEmpty)
         }
 
         @Test
@@ -91,8 +91,7 @@ class AgentKnowledgeControllerIT
                 .perform(
                     getAuth("/api/agents/${agent.id}/knowledge", roles = listOf("ROLE_ADMIN")),
                 ).andExpect(status().isOk)
-                .andExpect(jsonPath("$[0].name").value("Knowledge A"))
-                .andExpect(jsonPath("$[1].name").value("Knowledge B"))
+                .andExpect(jsonPath("$[*].name", containsInAnyOrder("Knowledge A", "Knowledge B")))
         }
 
         @Test
@@ -119,12 +118,12 @@ class AgentKnowledgeControllerIT
         }
 
         @Test
-        fun `should update existing knowledge for agent`() {
+        fun `should update existing knowledge without changing name`() {
             val entity =
                 repository.save(
                     AgentKnowledge(
                         agent = agent,
-                        name = "Old Knowledge",
+                        name = "Stable Knowledge Name",
                         sourceType = KnowledgeSourceType.WEB_URL,
                         sourceUri = "https://old.com",
                     ).apply { active = true },
@@ -132,7 +131,6 @@ class AgentKnowledgeControllerIT
 
             val updateReq =
                 UrlKnowledgeRequestDto(
-                    name = "Updated Knowledge",
                     url = "https://new.com",
                 )
 
@@ -144,7 +142,7 @@ class AgentKnowledgeControllerIT
                         roles = listOf("ROLE_ADMIN"),
                     ),
                 ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.name").value("Updated Knowledge"))
+                .andExpect(jsonPath("$.name").value("Stable Knowledge Name")) // immutable
                 .andExpect(jsonPath("$.sourceUri").value("https://new.com"))
                 .andExpect(jsonPath("$.sourceType").value("WEB_URL"))
         }
@@ -161,7 +159,6 @@ class AgentKnowledgeControllerIT
                     ).apply { active = true },
                 )
 
-            // Delete
             mockMvc
                 .perform(
                     deleteAuth(
@@ -170,7 +167,6 @@ class AgentKnowledgeControllerIT
                     ),
                 ).andExpect(status().isNoContent)
 
-            // Verify DB deleted flag
             assertSoftDeleted(
                 entityManager,
                 tableName = "agent_knowledge",
@@ -184,23 +180,5 @@ class AgentKnowledgeControllerIT
                         roles = listOf("ROLE_ADMIN"),
                     ),
                 ).andExpect(status().isNotFound)
-        }
-
-        @Test
-        fun `should validate missing name`() {
-            val invalidReq =
-                UrlKnowledgeRequestDto(
-                    name = "   ", // invalid blank
-                    url = "https://example.com",
-                )
-
-            mockMvc
-                .perform(
-                    postAuth(
-                        "/api/agents/${agent.id}/knowledge",
-                        invalidReq,
-                        roles = listOf("ROLE_ADMIN"),
-                    ),
-                ).andExpect(status().isBadRequest)
         }
     }

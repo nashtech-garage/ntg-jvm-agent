@@ -15,8 +15,6 @@ export type FileItem = z.infer<typeof FileItemSchema>;
 // Common fields (ALL OPTIONAL)
 // --------------------------------------------------------
 const CommonFields = z.object({
-  name: z.string().optional(),
-
   files: z.array(FileItemSchema).optional(),
 
   url: z.string().optional(),
@@ -38,31 +36,26 @@ const CommonFields = z.object({
 // --------------------------------------------------------
 export const FileImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.FILE),
-  name: z.string().min(1, 'Name is required'),
   files: z.array(FileItemSchema).min(1, 'At least one file is required'),
 });
 
 export const UrlImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.WEB_URL),
-  name: z.string().min(1, 'Name is required'),
   url: z.string().url('A valid URL is required'),
 });
 
 export const SitemapImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.SITEMAP),
-  name: z.string().min(1, 'Name is required'),
   sitemapUrl: z.string().url('A valid sitemap URL is required'),
 });
 
 export const InlineImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.INLINE),
-  name: z.string().min(1, 'Name is required'),
   inlineContent: z.string().min(1, 'Content cannot be empty'),
 });
 
 export const DatabaseImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.DATABASE),
-  name: z.string().min(1, 'Name is required'),
   dbHost: z.string().min(1, 'DB host is required'),
   dbPort: z.string().min(1, 'DB port is required'),
   dbUser: z.string().min(1, 'DB user is required'),
@@ -72,7 +65,6 @@ export const DatabaseImportSchema = CommonFields.extend({
 
 export const ApiImportSchema = CommonFields.extend({
   sourceType: z.literal(KNOWLEDGE_TYPES.API),
-  name: z.string().min(1, 'Name is required'),
   apiUrl: z.string().min(1, 'API URL is required'),
   apiMethod: z.string().min(1, 'HTTP method is required'),
 });

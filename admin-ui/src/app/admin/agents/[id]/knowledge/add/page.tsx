@@ -5,15 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -43,8 +35,10 @@ import { SitemapImportForm } from '@/components/knowledge/forms/sitemap-import-f
 import { InlineImportForm } from '@/components/knowledge/forms/inline-import-form';
 import { DatabaseImportForm } from '@/components/knowledge/forms/database-import-form';
 import { ApiImportForm } from '@/components/knowledge/forms/api-import-form';
+import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AddKnowledgePage() {
+  const { showError } = useToaster();
   const router = useRouter();
   const { id: agentId } = useParams();
 
@@ -55,7 +49,6 @@ export default function AddKnowledgePage() {
     resolver: zodResolver(KnowledgeSchema),
     defaultValues: {
       sourceType: KNOWLEDGE_TYPES.FILE,
-      name: '',
     },
   });
 
@@ -117,10 +110,8 @@ export default function AddKnowledgePage() {
   // Type Change Handler
   // ----------------------------------------------
   const applyTypeChange = (newType: KnowledgeSourceType) => {
-    const preservedName = form.getValues('name') || '';
-
     form.reset(
-      { ...typeDefaults[newType], name: preservedName },
+      { ...typeDefaults[newType] },
       { keepErrors: false, keepDirty: false, keepTouched: false }
     );
   };
@@ -142,21 +133,21 @@ export default function AddKnowledgePage() {
       formData.append('files', item.file);
     });
 
-    formData.append('name', values.name);
-
     const res = await fetch(`/api/agents/${agentId}/knowledge`, {
       method: 'POST',
       body: formData,
     });
 
-    if (!res.ok) throw new Error('Failed to upload file knowledge');
+    if (!res.ok) {
+      showError('Failed to upload file knowledge');
+      throw new Error('Failed to upload file knowledge');
+    }
 
     router.push(`/admin/agents/${agentId}/knowledge`);
   };
 
   const submitNonFileKnowledge = async (values: KnowledgeFormValues) => {
     const payload = {
-      name: values.name,
       sourceType: values.sourceType,
       url: values.url,
       sitemapUrl: values.sitemapUrl,
@@ -176,7 +167,10 @@ export default function AddKnowledgePage() {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error('Failed to create knowledge');
+    if (!res.ok) {
+      showError('Failed to create knowledge');
+      throw new Error('Failed to create knowledge');
+    }
 
     router.push(`/admin/agents/${agentId}/knowledge`);
   };
@@ -275,21 +269,6 @@ export default function AddKnowledgePage() {
 
         <Card className="p-6 mt-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* NAME */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Knowledge Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Example: Company Documents" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* TYPE PANELS */}
             {type === KNOWLEDGE_TYPES.FILE && <FileImportForm form={form} />}
             {type === KNOWLEDGE_TYPES.WEB_URL && <UrlImportForm form={form} />}

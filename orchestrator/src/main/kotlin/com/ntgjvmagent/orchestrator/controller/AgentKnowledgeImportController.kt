@@ -2,8 +2,6 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.dto.request.FileKnowledgeImportConfigRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentKnowledgeImportResponseDto
-import com.ntgjvmagent.orchestrator.ingestion.worker.FileImportWorker
-import com.ntgjvmagent.orchestrator.model.FileKnowledgeInternalRequest
 import com.ntgjvmagent.orchestrator.service.AgentKnowledgeService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -24,7 +22,6 @@ import java.util.UUID
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 class AgentKnowledgeImportController(
     private val agentKnowledgeService: AgentKnowledgeService,
-    private val fileImportWorker: FileImportWorker,
 ) {
     @PostMapping(
         path = ["/import"],
@@ -38,23 +35,23 @@ class AgentKnowledgeImportController(
     ): AgentKnowledgeImportResponseDto {
         require(files.isNotEmpty()) { "At least one file must be provided." }
 
-        val knowledge =
-            agentKnowledgeService.createFileKnowledge(
-                agentId,
-                FileKnowledgeInternalRequest(
-                    name = config.name,
-                    metadata = config.metadata,
-                ),
-            )
+        val results =
+            files.map { file ->
+                val originalFileName = file.originalFilename ?: "file"
+                val knowledge =
+                    agentKnowledgeService.createFileKnowledge(
+                        agentId = agentId,
+                        originalFileName = originalFileName,
+                        metadata = config.metadata,
+                        file = file,
+                    )
 
-        // enqueue async import task
-        files.forEach { file ->
-            fileImportWorker.run(agentId, knowledge.id, file)
-        }
+                knowledge to originalFileName
+            }
 
         return AgentKnowledgeImportResponseDto(
-            knowledge = knowledge,
-            fileNames = files.map { it.originalFilename ?: "file" },
+            knowledge = results.map { it.first },
+            fileNames = results.map { it.second },
         )
     }
 }
