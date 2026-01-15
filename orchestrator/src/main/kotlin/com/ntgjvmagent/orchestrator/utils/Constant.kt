@@ -5,9 +5,13 @@ object Constant {
     const val QUESTION_TYPE = 1
     const val ANSWER_TYPE = 2
     const val TOP_K = 5
+    const val CHAT_MEMORY_TOP_K = 5
+    const val RAG_ADVISOR_ORDER = 100
+    const val CHAT_MEMORY_ADVISOR_ORDER = 50
+    const val MEMORY_EMBED_SCORE_THRESHOLD = 0.35
     const val PNG_CONTENT_TYPE = "image/png"
     const val MAXIMUM_UPLOAD_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-
+    const val MIN_CONTENT_LENGTH_FOR_VECTORIZATION = 20
     const val SEARCH_TOOL_INSTRUCTION = """
         When the tool response contains search results (titles, snippets, links):
         1. Use the snippets as factual evidence ONLY IF they are relevant to the user's question.
@@ -69,6 +73,8 @@ object Constant {
     Return the updated summary.
     """
     const val SYSTEM_PROMPT = """
+        Use retrieved context from knowledge bases and previous conversations naturally as if you remember it.
+
         If you are unsure about an answer or the information is not available in the provided context, respond politely and constructively.
         Offer clarification, ask follow-up questions, or provide helpful guidance instead of saying “I don’t know.”
         Always aim to assist the user by explaining what can be inferred, what additional details are needed, or what alternative steps they can take.

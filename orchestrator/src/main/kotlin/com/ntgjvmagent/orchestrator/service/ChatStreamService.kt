@@ -37,7 +37,7 @@ class ChatStreamService(
                 ?: error("correlationId must not be null")
 
         val chatClient = buildChatClient(request.agentId)
-        val advisors = callAdvisorRegistry.resolveForAgent(request.agentId)
+        val advisors = callAdvisorRegistry.resolveForAgent(request.agentId, request.conversationId)
 
         val responseFlux =
             buildSharedResponseFlux(
