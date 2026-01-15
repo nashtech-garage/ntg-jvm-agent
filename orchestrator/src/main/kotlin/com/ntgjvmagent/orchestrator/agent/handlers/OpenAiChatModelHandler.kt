@@ -9,7 +9,6 @@ import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.openai.OpenAiChatModel
 import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.api.OpenAiApi
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.retry.RetryTemplate
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
@@ -26,8 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient
 @Service
 class OpenAiChatModelHandler(
     private val toolCallingManager: ToolCallingManager,
-    @Qualifier("noRetryTemplate")
-    private val retryTemplate: RetryTemplate,
+    private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
 ) : ChatModelHandler {
     override fun supports(providerType: ProviderType) = providerType == ProviderType.OPENAI
@@ -51,6 +49,6 @@ class OpenAiChatModelHandler(
                 .model(config.modelName)
                 .build()
 
-        return OpenAiChatModel(openAiApi, options, toolCallingManager, retryTemplate, observationRegistry)
+        return OpenAiChatModel(openAiApi, options, toolCallingManager, noRetryTemplate, observationRegistry)
     }
 }
