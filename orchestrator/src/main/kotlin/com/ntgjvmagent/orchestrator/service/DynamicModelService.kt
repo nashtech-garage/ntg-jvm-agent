@@ -1,18 +1,12 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.component.SimpleApiKey
+import com.ntgjvmagent.orchestrator.agent.ModelOrchestrator
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
-import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
-import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.utils.Quadruple
-import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.MetadataMode
-import org.springframework.ai.model.tool.ToolCallingManager
-import org.springframework.ai.openai.OpenAiChatModel
-import org.springframework.ai.openai.OpenAiChatOptions
 import org.springframework.ai.openai.OpenAiEmbeddingModel
 import org.springframework.ai.openai.OpenAiEmbeddingOptions
 import org.springframework.ai.openai.api.OpenAiApi
@@ -22,15 +16,15 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
 import org.springframework.web.reactive.function.client.WebClient
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 
 @Service
+@Suppress("TooManyFunctions")
 class DynamicModelService(
-    private val toolCallingManager: ToolCallingManager,
-    private val noRetryTemplate: RetryTemplate,
-    private val observationRegistry: ObservationRegistry,
+    private val modelOrchestrator: ModelOrchestrator,
     private val agentRepo: AgentRepository,
 ) {
     /**
@@ -72,99 +66,10 @@ class DynamicModelService(
         reloadModelsForAgent(agentId)
     }
 
-    // ---------------------------------------------------------------------
-    // Build Chat + Embedding models (Spring + wrapped)
-    // ---------------------------------------------------------------------
     private fun createModels(
         agentId: UUID,
-    ): Quadruple<
-        ChatModel,
-        ReactiveEmbeddingModel,
-        SpringEmbeddingModel,
-        AgentResponseDto,
-    > {
+    ): Quadruple<ChatModel, ReactiveEmbeddingModel, SpringEmbeddingModel, AgentResponseDto> {
         val agent = agentRepo.findById(agentId).orElseThrow()
-
-        val api =
-            createOpenAiApi(
-                baseUrl = agent.baseUrl,
-                apiKey = agent.apiKey,
-                chatCompletionsPath = agent.chatCompletionsPath,
-                embeddingsPath = agent.embeddingsPath,
-            )
-
-        val chatModel = createChatModel(api, agent.model)
-        val springEmbeddingModel = createSpringEmbeddingModel(api, agent.embeddingModel, agent.dimension)
-        val wrappedEmbeddingModel = SpringAiEmbeddingModelAdapter(springEmbeddingModel)
-        val agentConfig = AgentMapper.toResponse(agent)
-
-        return Quadruple(chatModel, wrappedEmbeddingModel, springEmbeddingModel, agentConfig)
+        return modelOrchestrator.create(agent)
     }
-
-    // ---------------------------------------------------------------------
-    // Chat Model
-    // ---------------------------------------------------------------------
-    private fun createChatModel(
-        api: OpenAiApi,
-        modelName: String,
-    ): ChatModel {
-        val options =
-            OpenAiChatOptions
-                .builder()
-                .model(modelName)
-                .build()
-
-        return OpenAiChatModel(
-            api,
-            options,
-            toolCallingManager,
-            noRetryTemplate,
-            observationRegistry,
-        )
-    }
-
-    // ---------------------------------------------------------------------
-    // RAW Spring AI EmbeddingModel
-    // This is required by PgVectorStore (synchronous)
-    // ---------------------------------------------------------------------
-    private fun createSpringEmbeddingModel(
-        api: OpenAiApi,
-        modelName: String,
-        dimension: Int,
-    ): SpringEmbeddingModel {
-        val options =
-            OpenAiEmbeddingOptions
-                .builder()
-                .model(modelName)
-                .dimensions(dimension)
-                .build()
-
-        return OpenAiEmbeddingModel(
-            api,
-            MetadataMode.EMBED,
-            options,
-            noRetryTemplate,
-            observationRegistry,
-        )
-    }
-
-    // ---------------------------------------------------------------------
-    // OpenAI API Client
-    // ---------------------------------------------------------------------
-    private fun createOpenAiApi(
-        baseUrl: String,
-        apiKey: String,
-        chatCompletionsPath: String,
-        embeddingsPath: String,
-    ): OpenAiApi =
-        OpenAiApi(
-            baseUrl,
-            SimpleApiKey(apiKey),
-            HttpHeaders(),
-            chatCompletionsPath,
-            embeddingsPath,
-            RestClient.builder(),
-            WebClient.builder(),
-            DefaultResponseErrorHandler(),
-        )
 }

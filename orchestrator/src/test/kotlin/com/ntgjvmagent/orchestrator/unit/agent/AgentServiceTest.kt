@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.unit.agent
 
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
+import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
@@ -158,7 +159,7 @@ class AgentServiceTest {
         Agent(
             name = "Test Agent",
             description = "desc",
-            provider = "OpenAI",
+            provider = ProviderType.OPENAI,
             baseUrl = "https://models.github.ai/inference",
             apiKey = "fake-github-token",
             chatCompletionsPath = "/v1/chat/completions",
@@ -189,7 +190,7 @@ class AgentServiceTest {
         frequencyPenalty = 0.0,
         presencePenalty = 0.0,
         active = true,
-        provider = "openai",
+        provider = ProviderType.AZURE_OPENAI,
         settings = mapOf("max_retries" to 3),
         baseUrl = "https://models.github.ai/inference",
         apiKey = "fake-github-token",
