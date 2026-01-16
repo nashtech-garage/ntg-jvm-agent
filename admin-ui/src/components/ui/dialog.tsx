@@ -6,7 +6,9 @@ import { XIcon } from 'lucide-react';
 
 import { cn } from '@/utils/css';
 
-function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>): React.ReactElement {
+function Dialog(
+  props: Readonly<React.ComponentProps<typeof DialogPrimitive.Root>>
+): React.ReactElement {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
