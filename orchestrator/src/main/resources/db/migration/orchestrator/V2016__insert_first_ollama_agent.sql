@@ -35,7 +35,7 @@ INSERT INTO agent (
     '',
     'nomic-embed-text',
     768,
-    'llama3',
+    'llama3.1',
     0.7,
     4096,
     1.0,
