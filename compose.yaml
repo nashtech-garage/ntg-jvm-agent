@@ -95,6 +95,16 @@ services:
     networks:
       - ntg-network
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/var/lib/ollama
+    networks:
+      - ntg-network
+
   mcp-server:
     build:
       context: ./mcp-server
@@ -251,3 +261,4 @@ volumes:
   prometheus:
   loki-data:
   redis-data:
+  ollama-data:
