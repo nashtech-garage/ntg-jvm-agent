@@ -94,6 +94,20 @@ services:
     command: redis-server --appendonly yes
     networks:
       - ntg-network
+  # Ollama - Local LLM Server
+  # To run the model: `docker exec -it ollama ollama run llama3.1`
+  # To view existing models: `docker exec ollama ollama list`
+  # To load the model first: `docker exec ollama ollama pull llama3.1`
+  # API endpoint: http://localhost:11434
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/var/lib/ollama
+    networks:
+      - ntg-network
 
   mcp-server:
     build:
@@ -251,3 +265,4 @@ volumes:
   prometheus:
   loki-data:
   redis-data:
+  ollama-data:
