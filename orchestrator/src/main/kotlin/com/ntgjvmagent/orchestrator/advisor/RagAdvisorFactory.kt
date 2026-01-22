@@ -36,7 +36,7 @@ class RagAdvisorFactory(
         val documentRetriever =
             VectorStoreDocumentRetriever
                 .builder()
-                .vectorStore(vectorStoreService.getVectorStore(agentId))
+                .vectorStore(vectorStoreService.getVectorStore())
                 .topK(Constant.TOP_K)
                 .filterExpression(filterExpression)
                 .build()

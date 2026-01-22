@@ -23,12 +23,6 @@ class KnowledgeChunk(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var metadata: Map<String, Any?> = emptyMap(),
-    @Column(name = "embedding_768")
-    @JdbcTypeCode(SqlTypes.VECTOR)
-    var embedding768: FloatArray? = null,
-    @Column(name = "embedding_1536")
-    @JdbcTypeCode(SqlTypes.VECTOR)
-    var embedding1536: FloatArray? = null,
 ) : UserAuditedEntity() {
     companion object {
         fun stub(): KnowledgeChunk =

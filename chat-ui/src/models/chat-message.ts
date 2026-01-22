@@ -5,7 +5,7 @@ export interface ChatMessage {
   content: string;
   medias: ChatMessageMedia[];
   createdAt: string;
-  type: number; // 1: user, 2: bot
+  type: string;
   reaction: Reaction;
 }
 

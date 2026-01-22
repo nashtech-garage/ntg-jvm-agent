@@ -15,7 +15,7 @@ class AuditorAwareImpl(
     private val userRepository: UserRepository,
 ) : AuditorAware<User> {
     override fun getCurrentAuditor(): Optional<User> =
-        (SecurityContextHolder.getContext()?.authentication?.principal as? Jwt)
+        (SecurityContextHolder.getContext().authentication?.principal as? Jwt)
             ?.getClaim<String>("user_id") // extract userId from JWT claim
             ?.let { UUID.fromString(it) } // convert to UUID
             ?.let { userRepository.findByIdOrNull(it) } // load User entity

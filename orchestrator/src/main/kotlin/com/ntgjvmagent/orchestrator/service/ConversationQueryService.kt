@@ -23,7 +23,7 @@ class ConversationQueryService(
             .orElseThrow { ResourceNotFoundException("Conversation not found: $conversationId") }
 
         return messageRepo
-            .listMessageByConversationId(conversationId)
+            .listMessageByConversationIdOrdered(conversationId)
             .map(ChatMessageMapper::toResponse)
     }
 }

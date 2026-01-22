@@ -2,8 +2,8 @@ package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
@@ -50,8 +50,6 @@ class AgentToolAssignmentServiceIT
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
                         model = "T-800",
-                        embeddingModel = "openai/text-embedding-3-small",
-                        embeddingsPath = "/embeddings",
                     ),
                 )
             activeTool =

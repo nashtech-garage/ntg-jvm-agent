@@ -14,7 +14,7 @@ class ChatModelService(
     private val chatStreamService: ChatStreamService,
     private val summarizationService: SummarizationService,
     private val promptBuilder: PromptBuilder,
-    private val dynamicModelService: DynamicModelService,
+    private val dynamicChatModelService: DynamicChatModelService,
     private val tokenFacade: TokenAccountingFacade,
 ) {
     fun call(
@@ -24,7 +24,7 @@ class ChatModelService(
         summary: String = "",
     ): Flux<String> {
         val combinedPrompt = promptBuilder.build(request, history, summary)
-        val agentConfig = dynamicModelService.getAgentConfig(request.agentId)
+        val agentConfig = dynamicChatModelService.getAgentConfig(request.agentId)
 
         // Estimate + enforce CHAT input budget
         val estimatedInputTokens =

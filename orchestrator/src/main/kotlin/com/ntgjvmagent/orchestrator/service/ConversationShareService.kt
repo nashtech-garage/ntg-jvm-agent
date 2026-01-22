@@ -1,6 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.entity.ConversationShareEntity
+import com.ntgjvmagent.orchestrator.entity.ConversationShare
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
@@ -49,12 +49,12 @@ class ConversationShareService(
         val expiresAt = Instant.now().plus(request.expiryDays.toLong(), ChronoUnit.DAYS)
 
         // Get current messages and save their IDs
-        val currentMessages = messageRepo.listMessageByConversationId(conversationId)
+        val currentMessages = messageRepo.listMessageByConversationIdOrdered(conversationId)
         val messageIds = currentMessages.mapNotNull { it.id?.toString() }
 
         // Create and save the share record with message IDs
         val conversationShare =
-            ConversationShareEntity(
+            ConversationShare(
                 conversation = conversation,
                 shareToken = shareToken,
                 isExpired = false,
@@ -103,7 +103,7 @@ class ConversationShareService(
         val messages =
             if (sharedMessageIds.isNotEmpty()) {
                 messageRepo
-                    .listMessageByConversationId(conversation.id ?: UUID.randomUUID())
+                    .listMessageByConversationIdOrdered(conversation.id ?: UUID.randomUUID())
                     .filter { msg -> msg.id?.toString() in sharedMessageIds }
                     .map { ChatMessageMapper.toResponse(it) }
             } else {

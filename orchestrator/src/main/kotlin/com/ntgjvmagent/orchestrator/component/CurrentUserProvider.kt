@@ -9,12 +9,8 @@ import java.util.UUID
 @Component
 class CurrentUserProvider {
     fun getUserId(): UUID {
-        val context =
-            SecurityContextHolder.getContext()
-                ?: fail("SecurityContext is null (no authentication present)")
-
         val authentication =
-            context.authentication
+            SecurityContextHolder.getContext().authentication
                 ?: fail("Authentication is null in SecurityContext")
 
         val jwt =

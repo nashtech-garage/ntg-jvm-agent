@@ -10,22 +10,17 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS conversation (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title               TEXT,
-    status              VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
     is_active           BOOLEAN DEFAULT TRUE,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     created_by          UUID REFERENCES users(id),
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_by          UUID REFERENCES users(id),
-
-    CONSTRAINT chk_conversation_status CHECK (
-        status IN ('DRAFT','ACTIVE')
-    )
+    updated_by          UUID REFERENCES users(id)
 );
 
 -- chat_message table
 CREATE TABLE IF NOT EXISTS chat_message (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type                INT4 NOT NULL,
+    type                VARCHAR(50) NOT NULL,
     content             TEXT,
     conversation_id     UUID NOT NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

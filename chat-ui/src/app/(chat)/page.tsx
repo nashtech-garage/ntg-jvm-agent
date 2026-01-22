@@ -11,6 +11,7 @@ import { FileSelectInfo } from '@/models/file-select-info';
 import Header from '@/components/ui/header';
 import AgentDropdown from '@/components/agent-dropdown';
 import logger from '@/utils/logger';
+import { Constants } from '@/constants/constant';
 import { REACTION_PATH } from '@/constants/url';
 import { Reaction } from '@/types/reaction';
 import { useToaster } from '@/contexts/ToasterContext';
@@ -27,7 +28,7 @@ function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
       fileName: f.file.name,
     })),
     createdAt: new Date().toISOString(),
-    type: 1,
+    type: Constants.QUESTION_TYPE,
     reaction: Reaction.NONE,
   };
 }
@@ -67,7 +68,7 @@ export default function Page() {
           content: token,
           medias: [],
           createdAt: new Date().toISOString(),
-          type: 2,
+          type: Constants.ANSWER_TYPE,
           reaction: Reaction.NONE,
         },
       ]);

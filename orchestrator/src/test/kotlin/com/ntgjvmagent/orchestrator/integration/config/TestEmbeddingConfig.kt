@@ -1,22 +1,26 @@
 package com.ntgjvmagent.orchestrator.integration.config
 
-import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
+import com.ntgjvmagent.orchestrator.chat.ChatModelOrchestrator
 import com.ntgjvmagent.orchestrator.embedding.runtime.ReactiveEmbeddingModel
-import com.ntgjvmagent.orchestrator.repository.AgentRepository
-import com.ntgjvmagent.orchestrator.service.DynamicModelService
+import com.ntgjvmagent.orchestrator.embedding.runtime.adapter.SpringAiEmbeddingModelAdapter
+import com.ntgjvmagent.orchestrator.embedding.vectorstore.VectorStoreBackend
+import com.ntgjvmagent.orchestrator.embedding.vectorstore.VectorStoreType
+import com.ntgjvmagent.orchestrator.embedding.vectorstore.builder.VectorStoreBuilder
+import io.mockk.every
 import io.mockk.mockk
+import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.document.Document
 import org.springframework.ai.embedding.BatchingStrategy
 import org.springframework.ai.embedding.Embedding
+import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.embedding.EmbeddingOptions
 import org.springframework.ai.embedding.EmbeddingRequest
 import org.springframework.ai.embedding.EmbeddingResponse
 import org.springframework.ai.model.tool.ToolCallingManager
+import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
-import reactor.core.publisher.Mono
-import java.util.UUID
 import kotlin.collections.map
 import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 
@@ -34,26 +38,45 @@ class TestEmbeddingConfig {
     fun toolCallingManager(): ToolCallingManager = mockk(relaxed = true)
 
     // ---------------------------------------------------------------------
-    // 2) Fake ReactiveEmbeddingModel (for EmbeddingService)
+    // 2) Fake VectorStore (CORE TEST SEAM)
     // ---------------------------------------------------------------------
     @Bean
     @Primary
-    fun fakeReactiveEmbeddingModel(): ReactiveEmbeddingModel =
-        object : ReactiveEmbeddingModel {
-            private val dims = 1536
-
-            override fun embedReactive(text: String): Mono<FloatArray> = Mono.just(FloatArray(dims) { 0.1f })
-
-            override fun embedBatchReactive(texts: List<String>): Mono<List<FloatArray>> {
-                val safeTexts = if (texts.isEmpty()) listOf("dummy") else texts
-                return Mono.just(
-                    safeTexts.map { FloatArray(dims) { 0.1f } },
-                )
-            }
+    fun fakeVectorStore(): VectorStore =
+        mockk {
+            every { add(any<List<Document>>()) } returns Unit
+            every { delete(any<List<String>>()) } returns Unit
+            every { similaritySearch(any<String>()) } returns emptyList()
         }
 
     // ---------------------------------------------------------------------
-    // 3) Fake SpringEmbeddingModel (used by PgVectorStore)
+    // 3) Fake VectorStoreBackend (NO-OP lifecycle)
+    // ---------------------------------------------------------------------
+    @Bean
+    @Primary
+    fun fakeVectorStoreBackend(): VectorStoreBackend =
+        object : VectorStoreBackend {
+            override val type = VectorStoreType.FAKE
+
+            override fun initialize() {}
+
+            override fun verifyDimension(expected: Int) {}
+        }
+
+    // ---------------------------------------------------------------------
+    // 4) Fake VectorStoreBuilder (returns fake VectorStore)
+    // ---------------------------------------------------------------------
+    @Bean
+    @Primary
+    fun fakeVectorStoreBuilder(fakeVectorStore: VectorStore): VectorStoreBuilder =
+        object : VectorStoreBuilder {
+            override fun supports(type: VectorStoreType): Boolean = type == VectorStoreType.FAKE
+
+            override fun build(embeddingModel: EmbeddingModel): VectorStore = fakeVectorStore
+        }
+
+    // ---------------------------------------------------------------------
+    // 5) Fake Spring AI EmbeddingModel (GLOBAL)
     // ---------------------------------------------------------------------
     @Bean
     @Primary
@@ -63,10 +86,10 @@ class TestEmbeddingConfig {
 
             override fun embed(text: String): FloatArray = FloatArray(dims) { 0.1f }
 
-            override fun embed(texts: List<String>): List<FloatArray> {
-                val safeTexts = texts.ifEmpty { listOf("dummy") }
-                return safeTexts.map { FloatArray(dims) { 0.1f } }
-            }
+            override fun embed(texts: List<String>): List<FloatArray> =
+                texts
+                    .ifEmpty { listOf("dummy") }
+                    .map { FloatArray(dims) { 0.1f } }
 
             override fun embed(document: Document): FloatArray = FloatArray(dims) { 0.1f }
 
@@ -74,7 +97,7 @@ class TestEmbeddingConfig {
                 documents: MutableList<Document>,
                 options: EmbeddingOptions,
                 batchingStrategy: BatchingStrategy,
-            ): MutableList<FloatArray> = documents.map { FloatArray(dims) { 0.0f } }.toMutableList()
+            ): MutableList<FloatArray> = documents.map { FloatArray(dims) { 0.1f } }.toMutableList()
 
             override fun call(request: EmbeddingRequest): EmbeddingResponse =
                 EmbeddingResponse(
@@ -85,46 +108,21 @@ class TestEmbeddingConfig {
         }
 
     // ---------------------------------------------------------------------
-    // 4) DynamicModelService override
+    // 6) Fake ReactiveEmbeddingModel
     // ---------------------------------------------------------------------
     @Bean
     @Primary
-    fun testDynamicModelService(
-        fakeReactiveEmbeddingModel: ReactiveEmbeddingModel,
-        fakeSpringEmbeddingModel: SpringEmbeddingModel,
-        agentRepo: AgentRepository, // REAL repository
-    ): DynamicModelService =
-        object : DynamicModelService(
-            modelOrchestrator = mockk(relaxed = true),
-            agentRepo = agentRepo,
-        ) {
-            override fun getEmbeddingModel(agentId: UUID): ReactiveEmbeddingModel = fakeReactiveEmbeddingModel
-
-            override fun getRawSpringEmbeddingModel(agentId: UUID): SpringEmbeddingModel = fakeSpringEmbeddingModel
-        }
+    fun fakeReactiveEmbeddingModel(springEmbeddingModel: SpringEmbeddingModel): ReactiveEmbeddingModel =
+        SpringAiEmbeddingModelAdapter(springEmbeddingModel)
 
     // ---------------------------------------------------------------------
-    // 5) Fake EmbeddingService (simple synchronous override)
+    // 7) Fake Chat components
     // ---------------------------------------------------------------------
     @Bean
     @Primary
-    fun fakeEmbeddingService(): EmbeddingService =
-        object : EmbeddingService(mockk(), mockk(), mockk(), mockk()) {
-            private val dims = 1536
+    fun fakeChatModelOrchestrator(): ChatModelOrchestrator = mockk(relaxed = true)
 
-            override fun embed(
-                agentId: UUID,
-                text: String,
-                correlationId: String,
-            ): FloatArray = FloatArray(dims) { 0.1f }
-
-            override fun embedBatch(
-                agentId: UUID,
-                texts: List<String>,
-                correlationId: String,
-            ): List<FloatArray> {
-                val safeTexts = texts.ifEmpty { listOf("dummy") }
-                return safeTexts.map { FloatArray(dims) { 0.1f } }
-            }
-        }
+    @Bean
+    @Primary
+    fun fakeChatModel(): ChatModel = mockk(relaxed = true)
 }

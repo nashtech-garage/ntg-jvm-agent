@@ -1,8 +1,8 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
@@ -30,8 +30,6 @@ class AgentRepositoryIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    embeddingsPath = "/embeddings",
                     temperature = BigDecimal("0.8"),
                 )
 
@@ -54,8 +52,6 @@ class AgentRepositoryIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    embeddingsPath = "/embeddings",
                 ),
             )
             repo.save(
@@ -66,8 +62,6 @@ class AgentRepositoryIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    embeddingsPath = "/embeddings",
                 ),
             )
 

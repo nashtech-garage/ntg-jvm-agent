@@ -22,9 +22,6 @@ CREATE TABLE IF NOT EXISTS agent (
     api_key             VARCHAR(200) NOT NULL,
     chat_completions_path VARCHAR(50) NOT NULL,
     model               VARCHAR(100) NOT NULL,
-    embedding_model     VARCHAR(50) NOT NULL,
-    dimension           INTEGER NOT NULL,
-    embeddings_path     VARCHAR(50) NOT NULL,
     top_p               NUMERIC(3,2) NOT NULL DEFAULT 1.0 CHECK (top_p >= 0 AND top_p <= 1),
     temperature         NUMERIC(3,2) NOT NULL DEFAULT 0.7 CHECK (temperature >= 0 AND temperature <= 2),
     max_tokens          INTEGER NOT NULL DEFAULT 2048 CHECK (max_tokens > 0),
@@ -206,8 +203,6 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     chunk_order     INTEGER NOT NULL,
     content         TEXT NOT NULL,
     metadata        JSONB NOT NULL DEFAULT '{}'::jsonb,
-    embedding_768   vector(768),
-    embedding_1536  vector(1536),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     created_by      UUID REFERENCES users(id),
     updated_at      TIMESTAMPTZ,
@@ -217,10 +212,6 @@ CREATE TABLE IF NOT EXISTS knowledge_chunk (
     CONSTRAINT uq_knowledge_chunk_order UNIQUE (knowledge_id, chunk_order)
 );
 
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_768
-  ON knowledge_chunk USING ivfflat (embedding_768 vector_l2_ops) WITH (lists = 100);
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_embedding_1536
-  ON knowledge_chunk USING ivfflat (embedding_1536 vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_knowledge_id ON knowledge_chunk (knowledge_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_chunk_order ON knowledge_chunk (knowledge_id, chunk_order);
 CREATE INDEX IF NOT EXISTS idx_chunk_metadata_jsonb ON knowledge_chunk USING gin (metadata);

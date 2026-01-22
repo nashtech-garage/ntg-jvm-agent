@@ -3,9 +3,9 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.dto.request.UrlKnowledgeRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
@@ -42,8 +42,6 @@ class AgentKnowledgeControllerIT
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4",
-                        embeddingModel = "openai/text-embedding-3-small",
-                        embeddingsPath = "/embeddings",
                     ),
                 )
         }

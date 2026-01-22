@@ -2,8 +2,7 @@ package com.ntgjvmagent.orchestrator.entity.agent
 
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
 import com.ntgjvmagent.orchestrator.entity.base.SoftDeletableEntity
-import com.ntgjvmagent.orchestrator.enum.ProviderType
-import com.ntgjvmagent.orchestrator.utils.Constant
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -34,12 +33,6 @@ data class Agent(
     var apiKey: String,
     @Column(name = "chat_completions_path", length = 50, nullable = false)
     var chatCompletionsPath: String,
-    @Column(name = "embeddings_path", length = 50, nullable = false)
-    var embeddingsPath: String,
-    @Column(name = "embedding_model", length = 50, nullable = false)
-    var embeddingModel: String,
-    @Column(nullable = false)
-    var dimension: Int = Constant.CHATGPT_DIMENSION,
     @Column(nullable = false, length = 100)
     var model: String,
     /**
@@ -105,8 +98,6 @@ data class Agent(
                 baseUrl = "",
                 apiKey = "",
                 chatCompletionsPath = "",
-                embeddingsPath = "",
-                embeddingModel = "",
                 model = "",
             )
     }

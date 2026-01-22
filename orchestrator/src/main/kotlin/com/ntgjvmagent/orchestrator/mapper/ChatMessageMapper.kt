@@ -1,23 +1,23 @@
 package com.ntgjvmagent.orchestrator.mapper
 
-import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
+import com.ntgjvmagent.orchestrator.entity.ChatMessage
+import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageMediaVm
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import java.util.Base64
 
 object ChatMessageMapper {
-    fun toHistoryFormat(entity: ChatMessageEntity): String {
+    fun toHistoryFormat(entity: ChatMessage): String {
         val role =
             when (entity.type) {
-                1 -> "User"
-                2 -> "Assistant"
-                else -> "Unknown"
+                ChatMessageType.QUESTION -> "User"
+                ChatMessageType.ANSWER -> "Assistant"
             }
 
         return "$role: ${entity.content}"
     }
 
-    fun toResponse(chatMessage: ChatMessageEntity): ChatMessageResponseVm =
+    fun toResponse(chatMessage: ChatMessage): ChatMessageResponseVm =
         ChatMessageResponseVm(
             id = chatMessage.id!!,
             content = chatMessage.content,

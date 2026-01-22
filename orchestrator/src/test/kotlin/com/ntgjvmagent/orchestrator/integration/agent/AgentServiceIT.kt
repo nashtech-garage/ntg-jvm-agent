@@ -3,13 +3,12 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ninjasquad.springmockk.MockkBean
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
-import com.ntgjvmagent.orchestrator.service.DynamicModelService
+import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
-import io.mockk.verify
 import jakarta.persistence.EntityManager
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,7 +30,7 @@ class AgentServiceIT
         private val entityManager: EntityManager,
     ) : BaseIntegrationTest() {
         @MockkBean(relaxUnitFun = true)
-        lateinit var dynamicModelService: DynamicModelService
+        lateinit var dynamicChatModelService: DynamicChatModelService
 
         private fun buildRequest(
             name: String = "Agent A",
@@ -45,9 +44,6 @@ class AgentServiceIT
             apiKey = "fake-github-token",
             chatCompletionsPath = "/v1/chat/completions",
             model = "gpt-4o-mini",
-            embeddingModel = "openai/text-embedding-3-small",
-            dimension = 1536,
-            embeddingsPath = "/embeddings",
             topP = 1.0,
             temperature = 0.7,
             maxTokens = 2048,
@@ -88,8 +84,6 @@ class AgentServiceIT
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
                             model = "gpt-4o-mini",
-                            embeddingModel = "openai/text-embedding-3-small",
-                            embeddingsPath = "/embeddings",
                         ),
                     )
             val found = service.getById(saved.id!!)
@@ -123,8 +117,6 @@ class AgentServiceIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    embeddingsPath = "/embeddings",
                 ).apply { this.active = true },
             )
             repo.save(
@@ -135,8 +127,6 @@ class AgentServiceIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    embeddingsPath = "/embeddings",
                 ).apply { this.active = false },
             )
 
@@ -162,8 +152,6 @@ class AgentServiceIT
                             apiKey = "fake-github-token",
                             chatCompletionsPath = "/v1/chat/completions",
                             model = "gpt-4o-mini",
-                            embeddingModel = "openai/text-embedding-3-small",
-                            embeddingsPath = "/embeddings",
                         ).apply { this.active = true },
                     )
 
@@ -185,8 +173,6 @@ class AgentServiceIT
             assertEquals("AfterUpdate", persisted.name)
             assertFalse(persisted.active)
             assertEquals("Updated agent", persisted.description)
-
-            verify { dynamicModelService.invalidateCacheForAgent(saved.id!!) }
         }
 
         @Test
@@ -216,8 +202,6 @@ class AgentServiceIT
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4o-mini",
-                        embeddingModel = "openai/text-embedding-3-small",
-                        embeddingsPath = "/embeddings",
                     ),
                 )
 

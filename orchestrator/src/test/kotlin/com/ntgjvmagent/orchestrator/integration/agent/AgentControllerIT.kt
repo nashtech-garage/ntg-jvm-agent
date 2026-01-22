@@ -2,8 +2,8 @@ package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -33,9 +33,6 @@ class AgentControllerIT
                     apiKey = "fake-github-token",
                     chatCompletionsPath = "/v1/chat/completions",
                     model = "gpt-4o-mini",
-                    embeddingModel = "openai/text-embedding-3-small",
-                    dimension = 1536,
-                    embeddingsPath = "/embeddings",
                     topP = 1.0,
                     temperature = 0.7,
                     maxTokens = 2048,

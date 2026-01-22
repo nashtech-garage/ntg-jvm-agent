@@ -8,12 +8,12 @@ import com.ntgjvmagent.orchestrator.entity.agent.knowledge.EmbeddingJob
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.KnowledgeChunk
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.VectorStoreService
-import com.ntgjvmagent.orchestrator.utils.Constant
 import io.github.resilience4j.ratelimiter.RequestNotPermitted
-import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.ai.document.Document
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.dao.DataAccessException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -40,7 +40,7 @@ class EmbeddingWorker(
     @Volatile
     private var rateLimitedRecently = false
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent::class)
     fun startWorker() {
         log.info("Starting adaptive reactive embedding worker...")
 
@@ -49,7 +49,7 @@ class EmbeddingWorker(
             .flatMap { pollAndExecuteJobs() }
             .subscribe(
                 { /* no-op */ },
-                { ex -> log.error("Worker crashed: {}", ex.message, ex) },
+                { ex -> log.error("Embedding worker crashed", ex) },
             )
     }
 
@@ -73,10 +73,16 @@ class EmbeddingWorker(
 
     /**
      * Full reactive job execution.
+     *
+     * Flow:
+     *   1) Load chunk
+     *   2) Embed content
+     *   3) Write to vector store
+     *   4) Mark job success
      */
     private fun processJobReactive(job: EmbeddingJob): Mono<Unit> {
         val agentId = job.agent.id!!
-        val jobCorrelationId = "embed-${job.id}"
+        val correlationId = "embed-${job.id}"
 
         return Mono
             .fromCallable {
@@ -84,24 +90,19 @@ class EmbeddingWorker(
                     ?: throw EntityNotFoundException("Chunk missing for job ${job.id}")
             }.subscribeOn(Schedulers.boundedElastic())
             .flatMap { chunk ->
-                val chunkCorrelationId = "$jobCorrelationId:chunk-${chunk.id}"
-
                 embeddingService
                     .embedReactive(
                         agentId = agentId,
                         text = chunk.content,
-                        correlationId = chunkCorrelationId,
+                        correlationId = "$correlationId:chunk-${chunk.id}",
                     ).map { embedding -> chunk to embedding }
-            }.flatMap { (chunk, embedding) ->
-                persistEmbeddingReactive(chunk, embedding)
-            }.flatMap { chunk ->
-                val docs = listOf(toDocument(chunk))
-
+            }.flatMap { (chunk, _) ->
                 Mono
                     .fromCallable {
-                        vectorStoreService.getVectorStore(agentId).add(docs)
+                        vectorStoreService
+                            .getVectorStore()
+                            .add(listOf(toDocument(chunk)))
                     }.subscribeOn(Schedulers.boundedElastic())
-                    .thenReturn(chunk)
             }.then(
                 Mono.defer {
                     statusService.markSuccess(job)
@@ -109,23 +110,6 @@ class EmbeddingWorker(
                 },
             ).onErrorResume { ex -> handleFailure(job, ex) }
     }
-
-    /**
-     * Persist embeddings in DB (reactively via boundedElastic).
-     */
-    private fun persistEmbeddingReactive(
-        chunk: KnowledgeChunk,
-        embedding: FloatArray,
-    ): Mono<KnowledgeChunk> =
-        Mono
-            .fromCallable {
-                when (embedding.size) {
-                    Constant.GEMINI_DIMENSION -> chunk.embedding768 = embedding
-                    Constant.CHATGPT_DIMENSION -> chunk.embedding1536 = embedding
-                    else -> throw IllegalArgumentException("Unsupported embedding dimension ${embedding.size}")
-                }
-                chunkRepo.save(chunk)
-            }.subscribeOn(Schedulers.boundedElastic())
 
     /**
      * Worker-level failure handler.
@@ -153,7 +137,7 @@ class EmbeddingWorker(
                 }
 
                 else -> {
-                    log.error("Job {} failed after embedding retries: {}", job.id, ex.message)
+                    log.error("Job {} failed: {}", job.id, ex.message, ex)
                     statusService.markFailure(job, ex)
                 }
             }
@@ -184,7 +168,7 @@ class EmbeddingWorker(
         rateLimitedRecently = false
     }
 
-    private fun toDocument(chunk: KnowledgeChunk) =
+    private fun toDocument(chunk: KnowledgeChunk): Document =
         Document(
             chunk.id.toString(),
             chunk.content,

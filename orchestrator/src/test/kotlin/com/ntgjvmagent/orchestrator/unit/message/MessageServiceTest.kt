@@ -1,13 +1,13 @@
 package com.ntgjvmagent.orchestrator.unit.message
 
-import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
-import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.entity.ChatMessage
+import com.ntgjvmagent.orchestrator.entity.Conversation
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
+import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.model.MessageReaction
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.service.MessageService
-import com.ntgjvmagent.orchestrator.utils.Constant
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -33,13 +33,10 @@ class MessageServiceTest {
         clearMocks(messageRepo)
     }
 
-    private fun createMessage(
-        createdBy: UUID?,
-        type: Int,
-    ): ChatMessageEntity {
-        val conversation = mockk<ConversationEntity>(relaxed = true)
+    private fun createMessage(type: ChatMessageType): ChatMessage {
+        val conversation = mockk<Conversation>(relaxed = true)
 
-        return ChatMessageEntity(
+        return ChatMessage(
             content = "hello",
             conversation = conversation,
             type = type,
@@ -53,7 +50,7 @@ class MessageServiceTest {
 
     @Test
     fun `reactMessage should update reaction when valid`() {
-        val message = createMessage(userid, Constant.ANSWER_TYPE)
+        val message = createMessage(ChatMessageType.ANSWER)
 
         every { messageRepo.findById(messageId) } returns Optional.of(message)
         every { messageRepo.save(message) } returns message
@@ -81,7 +78,7 @@ class MessageServiceTest {
 
     @Test
     fun `reactMessage should throw when message type is invalid`() {
-        val message = createMessage(userid, Constant.QUESTION_TYPE)
+        val message = createMessage(ChatMessageType.QUESTION)
 
         every { messageRepo.findById(messageId) } returns Optional.of(message)
 

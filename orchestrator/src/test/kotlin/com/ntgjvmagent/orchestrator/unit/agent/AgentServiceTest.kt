@@ -2,11 +2,11 @@ package com.ntgjvmagent.orchestrator.unit.agent
 
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.mapper.AgentMapper
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.service.AgentService
-import com.ntgjvmagent.orchestrator.service.DynamicModelService
+import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -25,8 +25,8 @@ import kotlin.test.assertTrue
 
 class AgentServiceTest {
     private val repo: AgentRepository = mockk(relaxed = true)
-    private val dynamicModelService: DynamicModelService = mockk(relaxed = true)
-    private val service = AgentService(repo, dynamicModelService)
+    private val dynamicChatModelService: DynamicChatModelService = mockk(relaxed = true)
+    private val service = AgentService(repo)
 
     @BeforeEach
     fun setup() {
@@ -106,7 +106,6 @@ class AgentServiceTest {
         assertEquals(1.0, result.temperature)
         verify { repo.findById(id) }
         verify { repo.save(existing) }
-        verify { dynamicModelService.invalidateCacheForAgent(id) }
     }
 
     @Test
@@ -164,8 +163,6 @@ class AgentServiceTest {
             apiKey = "fake-github-token",
             chatCompletionsPath = "/v1/chat/completions",
             model = "gpt-4o-mini",
-            embeddingModel = "openai/text-embedding-3-small",
-            embeddingsPath = "/embeddings",
             topP = BigDecimal("1.0"),
             temperature = BigDecimal("0.7"),
             maxTokens = 2048,
@@ -195,8 +192,5 @@ class AgentServiceTest {
         baseUrl = "https://models.github.ai/inference",
         apiKey = "fake-github-token",
         chatCompletionsPath = "/v1/chat/completions",
-        embeddingsPath = "/embeddings",
-        embeddingModel = "openai/text-embedding-3-small",
-        dimension = 1536,
     )
 }

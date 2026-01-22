@@ -2,7 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.request.SystemSettingRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.SystemSettingResponseDto
-import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
+import com.ntgjvmagent.orchestrator.entity.SystemSetting
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.repository.SystemSettingRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -40,7 +40,7 @@ class SystemSettingService(
         return systemSetting.save(setting).toSystemSettingResponseDto()
     }
 
-    private fun SystemSettingEntity.toSystemSettingResponseDto() =
+    private fun SystemSetting.toSystemSettingResponseDto() =
         SystemSettingResponseDto(
             id = this.id,
             siteName = this.siteName,

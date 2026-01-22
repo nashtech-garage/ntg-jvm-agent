@@ -3,9 +3,9 @@ package com.ntgjvmagent.orchestrator.integration.agent
 import com.ntgjvmagent.orchestrator.embedding.job.EmbeddingJobStatus
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeStatus
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
@@ -64,8 +64,6 @@ class KnowledgeImportServiceIT
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4",
-                        embeddingModel = "openai/text-embedding-3-small",
-                        embeddingsPath = "/embeddings",
                     ),
                 )
         }

@@ -1,66 +1,44 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.repository.AgentRepository
-import jakarta.persistence.EntityNotFoundException
+import com.ntgjvmagent.orchestrator.embedding.runtime.EmbeddingService
+import com.ntgjvmagent.orchestrator.embedding.vectorstore.VectorStoreBackend
+import com.ntgjvmagent.orchestrator.embedding.vectorstore.builder.VectorStoreBuilder
+import org.slf4j.LoggerFactory
 import org.springframework.ai.vectorstore.VectorStore
-import org.springframework.ai.vectorstore.pgvector.PgVectorStore
-import org.springframework.data.repository.findByIdOrNull
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class VectorStoreService(
-    private val dynamicModelService: DynamicModelService,
-    private val jdbcTemplate: JdbcTemplate,
-    private val agentRepo: AgentRepository,
+    private val backend: VectorStoreBackend,
+    private val builders: List<VectorStoreBuilder>,
+    private val embeddingService: EmbeddingService,
 ) {
-    private val cache = ConcurrentHashMap<UUID, VectorStore>()
+    private val log = LoggerFactory.getLogger(javaClass)
 
-    /**
-     * Return cached vector store or build it atomically if missing.
-     */
-    fun getVectorStore(agentId: UUID): VectorStore = cache.computeIfAbsent(agentId) { buildVectorStore(it) }
+    @Volatile
+    private var vectorStore: VectorStore? = null
 
-    /**
-     * Atomically reload vector store for this agent.
-     * Ensures only one thread rebuilds the store.
-     */
-    fun reload(agentId: UUID) {
-        cache.compute(agentId) { _, _ ->
-            buildVectorStore(agentId)
+    /** Global singleton VectorStore */
+    fun getVectorStore(): VectorStore =
+        vectorStore ?: synchronized(this) {
+            vectorStore ?: buildVectorStore().also { vectorStore = it }
         }
-    }
 
-    /**
-     * Preferred replacement for invalidate() — because remove() creates
-     * a race window in high concurrency systems.
-     */
-    fun invalidate(agentId: UUID) {
-        reload(agentId)
-    }
+    // ---------------------------------------------------------------------
 
-    /**
-     * Build the vector store for the given agent.
-     */
-    private fun buildVectorStore(agentId: UUID): VectorStore {
-        // Get agent config (local DB)
-        val agent =
-            agentRepo.findByIdOrNull(agentId)
-                ?: throw EntityNotFoundException("Agent $agentId not found")
+    private fun buildVectorStore(): VectorStore {
+        require(vectorStore == null) {
+            "VectorStore already initialized; embedding config must be immutable"
+        }
 
-        val dimension = agent.dimension
+        log.info("Building VectorStore for backend {}", backend.type)
 
-        // PgVectorStore requires the BLOCKING Spring AI EmbeddingModel
-        val springEmbeddingModel = dynamicModelService.getRawSpringEmbeddingModel(agentId)
+        val embeddingModel = embeddingService.embeddingModel()
 
-        // Build vector store with per-agent table
-        return PgVectorStore
-            .builder(jdbcTemplate, springEmbeddingModel)
-            .dimensions(dimension)
-            .schemaName("public")
-            .vectorTableName("vector_store_$dimension")
-            .build()
+        val builder =
+            builders.firstOrNull { it.supports(backend.type) }
+                ?: error("No VectorStoreBuilder found for backend ${backend.type}")
+
+        return builder.build(embeddingModel)
     }
 }
