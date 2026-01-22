@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component
 class PromptBuilder {
     fun build(
         request: ChatRequestDto,
-        history: List<String>,
         summary: String,
     ): String =
         buildString {
@@ -17,10 +16,5 @@ class PromptBuilder {
                 appendLine()
             }
             appendLine("User question: ${request.question}")
-            if (history.isNotEmpty()) {
-                appendLine("Chat history:")
-                history.forEach { appendLine(it) }
-                appendLine()
-            }
         }
 }
