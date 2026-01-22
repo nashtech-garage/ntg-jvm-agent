@@ -16,9 +16,14 @@ class RagAdvisorFactory(
     private val vectorStoreService: VectorStoreService,
     private val agentKnowledgeRepo: AgentKnowledgeRepository,
 ) {
-    fun create(agentId: UUID): CallAdvisor? = createRagAdvisorForAgent(agentId)
+    fun createRagAdvisor(agentId: UUID): CallAdvisor? = buildRagAdvisorForAgent(agentId)
 
-    private fun createRagAdvisorForAgent(agentId: UUID): CallAdvisor? {
+    fun createChatMemoryAdvisor(
+        agentId: UUID,
+        conversationId: UUID?,
+    ): CallAdvisor? = buildChatMemoryAdvisor(agentId, conversationId)
+
+    private fun buildRagAdvisorForAgent(agentId: UUID): CallAdvisor? {
         val knowledgeIds =
             agentKnowledgeRepo
                 .findAllByAgentIdAndActiveTrue(agentId)
@@ -51,6 +56,58 @@ class RagAdvisorFactory(
             .builder()
             .documentRetriever(documentRetriever)
             .queryAugmenter(queryAugmenter)
+            .order(Constant.RAG_ADVISOR_ORDER)
+            .build()
+    }
+
+    private fun buildChatMemoryAdvisor(
+        agentId: UUID,
+        conversationId: UUID?,
+    ): CallAdvisor? {
+        if (conversationId == null) return null
+
+        val filter =
+            Filter.Expression(
+                Filter.ExpressionType.AND,
+                Filter.Expression(
+                    Filter.ExpressionType.EQ,
+                    Filter.Key("agentId"),
+                    Filter.Value(agentId.toString()),
+                ),
+                Filter.Expression(
+                    Filter.ExpressionType.AND,
+                    Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        Filter.Key("conversationId"),
+                        Filter.Value(conversationId.toString()),
+                    ),
+                    Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        Filter.Key("type"),
+                        Filter.Value("chat_message"),
+                    ),
+                ),
+            )
+
+        val retriever =
+            VectorStoreDocumentRetriever
+                .builder()
+                .vectorStore(vectorStoreService.getVectorStore(agentId))
+                .topK(Constant.CHAT_MEMORY_TOP_K)
+                .filterExpression(filter)
+                .build()
+
+        val queryAugmenter =
+            ContextualQueryAugmenter
+                .builder()
+                .allowEmptyContext(true)
+                .build()
+
+        return RetrievalAugmentationAdvisor
+            .builder()
+            .documentRetriever(retriever)
+            .queryAugmenter(queryAugmenter)
+            .order(Constant.CHAT_MEMORY_ADVISOR_ORDER)
             .build()
     }
 }

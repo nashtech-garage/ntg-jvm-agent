@@ -8,10 +8,14 @@ import java.util.UUID
 class CallAdvisorRegistry(
     private val ragAdvisorFactory: RagAdvisorFactory,
 ) {
-    fun resolveForAgent(agentId: UUID): List<CallAdvisor> {
+    fun resolveForAgent(
+        agentId: UUID,
+        conversationId: UUID?,
+    ): List<CallAdvisor> {
         val advisors = mutableListOf<CallAdvisor>()
 
-        ragAdvisorFactory.create(agentId)?.let(advisors::add)
+        ragAdvisorFactory.createRagAdvisor(agentId)?.let(advisors::add)
+        ragAdvisorFactory.createChatMemoryAdvisor(agentId, conversationId)?.let(advisors::add)
 
         if (advisors.isEmpty()) {
             advisors.add(NoOpCallAdvisor)

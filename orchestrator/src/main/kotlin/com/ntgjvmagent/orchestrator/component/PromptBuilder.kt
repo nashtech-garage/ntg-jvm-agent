@@ -16,11 +16,11 @@ class PromptBuilder {
                 appendLine(summary)
                 appendLine()
             }
-            appendLine("User question: ${request.question}")
             if (history.isNotEmpty()) {
                 appendLine("Chat history:")
                 history.forEach { appendLine(it) }
                 appendLine()
             }
+            appendLine("User question: ${request.question}")
         }
 }
