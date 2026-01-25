@@ -2,15 +2,16 @@ package com.ntgjvmagent.orchestrator.integration.agent
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.entity.agent.knowledge.AgentKnowledge
-import com.ntgjvmagent.orchestrator.enum.ProviderType
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.KnowledgeSourceType
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import com.ntgjvmagent.orchestrator.service.KnowledgeChunkService
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.test.Test
@@ -44,8 +45,6 @@ class KnowledgeChunkServiceIT
                         apiKey = "fake-github-token",
                         chatCompletionsPath = "/v1/chat/completions",
                         model = "gpt-4",
-                        embeddingModel = "openai/text-embedding-3-small",
-                        embeddingsPath = "/embeddings",
                     ),
                 )
 
@@ -62,24 +61,56 @@ class KnowledgeChunkServiceIT
         }
 
         @Test
-        fun `addChunk should persist chunk and call vectorStore`() {
+        fun `addChunk should persist chunk content without embeddings`() {
             val content = "This is a test chunk"
-            val chunk = chunkService.addChunk(agent.id!!, knowledge.id!!, content)
 
-            val persisted = chunkRepo.findById(chunk.id).orElseThrow()
-            val embedding = persisted.embedding768 ?: persisted.embedding1536
+            val response =
+                chunkService.createChunkAndEnqueueEmbedding(
+                    agentId = agent.id!!,
+                    knowledgeId = knowledge.id!!,
+                    content = content,
+                )
+
+            val persisted = chunkRepo.findById(response.id).orElseThrow()
+
             assertEquals(content, persisted.content)
-            assertNotNull(embedding)
+            assertEquals(knowledge.id, persisted.knowledge.id)
+            assertEquals(1, persisted.chunkOrder)
+
+            // 🔒 Embeddings must NOT be stored in DB anymore
+            // If columns still exist during migration, they must remain null
+            persisted::class
+                .members
+                .filter { it.name.startsWith("embedding") }
+                .forEach {
+                    val value = it.call(persisted)
+                    assertNull(value, "Embedding must not be persisted in knowledge_chunk")
+                }
         }
 
         @Test
-        fun `searchSimilarChunks should filter by active knowledge`() {
-            chunkService.addChunk(agent.id!!, knowledge.id!!, "Chunk one")
-            chunkService.addChunk(agent.id!!, knowledge.id!!, "Chunk two")
+        fun `searchSimilarChunks should return empty when vector store is mocked`() {
+            chunkService.createChunkAndEnqueueEmbedding(
+                agentId = agent.id!!,
+                knowledgeId = knowledge.id!!,
+                content = "Chunk one",
+            )
 
-            val results = chunkService.searchSimilarChunks(agent.id!!, knowledge.id!!, "Chunk", topK = 2)
+            chunkService.createChunkAndEnqueueEmbedding(
+                agentId = agent.id!!,
+                knowledgeId = knowledge.id!!,
+                content = "Chunk two",
+            )
 
-            // Since TestEmbeddingConfig or vectorStore is mocked, expected empty list
-            assertEquals(0, results.size)
+            val results =
+                chunkService.searchSimilarChunks(
+                    agentId = agent.id!!,
+                    knowledgeId = knowledge.id!!,
+                    query = "Chunk",
+                    topK = 2,
+                )
+
+            // Vector store is mocked in TestEmbeddingConfig → no results
+            assertTrue(results.isEmpty())
         }
     }

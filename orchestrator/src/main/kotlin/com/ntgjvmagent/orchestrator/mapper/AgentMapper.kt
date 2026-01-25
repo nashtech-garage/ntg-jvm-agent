@@ -24,9 +24,6 @@ object AgentMapper {
             baseUrl = request.baseUrl,
             apiKey = request.apiKey,
             chatCompletionsPath = request.chatCompletionsPath,
-            embeddingsPath = request.embeddingsPath,
-            embeddingModel = request.embeddingModel,
-            dimension = request.dimension,
         ).apply { active = request.active }
 
     fun toResponse(agent: Agent): AgentResponseDto =
@@ -41,9 +38,6 @@ object AgentMapper {
             apiKey = agent.apiKey,
             chatCompletionsPath = agent.chatCompletionsPath,
             model = agent.model,
-            embeddingModel = agent.embeddingModel,
-            dimension = agent.dimension,
-            embeddingsPath = agent.embeddingsPath,
             topP = agent.topP.toDouble(),
             temperature = agent.temperature.toDouble(),
             maxTokens = agent.maxTokens,

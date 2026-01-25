@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.dto.request
 
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.enum.ProviderType
+import com.ntgjvmagent.orchestrator.model.ProviderType
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Max
@@ -29,12 +29,6 @@ data class AgentRequestDto(
     @field:NotBlank(message = "Model must not be blank")
     @field:Size(max = 100, message = "Model name must not exceed 100 characters")
     val model: String,
-    @field:NotBlank(message = "Embedding model must not be blank")
-    val embeddingModel: String,
-    @field:Min(value = Agent.MIN_DIMENSION.toLong(), message = "Min embedding must be at least {value}")
-    val dimension: Int,
-    @field:NotBlank(message = "Embeddings path must not be blank")
-    val embeddingsPath: String,
     @field:DecimalMin(value = Agent.MIN_TOP_P.toString(), inclusive = true, message = "TopP must be at least {value}")
     @field:DecimalMax(value = Agent.MAX_TOP_P.toString(), inclusive = true, message = "TopP must not exceed {value}")
     val topP: Double = Agent.DEFAULT_TOP_P.toDouble(),

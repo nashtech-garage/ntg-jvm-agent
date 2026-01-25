@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.integration.config.AsyncTestConfig
 import com.ntgjvmagent.orchestrator.integration.config.DisableSchedulingConfig
+import com.ntgjvmagent.orchestrator.integration.config.DisableVectorStoreInitializerConfig
 import com.ntgjvmagent.orchestrator.integration.config.PostgresTestContainer
 import com.ntgjvmagent.orchestrator.integration.config.TestAuditorConfig
 import com.ntgjvmagent.orchestrator.integration.config.TestEmbeddingConfig
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
+import org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration
+import org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration
+import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -38,15 +42,21 @@ import reactor.core.scheduler.Schedulers
 @SpringBootTest
 @ImportAutoConfiguration(
     exclude = [
-        org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration::class,
-        org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration::class,
-        org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration::class,
+        McpClientAutoConfiguration::class,
+        McpToolCallbackAutoConfiguration::class,
+        ToolCallingAutoConfiguration::class,
     ],
 )
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // Container spins up once per class
 @ContextConfiguration(initializers = [PostgresTestContainer.Initializer::class])
-@Import(TestEmbeddingConfig::class, TestAuditorConfig::class, AsyncTestConfig::class, DisableSchedulingConfig::class)
+@Import(
+    TestEmbeddingConfig::class,
+    TestAuditorConfig::class,
+    AsyncTestConfig::class,
+    DisableSchedulingConfig::class,
+    DisableVectorStoreInitializerConfig::class,
+)
 @Tag("integration")
 abstract class BaseIntegrationTest {
     @Autowired

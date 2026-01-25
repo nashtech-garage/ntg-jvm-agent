@@ -2,19 +2,22 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
-import com.ntgjvmagent.orchestrator.entity.ChatMessageEntity
-import com.ntgjvmagent.orchestrator.entity.ChatMessageMediaEntity
-import com.ntgjvmagent.orchestrator.entity.ConversationEntity
+import com.ntgjvmagent.orchestrator.entity.ChatMessage
+import com.ntgjvmagent.orchestrator.entity.ChatMessageMedia
+import com.ntgjvmagent.orchestrator.entity.Conversation
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
-import com.ntgjvmagent.orchestrator.model.ConversationStatus
+import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.model.MessageReaction
 import com.ntgjvmagent.orchestrator.repository.ChatMessageMediaRepository
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
+import com.ntgjvmagent.orchestrator.repository.UserRepository
 import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
+import jakarta.persistence.EntityNotFoundException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -25,19 +28,11 @@ class ConversationCommandService(
     private val conversationRepo: ConversationRepository,
     private val messageRepo: ChatMessageRepository,
     private val messageMediaRepo: ChatMessageMediaRepository,
+    private val userRepository: UserRepository,
 ) {
-    @Transactional
-    fun createEmptyConversation(): UUID {
-        val conversation =
-            ConversationEntity(
-                title = "",
-                status = ConversationStatus.DRAFT,
-            )
-
-        return conversationRepo
-            .save(conversation)
-            .id ?: error("Can't create conversation")
-    }
+    // --------------------------------------------------
+    // Delete / Update
+    // --------------------------------------------------
 
     @Transactional
     fun deleteConversation(conversationId: UUID) {
@@ -68,6 +63,75 @@ class ConversationCommandService(
         )
     }
 
+    // --------------------------------------------------
+    // Create (first message only)
+    // --------------------------------------------------
+
+    @Transactional
+    fun createConversationWithFirstMessage(
+        userId: UUID,
+        chatReq: ChatRequestDto,
+        answer: String,
+    ): ChatResponseDto {
+        val createdBy =
+            userRepository.findByIdOrNull(userId)
+                ?: throw EntityNotFoundException("User $userId not found")
+
+        // 1) Create conversation (exists == successful stream)
+        val conversation =
+            conversationRepo.save(
+                Conversation(
+                    title = "",
+                ).also {
+                    it.createdBy = createdBy
+                },
+            )
+
+        // 2) Save question
+        val question =
+            messageRepo.save(
+                ChatMessage(
+                    content = chatReq.question,
+                    conversation = conversation,
+                    type = ChatMessageType.QUESTION,
+                ).also {
+                    it.createdBy = createdBy
+                },
+            )
+
+        saveMessageMedia(chatReq, question)
+
+        // 3) Save answer
+        val answerEntity =
+            messageRepo.save(
+                ChatMessage(
+                    content = answer,
+                    conversation = conversation,
+                    type = ChatMessageType.ANSWER,
+                ).also {
+                    it.createdBy = createdBy
+                },
+            )
+
+        // 4) Generate title ONCE (first message only)
+        val title =
+            chatModelService.createSummarize(
+                userId = userId,
+                agentId = chatReq.agentId,
+                correlationId = chatReq.correlationId,
+                question = chatReq.question,
+            ) ?: chatReq.question
+
+        conversation.title = title
+        conversationRepo.save(conversation)
+
+        return buildResponse(conversation, answerEntity)
+    }
+
+    // --------------------------------------------------
+    // Append (follow-up messages)
+    // --------------------------------------------------
+
     @Transactional
     fun appendConversationMessage(
         userId: UUID,
@@ -76,17 +140,22 @@ class ConversationCommandService(
     ): ChatResponseDto {
         val conversationId =
             chatReq.conversationId
-                ?: error("conversationId must exist")
+                ?: error("conversationId must be provided to append message")
 
         val conversation = findConversation(conversationId)
+
+        // ownership check
+        if (conversation.createdBy?.id != userId) {
+            throw ResourceNotFoundException("Conversation not found: $conversationId")
+        }
 
         // Save question
         val question =
             messageRepo.save(
-                ChatMessageEntity(
+                ChatMessage(
                     content = chatReq.question,
                     conversation = conversation,
-                    type = Constant.QUESTION_TYPE,
+                    type = ChatMessageType.QUESTION,
                 ),
             )
 
@@ -95,29 +164,25 @@ class ConversationCommandService(
         // Save answer
         val answerEntity =
             messageRepo.save(
-                ChatMessageEntity(
+                ChatMessage(
                     content = answer,
                     conversation = conversation,
-                    type = Constant.ANSWER_TYPE,
+                    type = ChatMessageType.ANSWER,
                 ),
             )
 
-        // Generate & update title once (after first answer)
-        if (conversation.status == ConversationStatus.DRAFT) {
-            val title =
-                chatModelService.createSummarize(
-                    userId,
-                    chatReq.agentId,
-                    chatReq.correlationId,
-                    chatReq.question,
-                ) ?: chatReq.question
+        return buildResponse(conversation, answerEntity)
+    }
 
-            conversation.title = title
-            conversation.status = ConversationStatus.ACTIVE
-            conversationRepo.save(conversation)
-        }
+    // --------------------------------------------------
+    // Helpers
+    // --------------------------------------------------
 
-        return ChatResponseDto(
+    private fun buildResponse(
+        conversation: Conversation,
+        answerEntity: ChatMessage,
+    ): ChatResponseDto =
+        ChatResponseDto(
             ConversationResponseVmImpl(
                 conversation.id!!,
                 conversation.title,
@@ -127,25 +192,22 @@ class ConversationCommandService(
                 answerEntity.id!!,
                 answerEntity.content,
                 answerEntity.createdAt!!,
-                Constant.ANSWER_TYPE,
+                ChatMessageType.ANSWER,
                 emptyList(),
                 MessageReaction.NONE,
             ),
         )
-    }
-
-    // ---------------- private helpers ----------------
 
     private fun saveMessageMedia(
         chatReq: ChatRequestDto,
-        questionEntity: ChatMessageEntity,
+        questionEntity: ChatMessage,
     ) {
         val files = chatReq.files ?: return
         if (files.isEmpty()) return
 
         val media =
             files.map {
-                ChatMessageMediaEntity(
+                ChatMessageMedia(
                     fileName = it.originalFilename ?: it.name,
                     contentType = it.contentType ?: Constant.PNG_CONTENT_TYPE,
                     chatMessage = questionEntity,
@@ -157,8 +219,10 @@ class ConversationCommandService(
         messageMediaRepo.saveAll(media)
     }
 
-    private fun findConversation(id: UUID): ConversationEntity =
+    private fun findConversation(id: UUID): Conversation =
         conversationRepo
             .findById(id)
-            .orElseThrow { ResourceNotFoundException("Conversation not found: $id") }
+            .orElseThrow {
+                ResourceNotFoundException("Conversation not found: $id")
+            }
 }

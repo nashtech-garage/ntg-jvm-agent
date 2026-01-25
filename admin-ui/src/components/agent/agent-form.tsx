@@ -46,9 +46,6 @@ const formSchema = z.object({
   apiKey: z.string().min(1, 'API Key is required'),
   baseUrl: z.string().min(1, 'Base URL is required'),
   chatCompletionsPath: z.string().min(1, 'Chat Completions Path is required'),
-  embeddingsPath: z.string().min(1, 'Embeddings API Path is required'),
-  embeddingModel: z.string().min(1, 'Embedding Model is required'),
-  dimension: z.number().min(1),
   temperature: z.number().min(0).max(2),
   maxTokens: z.number().min(1),
   topP: z.number().min(0).max(1),
@@ -72,9 +69,6 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
       apiKey: '',
       baseUrl: '',
       chatCompletionsPath: '/v1/chat/completions',
-      embeddingsPath: '/v1/embeddings',
-      embeddingModel: '',
-      dimension: 1536,
       temperature: 0.7,
       maxTokens: 2048,
       topP: 1,
@@ -173,26 +167,6 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                   {/* ------------------- Provider Models ------------------- */}
                   <h3 className="text-lg font-semibold">Provider Models</h3>
                   <TextField<AgentFormValues> form={form} name="model" label="Model" />
-
-                  {/* ------------------- Embedding Configuration ------------------- */}
-                  <h3 className="text-lg font-semibold">Embedding Configuration</h3>
-                  <TwoColumn>
-                    <TextField<AgentFormValues>
-                      form={form}
-                      name="embeddingModel"
-                      label="Embedding Model"
-                    />
-                    <NumberField<AgentFormValues>
-                      form={form}
-                      name="dimension"
-                      label="Vector Dimension"
-                    />
-                  </TwoColumn>
-                  <TextField<AgentFormValues>
-                    form={form}
-                    name="embeddingsPath"
-                    label="Embeddings API Path"
-                  />
 
                   {/* ------------------- Generation Parameters ------------------- */}
                   <h3 className="text-lg font-semibold">Generation Parameters</h3>

@@ -6,7 +6,7 @@ import com.ntgjvmagent.orchestrator.exception.TokenQuotaUnavailableException
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.repository.TokenUsageLogRepository
 import com.ntgjvmagent.orchestrator.repository.UserTokenQuotaRepository
-import com.ntgjvmagent.orchestrator.service.DynamicModelService
+import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import com.ntgjvmagent.orchestrator.token.cache.DailyTokenUsageCache
 import com.ntgjvmagent.orchestrator.utils.toNormalizedUsage
 import io.micrometer.core.instrument.MeterRegistry
@@ -25,7 +25,7 @@ class TokenMeteringService(
     private val tokenUsageLogRepository: TokenUsageLogRepository,
     private val userTokenQuotaRepository: UserTokenQuotaRepository,
     private val dailyTokenUsageCache: DailyTokenUsageCache,
-    private val dynamicModelService: DynamicModelService,
+    private val dynamicChatModelService: DynamicChatModelService,
     private val meterRegistry: MeterRegistry,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -116,7 +116,7 @@ class TokenMeteringService(
 
         try {
             val normalized = usage.toNormalizedUsage()
-            val agentConfig = dynamicModelService.getAgentConfig(agentId)
+            val agentConfig = dynamicChatModelService.getAgentConfig(agentId)
 
             tokenUsageLogRepository.save(
                 TokenUsageLog(

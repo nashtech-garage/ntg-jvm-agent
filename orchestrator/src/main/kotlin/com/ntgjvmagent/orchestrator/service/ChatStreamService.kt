@@ -21,7 +21,7 @@ import java.util.UUID
 @Service
 class ChatStreamService(
     private val toolFacade: ToolExecutionFacade,
-    private val dynamicModelService: DynamicModelService,
+    private val dynamicChatModelService: DynamicChatModelService,
     private val callAdvisorRegistry: CallAdvisorRegistry,
     private val tokenFacade: TokenAccountingFacade,
 ) {
@@ -149,7 +149,7 @@ class ChatStreamService(
             }.thenReturn(Unit)
 
     private fun buildChatClient(agentId: UUID): ChatClient =
-        ChatClient.builder(dynamicModelService.getChatModel(agentId)).build()
+        ChatClient.builder(dynamicChatModelService.getChatModel(agentId)).build()
 
     private fun attachUserInput(
         u: ChatClient.PromptUserSpec,

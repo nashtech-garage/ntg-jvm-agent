@@ -51,7 +51,7 @@ class KnowledgeChunkController(
         @PathVariable knowledgeId: UUID,
         @Valid @RequestBody req: KnowledgeChunkRequestDto,
     ): KnowledgeChunkResponseDto =
-        chunkService.addChunk(
+        chunkService.createChunkAndEnqueueEmbedding(
             agentId = agentId,
             knowledgeId = knowledgeId,
             content = req.content,

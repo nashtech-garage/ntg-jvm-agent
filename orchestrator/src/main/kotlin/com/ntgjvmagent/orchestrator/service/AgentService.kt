@@ -14,7 +14,6 @@ import java.util.UUID
 @Service
 class AgentService(
     private val repo: AgentRepository,
-    private val dynamicModelService: DynamicModelService,
 ) {
     @Transactional(readOnly = true)
     fun getAll(name: String?) =
@@ -69,11 +68,7 @@ class AgentService(
             apiKey = request.apiKey
             baseUrl = request.baseUrl
             chatCompletionsPath = request.chatCompletionsPath
-            embeddingModel = request.embeddingModel
-            dimension = request.dimension
-            embeddingsPath = request.embeddingsPath
         }
-        dynamicModelService.invalidateCacheForAgent(id)
         return AgentMapper.toResponse(repo.save(existing))
     }
 

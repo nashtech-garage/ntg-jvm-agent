@@ -13,9 +13,6 @@ insert into agent (
 	base_url,
 	api_key,
 	chat_completions_path,
-	embeddings_path,
-	embedding_model,
-	dimension,
 	"version")
 values
 	 (  'Default agent',
@@ -27,13 +24,10 @@ values
         0.00,
         0.00,
         true,
-        'Open AI',
+        'OPENAI',
         null,
         'https://models.github.ai/inference',
         'Dummy Github API key',
         '/v1/chat/completions',
-        '/embeddings',
-        'openai/text-embedding-3-small',
-        1536,
         0
     );

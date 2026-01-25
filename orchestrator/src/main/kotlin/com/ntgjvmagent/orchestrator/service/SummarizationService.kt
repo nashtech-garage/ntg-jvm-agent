@@ -10,7 +10,7 @@ import java.util.UUID
 
 @Service
 class SummarizationService(
-    private val dynamicModelService: DynamicModelService,
+    private val dynamicChatModelService: DynamicChatModelService,
     private val tokenFacade: TokenAccountingFacade,
 ) {
     fun create(
@@ -59,7 +59,7 @@ class SummarizationService(
         promptText: String,
         correlationId: String,
     ): String? {
-        val agentConfig = dynamicModelService.getAgentConfig(agentId)
+        val agentConfig = dynamicChatModelService.getAgentConfig(agentId)
 
         val estimatedInputTokens =
             tokenFacade.estimatePromptInput(
@@ -73,7 +73,7 @@ class SummarizationService(
             estimatedInputTokens = estimatedInputTokens,
         )
 
-        val chatModel = dynamicModelService.getChatModel(agentId)
+        val chatModel = dynamicChatModelService.getChatModel(agentId)
         val response = chatModel.call(Prompt(promptText))
 
         val output =

@@ -24,24 +24,17 @@ class ConversationStreamingService(
         userId: UUID,
     ): Flux<ServerSentEvent<Any>> {
         // --------------------------------------------------
-        // 1. Ensure conversation exists
-        // --------------------------------------------------
-        val conversationId =
-            request.conversationId ?: commandService.createEmptyConversation()
-
-        // --------------------------------------------------
-        // 2. Create correlation identity
+        // 1. Create correlation identity
         // --------------------------------------------------
         val correlationId = "chat-${UUID.randomUUID()}"
 
         val correlatedRequest =
             request.copy(
-                conversationId = conversationId,
                 correlationId = correlationId,
             )
 
         // --------------------------------------------------
-        // 3. Load history & generate summary (same correlation root)
+        // 2. Load history & generate summary
         // --------------------------------------------------
         val (older, recent) = loadAndSplitHistory(correlatedRequest)
 
@@ -56,7 +49,7 @@ class ConversationStreamingService(
         val answerBuilder = StringBuilder()
 
         // --------------------------------------------------
-        // 4. Stream chat response
+        // 3. Stream chat response
         // --------------------------------------------------
         val stream =
             chatModelService
@@ -65,31 +58,42 @@ class ConversationStreamingService(
                     request = correlatedRequest,
                     history = recent,
                     summary = summary,
-                ).doOnNext { answerBuilder.append(it.replace("\r\n", "\n")) }
-                .map {
+                ).doOnNext { token ->
+                    answerBuilder.append(token.replace("\r\n", "\n"))
+                }.map { token ->
                     ServerSentEvent
                         .builder<Any>()
                         .event("message")
-                        .data(it)
+                        .data(token)
                         .build()
                 }
 
         // --------------------------------------------------
-        // 5. Finalize message AFTER stream completes
+        // 4. Persist AFTER stream completes
         // --------------------------------------------------
         val completion =
             Mono
                 .fromCallable {
-                    commandService.appendConversationMessage(
-                        userId = userId,
-                        chatReq = correlatedRequest,
-                        answer = answerBuilder.toString(),
-                    )
-                }.map {
+                    if (correlatedRequest.conversationId == null) {
+                        // First message → create conversation
+                        commandService.createConversationWithFirstMessage(
+                            userId = userId,
+                            chatReq = correlatedRequest,
+                            answer = answerBuilder.toString(),
+                        )
+                    } else {
+                        // Follow-up → append only
+                        commandService.appendConversationMessage(
+                            userId = userId,
+                            chatReq = correlatedRequest,
+                            answer = answerBuilder.toString(),
+                        )
+                    }
+                }.map { response ->
                     ServerSentEvent
                         .builder<Any>()
                         .event("complete")
-                        .data(it)
+                        .data(response)
                         .build()
                 }
 
@@ -105,7 +109,7 @@ class ConversationStreamingService(
             request.conversationId
                 ?.let {
                     messageRepo
-                        .listMessageByConversationId(it)
+                        .listMessageByConversationIdOrdered(it)
                         .map(ChatMessageMapper::toHistoryFormat)
                 }
                 ?: emptyList()
@@ -116,7 +120,9 @@ class ConversationStreamingService(
             history
                 .withIndex()
                 .partition { it.index < split }
-                .let { (o, r) -> o.map { it.value } to r.map { it.value } }
+                .let { (o, r) ->
+                    o.map { it.value } to r.map { it.value }
+                }
         } else {
             emptyList<String>() to history
         }

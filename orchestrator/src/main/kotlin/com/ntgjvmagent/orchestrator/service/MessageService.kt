@@ -3,9 +3,9 @@ package com.ntgjvmagent.orchestrator.service
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.exception.ResourceNotFoundException
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
+import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.model.MessageReaction
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
-import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,7 +26,7 @@ class MessageService(
                 .findById(messageId)
                 .orElseThrow { ResourceNotFoundException("Message not found: $messageId") }
 
-        if (message.conversation.createdBy?.equals(userId) == true || message.type != Constant.ANSWER_TYPE) {
+        if (message.conversation.createdBy?.equals(userId) == true || message.type != ChatMessageType.ANSWER) {
             throw BadRequestException("You are not allowed to react to this message")
         }
 

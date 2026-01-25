@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.viewmodel
 
+import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.model.MessageReaction
 import java.time.Instant
 import java.util.UUID
@@ -8,7 +9,7 @@ data class ChatMessageResponseVm(
     val id: UUID,
     val content: String,
     val createdAt: Instant,
-    val type: Int,
+    val type: ChatMessageType,
     val medias: List<ChatMessageMediaVm>,
     val reaction: MessageReaction,
 )

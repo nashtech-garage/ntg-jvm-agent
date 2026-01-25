@@ -9,9 +9,6 @@ export type AgentDetail = {
   apiKey: string;
   baseUrl: string;
   chatCompletionsPath: string;
-  embeddingsPath: string;
-  embeddingModel: string;
-  dimension: number;
   temperature: number;
   maxTokens: number;
   topP: number;
@@ -42,9 +39,6 @@ export type AgentFormData = {
   apiKey: string;
   baseUrl: string;
   chatCompletionsPath: string;
-  embeddingsPath: string;
-  embeddingModel: string;
-  dimension: number;
   temperature: number;
   maxTokens: number;
   topP: number;

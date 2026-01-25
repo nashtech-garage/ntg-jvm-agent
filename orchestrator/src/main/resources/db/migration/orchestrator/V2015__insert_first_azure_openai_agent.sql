@@ -9,9 +9,6 @@ INSERT INTO agent (
     base_url,
     api_key,
     chat_completions_path,
-    embeddings_path,
-    embedding_model,
-    dimension,
     model,
     temperature,
     max_tokens,
@@ -34,9 +31,6 @@ INSERT INTO agent (
     'https://<resource>.openai.azure.com/',
     'token',
     '',
-    '',
-    'text-embedding-3-small',
-    1536,
     'gpt-4.1-mini',
     0.7,
     2048,
@@ -51,10 +45,3 @@ INSERT INTO agent (
     NULL,
     NULL
 );
-
--- Fix provider enum value from 'Open AI' to 'OPENAI' to match ProviderType enum
-UPDATE agent
-SET provider = 'OPENAI'
-WHERE provider = 'Open AI';
-
--- Note: Replace {deployment-name} with your actual Azure OpenAI deployment name
