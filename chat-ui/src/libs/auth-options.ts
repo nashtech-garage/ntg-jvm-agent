@@ -17,12 +17,16 @@ export const authOptions: NextAuthOptions = {
       type: 'oauth',
       clientId: SERVER_CONFIG.CLIENT_ID,
       clientSecret: SERVER_CONFIG.CLIENT_SECRET,
-      wellKnown: `${PUBLIC_CONFIG.AUTH_SERVER}/.well-known/openid-configuration`,
+      issuer: PUBLIC_CONFIG.AUTH_SERVER,
+      jwks_endpoint: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/jwks`,
       authorization: {
+        url: `${PUBLIC_CONFIG.AUTH_SERVER}/oauth2/authorize`,
         params: {
           scope: PUBLIC_CONFIG.SCOPE,
         },
       },
+      token: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`,
+      userinfo: `${SERVER_CONFIG.AUTH_SERVER}/userinfo`,
       checks: ['pkce', 'state'],
       idToken: true,
       // Runs once during the OAuth callback to shape the user object from userinfo/token claims

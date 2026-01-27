@@ -107,20 +107,20 @@ class PgVectorBackend(
     }
 
     /**
-     * Read pgvector dimension using pg_catalog.
+     * Read pgvector dimension from pg_catalog.
      *
      * Semantics:
-     * - 0 → column exists but no vectors written yet (VALID)
-     * - >0 → fixed dimension
+     * - 0  → column exists but dimension not enforced (VECTOR without size)
+     * - >0 → fixed vector dimension
      */
     private fun readVectorDimension(): Int =
         jdbcTemplate.queryForObject(
             """
-            SELECT attndims
+            SELECT COALESCE(atttypmod, 0)
             FROM pg_attribute
             WHERE attrelid = '${PgVectorSchema.TABLE_NAME}'::regclass
               AND attname = '${PgVectorSchema.EMBEDDING_COLUMN}'
-              AND NOT attisdropped
+              AND atttypmod > 0
             """.trimIndent(),
             Int::class.java,
         ) ?: 0
