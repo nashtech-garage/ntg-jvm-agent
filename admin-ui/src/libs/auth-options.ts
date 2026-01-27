@@ -17,12 +17,16 @@ export const authOptions: NextAuthOptions = {
       type: 'oauth',
       clientId: SERVER_CONFIG.CLIENT_ID,
       clientSecret: SERVER_CONFIG.CLIENT_SECRET,
-      wellKnown: `${PUBLIC_CONFIG.AUTH_SERVER}/.well-known/openid-configuration`,
+      issuer: PUBLIC_CONFIG.AUTH_SERVER,
+      jwks_endpoint: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/jwks`,
       authorization: {
+        url: `${PUBLIC_CONFIG.AUTH_SERVER}/oauth2/authorize`,
         params: {
           scope: PUBLIC_CONFIG.SCOPE,
         },
       },
+      token: `${SERVER_CONFIG.AUTH_SERVER}/oauth2/token`,
+      userinfo: `${SERVER_CONFIG.AUTH_SERVER}/userinfo`,
       checks: ['pkce', 'state'],
       idToken: true,
       // Runs once during the OAuth callback to shape the user object from userinfo/token claims
@@ -47,7 +51,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: PAGE_PATH.LOGIN,
-    error: PAGE_PATH.LOGIN,
+    error: PAGE_PATH.FORBIDDEN,
   },
   session: {
     strategy: 'jwt',
@@ -63,7 +67,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!hasAdminRole(roles)) {
         logger.error('Sign-in blocked: user lacks admin role', roles);
-        return `${PAGE_PATH.FORBIDDEN}`;
+        throw new Error('FORBIDDEN');
       }
 
       return true;
@@ -88,12 +92,13 @@ export const authOptions: NextAuthOptions = {
     },
     // Fields added here are returned in the session from getSession()/useSession()/getServerSession()
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.refreshToken = token.refreshToken;
-      session.error = token.error;
+      session.accessToken = token.accessToken as string | undefined;
+      session.refreshToken = token.refreshToken as string | undefined;
+      session.error = token.error as string | undefined;
+
       session.user = {
         ...session.user,
-        id: token.sub || '',
+        id: token.sub ?? '',
         roles: (token.roles as string[]) ?? [],
       };
       return session;
