@@ -10,9 +10,12 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 
 @Entity
 @Table(name = "conversation")
+@Audited
 data class ConversationEntity(
     @Column(columnDefinition = "TEXT")
     var title: String,
@@ -26,5 +29,6 @@ data class ConversationEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
+    @NotAudited
     val messages: MutableList<ChatMessageEntity> = mutableListOf(),
 ) : UserAuditedEntity()

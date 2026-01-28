@@ -13,11 +13,14 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 
 @Entity
 @Table(name = "agent")
+@Audited
 data class Agent(
     @Column(nullable = false, length = 100)
     var name: String,
@@ -112,8 +115,10 @@ data class Agent(
     }
 
     @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @NotAudited
     var tools: MutableSet<AgentTool> = mutableSetOf()
 
     @OneToMany(mappedBy = "agent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @NotAudited
     var knowledge: MutableSet<AgentKnowledge> = mutableSetOf()
 }
