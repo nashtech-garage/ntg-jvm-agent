@@ -4,10 +4,13 @@ import com.ntgjvmagent.orchestrator.entity.base.UserAuditedEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import org.hibernate.envers.Audited
 
 @Entity
 @Table(name = "system_setting")
 data class SystemSetting(
+@Audited
+data class SystemSettingEntity(
     @Column(name = "site_name")
     var siteName: String,
     @Column(name = "maximum_user")
