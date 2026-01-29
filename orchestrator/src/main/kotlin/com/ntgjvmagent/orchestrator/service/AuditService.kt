@@ -29,6 +29,24 @@ class AuditService(
     fun <T> findEntityAtRevision(entityClass: Class<T>, entityId: UUID, revision: Number): T? =
         auditReader().find(entityClass, entityId, revision)
 
+    fun <T> getRevisionHistory(entityClass: Class<T>): List<RevisionInfo<T>> {
+        val results = auditReader()
+            .createQuery()
+            .forRevisionsOfEntity(entityClass, false, true)
+            .addOrder(AuditEntity.revisionNumber().desc())
+            .resultList
+
+        return results.map { row ->
+            val arr = row as Array<*>
+            @Suppress("UNCHECKED_CAST")
+            RevisionInfo(
+                entity = arr[0] as T,
+                revisionEntity = arr[1] as RevisionEntity,
+                revisionType = arr[2] as RevisionType,
+            )
+        }
+    }
+
     /**
      * History of entity revisions.
      * Each element returns: entity snapshot + revision metadata + revision type.

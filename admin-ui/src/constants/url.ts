@@ -18,6 +18,15 @@ export const API_PATH = {
     return query ? `/api/agents?${query}` : '/api/agents';
   },
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
+  AUDIT_HISTORY_ALL: (entity: string) => `/api/audit/${entity}/history`,
+  AUDIT_HISTORY: (entity: string, id: string) => `/api/audit/${entity}/${id}/history`,
+  AUDIT_REVISION: (entity: string, id: string, revision: number) =>
+    `/api/audit/${entity}/${id}/revision/${revision}`,
+  AUDIT_ROLLBACK: (entity: string, id: string) => `/api/audit/${entity}/${id}/rollback`,
+  AUDIT_AGENT_HISTORY: (id: string) => `/api/audit/agent/${id}/history`,
+  AUDIT_AGENT_REVISION: (id: string, revision: number) =>
+    `/api/audit/agent/${id}/revision/${revision}`,
+  AUDIT_AGENT_ROLLBACK: (id: string) => `/api/audit/agent/${id}/rollback`,
 } as const;
 
 export const BACKEND_PATH = {
@@ -29,4 +38,12 @@ export const BACKEND_PATH = {
     return query ? `/api/agents?${query}` : '/api/agents';
   },
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
+  AUDIT_HISTORY_ALL: (entity: string) => `/api/v1/audit/${entity}/history`,
+  AUDIT_HISTORY: (entity: string, id: string) => `/api/v1/audit/${entity}/${id}/history`,
+  AUDIT_REVISION: (entity: string, id: string, revision: number) =>
+    `/api/v1/audit/${entity}/${id}/revision/${revision}`,
+  AUDIT_ROLLBACK: (entity: string, id: string) => `/api/v1/audit/${entity}/${id}/rollback`,
+  AUDIT_AGENT_HISTORY: (id: string) => `/api/v1/audit/agent/${id}/history`,
+  AUDIT_AGENT_REVISION: (id: string, revision: number) => `/api/v1/audit/agent/${id}/revision/${revision}`,
+  AUDIT_AGENT_ROLLBACK: (id: string) => `/api/v1/audit/agent/${id}/rollback`,
 } as const;

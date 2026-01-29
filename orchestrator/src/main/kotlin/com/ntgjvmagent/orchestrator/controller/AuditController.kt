@@ -47,6 +47,14 @@ class AuditController(
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
+    @GetMapping("/agent/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get complete audit history for all agents")
+    fun getAllAgentHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+        val history = auditService.getRevisionHistory(Agent::class.java)
+        return ResponseEntity.ok(history.map { it.toResponse() })
+    }
+
     @GetMapping("/agent/{id}/revision/{revision}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get agent state at specific revision")
