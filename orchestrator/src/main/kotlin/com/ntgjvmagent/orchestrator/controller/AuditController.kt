@@ -6,6 +6,7 @@ import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.service.AgentRollbackService
 import com.ntgjvmagent.orchestrator.service.AuditService
+import com.ntgjvmagent.orchestrator.service.AuditLogVm
 import com.ntgjvmagent.orchestrator.service.RevisionInfo
 import com.ntgjvmagent.orchestrator.viewmodel.RollbackAgentRequestVm
 import io.swagger.v3.oas.annotations.Operation
@@ -94,6 +95,14 @@ class AuditController(
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
+    @GetMapping("/tool/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get complete audit history for all tools")
+    fun getAllToolHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+        val history = auditService.getRevisionHistory(Tool::class.java)
+        return ResponseEntity.ok(history.map { it.toResponse() })
+    }
+
     @PostMapping("/agent/{id}/rollback")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Rollback agent to revision (Envers)")
@@ -125,11 +134,37 @@ class AuditController(
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
+    @GetMapping("/conversation/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get complete audit history for all conversations")
+    fun getAllConversationHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+        val history = auditService.getRevisionHistory(ConversationEntity::class.java)
+        return ResponseEntity.ok(history.map { it.toResponse() })
+    }
+
     @GetMapping("/system-setting/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for system settings")
     fun getSystemSettingHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
         val history = auditService.getRevisionHistory(SystemSettingEntity::class.java, id)
+        return ResponseEntity.ok(history.map { it.toResponse() })
+    }
+
+    @GetMapping("/logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "System-wide audit logs (optional filter by agent)")
+    fun getSystemLogs(
+        @RequestParam(required = false) agentId: UUID?,
+    ): ResponseEntity<List<AuditLogVm>> {
+        val logs = auditService.getAllAuditLogs(agentId)
+        return ResponseEntity.ok(logs)
+    }
+
+    @GetMapping("/system-setting/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get complete audit history for all system settings")
+    fun getAllSystemSettingHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+        val history = auditService.getRevisionHistory(SystemSettingEntity::class.java)
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 

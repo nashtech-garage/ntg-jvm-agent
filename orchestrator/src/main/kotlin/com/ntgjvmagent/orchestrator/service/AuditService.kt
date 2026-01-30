@@ -138,10 +138,110 @@ class AuditService(
     }
 
     fun getEntitiesModifiedAtRevision(revision: Number): Map<String, List<Any>> = emptyMap()
+
+    fun getAllAuditLogs(agentId: UUID? = null): List<AuditLogVm> {
+        val collected = mutableListOf<AuditLogVm>()
+
+        fun <T> collect(entityClass: Class<T>, entityType: String) {
+            val items = getRevisionHistory(entityClass)
+            items.forEach { info ->
+                val entityId = extractId(info.entity)
+                if (agentId == null || (entityType == "Agent" && entityId == agentId)) {
+                    collected += AuditLogVm(
+                        entityType = entityType,
+                        entityId = entityId,
+                        revision = info.revisionEntity.id ?: 0,
+                        revisionType = info.revisionType.name,
+                        username = info.revisionEntity.username,
+                        timestamp = info.revisionEntity.timestamp?.let { Instant.ofEpochMilli(it) },
+                        payload = toSafePayload(info.entity),
+                    )
+                }
+            }
+        }
+
+        collect(com.ntgjvmagent.orchestrator.entity.agent.Agent::class.java, "Agent")
+        collect(com.ntgjvmagent.orchestrator.entity.Tool::class.java, "Tool")
+        collect(com.ntgjvmagent.orchestrator.entity.ConversationEntity::class.java, "Conversation")
+        collect(com.ntgjvmagent.orchestrator.entity.SystemSettingEntity::class.java, "SystemSetting")
+
+        return collected.sortedByDescending { it.revision }
+    }
+
+    private fun extractId(entity: Any?): UUID? =
+        when (entity) {
+            null -> null
+            is com.ntgjvmagent.orchestrator.entity.agent.Agent -> entity.id
+            is com.ntgjvmagent.orchestrator.entity.Tool -> entity.id
+            is com.ntgjvmagent.orchestrator.entity.ConversationEntity -> entity.id
+            is com.ntgjvmagent.orchestrator.entity.SystemSettingEntity -> entity.id
+            else -> null
+        }
+
+    private fun toSafePayload(entity: Any?): Any? =
+        when (entity) {
+            null -> null
+            is com.ntgjvmagent.orchestrator.entity.agent.Agent -> mapOf(
+                "id" to entity.id,
+                "name" to entity.name,
+                "description" to entity.description,
+                "provider" to entity.provider,
+                "baseUrl" to entity.baseUrl,
+                "chatCompletionsPath" to entity.chatCompletionsPath,
+                "embeddingsPath" to entity.embeddingsPath,
+                "embeddingModel" to entity.embeddingModel,
+                "dimension" to entity.dimension,
+                "model" to entity.model,
+                "temperature" to entity.temperature,
+                "maxTokens" to entity.maxTokens,
+                "topP" to entity.topP,
+                "frequencyPenalty" to entity.frequencyPenalty,
+                "presencePenalty" to entity.presencePenalty,
+                "settings" to entity.settings,
+                "version" to entity.version,
+            )
+            is com.ntgjvmagent.orchestrator.entity.Tool -> mapOf(
+                "id" to entity.id,
+                "name" to entity.name,
+                "type" to entity.type,
+                "description" to entity.description,
+                "definition" to entity.definition,
+                "connectionConfig" to entity.connectionConfig,
+                "baseUrl" to entity.baseUrl,
+            )
+            is com.ntgjvmagent.orchestrator.entity.ConversationEntity -> mapOf(
+                "id" to entity.id,
+                "title" to entity.title,
+                "status" to entity.status,
+                "isActive" to entity.isActive,
+            )
+            is com.ntgjvmagent.orchestrator.entity.SystemSettingEntity -> mapOf(
+                "id" to entity.id,
+                "siteName" to entity.siteName,
+                "maintenanceMode" to entity.maintenanceMode,
+                "maximumUser" to entity.maximumUser,
+                "sessionTimeout" to entity.sessionTimeout,
+                "maximumSizeFileUpload" to entity.maximumSizeFileUpload,
+                "allowedFileTypes" to entity.allowedFileTypes,
+                "userRegistration" to entity.userRegistration,
+                "emailVerification" to entity.emailVerification,
+            )
+            else -> null
+        }
 }
 
 data class RevisionInfo<T>(
     val entity: T,
     val revisionEntity: RevisionEntity,
     val revisionType: RevisionType,
+)
+
+data class AuditLogVm(
+    val entityType: String,
+    val entityId: UUID?,
+    val revision: Int,
+    val revisionType: String,
+    val username: String?,
+    val timestamp: Instant?,
+    val payload: Any?,
 )

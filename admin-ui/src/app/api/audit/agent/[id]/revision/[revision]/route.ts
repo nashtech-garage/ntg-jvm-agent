@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SERVER_CONFIG } from '@/constants/site-config';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/libs/auth';
+import { authOptions } from '@/libs/auth-options';
 
 export async function GET(
   req: NextRequest,

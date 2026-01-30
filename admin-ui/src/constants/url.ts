@@ -27,6 +27,8 @@ export const API_PATH = {
   AUDIT_AGENT_REVISION: (id: string, revision: number) =>
     `/api/audit/agent/${id}/revision/${revision}`,
   AUDIT_AGENT_ROLLBACK: (id: string) => `/api/audit/agent/${id}/rollback`,
+  AUDIT_LOGS: (agentId?: string) =>
+    agentId ? `/api/audit/logs?agentId=${encodeURIComponent(agentId)}` : '/api/audit/logs',
 } as const;
 
 export const BACKEND_PATH = {
@@ -46,4 +48,6 @@ export const BACKEND_PATH = {
   AUDIT_AGENT_HISTORY: (id: string) => `/api/v1/audit/agent/${id}/history`,
   AUDIT_AGENT_REVISION: (id: string, revision: number) => `/api/v1/audit/agent/${id}/revision/${revision}`,
   AUDIT_AGENT_ROLLBACK: (id: string) => `/api/v1/audit/agent/${id}/rollback`,
+  AUDIT_LOGS: (agentId?: string) =>
+    agentId ? `/api/v1/audit/logs?agentId=${encodeURIComponent(agentId)}` : '/api/v1/audit/logs',
 } as const;
