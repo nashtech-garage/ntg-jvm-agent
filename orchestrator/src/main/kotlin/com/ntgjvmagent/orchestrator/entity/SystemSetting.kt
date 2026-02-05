@@ -8,9 +8,8 @@ import org.hibernate.envers.Audited
 
 @Entity
 @Table(name = "system_setting")
-data class SystemSetting(
 @Audited
-data class SystemSettingEntity(
+data class SystemSetting(
     @Column(name = "site_name")
     var siteName: String,
     @Column(name = "maximum_user")

@@ -1,7 +1,7 @@
 package com.ntgjvmagent.orchestrator.controller
 
-import com.ntgjvmagent.orchestrator.entity.ConversationEntity
-import com.ntgjvmagent.orchestrator.entity.SystemSettingEntity
+import com.ntgjvmagent.orchestrator.entity.Conversation
+import com.ntgjvmagent.orchestrator.entity.SystemSetting
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
 import com.ntgjvmagent.orchestrator.service.AgentRollbackService
@@ -9,6 +9,7 @@ import com.ntgjvmagent.orchestrator.service.AuditService
 import com.ntgjvmagent.orchestrator.service.AuditLogVm
 import com.ntgjvmagent.orchestrator.service.RevisionInfo
 import com.ntgjvmagent.orchestrator.viewmodel.RollbackAgentRequestVm
+import com.ntgjvmagent.orchestrator.dto.AuditHistoryResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
@@ -122,7 +123,7 @@ class AuditController(
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get all revisions for a conversation")
     fun getConversationRevisions(@PathVariable id: UUID): ResponseEntity<List<Number>> {
-        val revisions = auditService.getRevisions(ConversationEntity::class.java, id)
+        val revisions = auditService.getRevisions(Conversation::class.java, id)
         return ResponseEntity.ok(revisions)
     }
 
@@ -130,7 +131,7 @@ class AuditController(
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for a conversation")
     fun getConversationHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
-        val history = auditService.getRevisionHistory(ConversationEntity::class.java, id)
+        val history = auditService.getRevisionHistory(Conversation::class.java, id)
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
@@ -138,7 +139,7 @@ class AuditController(
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all conversations")
     fun getAllConversationHistory(): ResponseEntity<List<AuditHistoryResponse>> {
-        val history = auditService.getRevisionHistory(ConversationEntity::class.java)
+        val history = auditService.getRevisionHistory(Conversation::class.java)
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
@@ -146,7 +147,7 @@ class AuditController(
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for system settings")
     fun getSystemSettingHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
-        val history = auditService.getRevisionHistory(SystemSettingEntity::class.java, id)
+        val history = auditService.getRevisionHistory(SystemSetting::class.java, id)
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
@@ -164,7 +165,7 @@ class AuditController(
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all system settings")
     fun getAllSystemSettingHistory(): ResponseEntity<List<AuditHistoryResponse>> {
-        val history = auditService.getRevisionHistory(SystemSettingEntity::class.java)
+        val history = auditService.getRevisionHistory(SystemSetting::class.java)
         return ResponseEntity.ok(history.map { it.toResponse() })
     }
 
@@ -184,9 +185,3 @@ class AuditController(
         )
     }
 }
-
-data class AuditHistoryResponse(
-    val revision: Int,
-    val revisionType: String,
-    val entity: Any?,
-)

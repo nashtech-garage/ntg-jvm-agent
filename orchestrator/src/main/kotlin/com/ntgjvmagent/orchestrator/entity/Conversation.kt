@@ -12,9 +12,8 @@ import org.hibernate.envers.NotAudited
 
 @Entity
 @Table(name = "conversation")
-data class Conversation(
 @Audited
-data class ConversationEntity(
+data class Conversation(
     @Column(columnDefinition = "TEXT")
     var title: String,
     @Column(name = "is_active")
@@ -25,7 +24,6 @@ data class ConversationEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    val messages: MutableList<ChatMessage> = mutableListOf(),
     @NotAudited
-    val messages: MutableList<ChatMessageEntity> = mutableListOf(),
+    val messages: MutableList<ChatMessage> = mutableListOf()
 ) : UserAuditedEntity()
