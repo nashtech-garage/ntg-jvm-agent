@@ -1,5 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.entity.Conversation
+import com.ntgjvmagent.orchestrator.entity.SystemSetting
 import com.ntgjvmagent.orchestrator.entity.audit.RevisionEntity
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -80,7 +82,7 @@ class AuditService(
             .createQuery()
             .forRevisionsOfEntity(entityClass, false, true)
             .add(AuditEntity.id().eq(entityId))
-            // Lưu ý: field timestamp trong RevisionEntity được map vào column revtstmp
+            // Note: the RevisionEntity timestamp is mapped to the "revtstmp" column.
             .add(AuditEntity.revisionProperty("revtstmp").ge(startTime.toEpochMilli()))
             .add(AuditEntity.revisionProperty("revtstmp").le(endTime.toEpochMilli()))
             .addOrder(AuditEntity.revisionNumber().desc())
@@ -162,8 +164,8 @@ class AuditService(
 
         collect(com.ntgjvmagent.orchestrator.entity.agent.Agent::class.java, "Agent")
         collect(com.ntgjvmagent.orchestrator.entity.Tool::class.java, "Tool")
-        collect(com.ntgjvmagent.orchestrator.entity.ConversationEntity::class.java, "Conversation")
-        collect(com.ntgjvmagent.orchestrator.entity.SystemSettingEntity::class.java, "SystemSetting")
+        collect(Conversation::class.java, "Conversation")
+        collect(SystemSetting::class.java, "SystemSetting")
 
         return collected.sortedByDescending { it.revision }
     }
@@ -173,8 +175,8 @@ class AuditService(
             null -> null
             is com.ntgjvmagent.orchestrator.entity.agent.Agent -> entity.id
             is com.ntgjvmagent.orchestrator.entity.Tool -> entity.id
-            is com.ntgjvmagent.orchestrator.entity.ConversationEntity -> entity.id
-            is com.ntgjvmagent.orchestrator.entity.SystemSettingEntity -> entity.id
+            is Conversation -> entity.id
+            is SystemSetting -> entity.id
             else -> null
         }
 
@@ -188,9 +190,6 @@ class AuditService(
                 "provider" to entity.provider,
                 "baseUrl" to entity.baseUrl,
                 "chatCompletionsPath" to entity.chatCompletionsPath,
-                "embeddingsPath" to entity.embeddingsPath,
-                "embeddingModel" to entity.embeddingModel,
-                "dimension" to entity.dimension,
                 "model" to entity.model,
                 "temperature" to entity.temperature,
                 "maxTokens" to entity.maxTokens,
@@ -209,13 +208,12 @@ class AuditService(
                 "connectionConfig" to entity.connectionConfig,
                 "baseUrl" to entity.baseUrl,
             )
-            is com.ntgjvmagent.orchestrator.entity.ConversationEntity -> mapOf(
+            is Conversation -> mapOf(
                 "id" to entity.id,
                 "title" to entity.title,
-                "status" to entity.status,
                 "isActive" to entity.isActive,
             )
-            is com.ntgjvmagent.orchestrator.entity.SystemSettingEntity -> mapOf(
+            is SystemSetting -> mapOf(
                 "id" to entity.id,
                 "siteName" to entity.siteName,
                 "maintenanceMode" to entity.maintenanceMode,
