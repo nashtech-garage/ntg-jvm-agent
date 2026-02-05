@@ -4,12 +4,9 @@ import com.ntgjvmagent.orchestrator.entity.Conversation
 import com.ntgjvmagent.orchestrator.entity.SystemSetting
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.Agent
-import com.ntgjvmagent.orchestrator.service.AgentRollbackService
 import com.ntgjvmagent.orchestrator.service.AuditService
 import com.ntgjvmagent.orchestrator.service.AuditLogVm
 import com.ntgjvmagent.orchestrator.service.RevisionInfo
-import com.ntgjvmagent.orchestrator.viewmodel.RollbackAgentRequestVm
-import com.ntgjvmagent.orchestrator.dto.AuditHistoryResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
@@ -17,8 +14,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -30,7 +25,6 @@ import java.util.UUID
 @Tag(name = "Audit", description = "Entity audit history and revision tracking")
 class AuditController(
     private val auditService: AuditService,
-    private val agentRollbackService: AgentRollbackService,
 ) {
 
     @GetMapping("/agent/{id}/revisions")
@@ -44,17 +38,17 @@ class AuditController(
     @GetMapping("/agent/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for an agent")
-    fun getAgentHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getAgentHistory(@PathVariable id: UUID): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Agent::class.java, id)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/agent/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all agents")
-    fun getAllAgentHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getAllAgentHistory(): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Agent::class.java)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/agent/{id}/revision/{revision}")
@@ -75,9 +69,9 @@ class AuditController(
         @PathVariable id: UUID,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startTime: Instant,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endTime: Instant,
-    ): ResponseEntity<List<AuditHistoryResponse>> {
+    ): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistoryBetween(Agent::class.java, id, startTime, endTime)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/tool/{id}/revisions")
@@ -91,32 +85,17 @@ class AuditController(
     @GetMapping("/tool/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for a tool")
-    fun getToolHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getToolHistory(@PathVariable id: UUID): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Tool::class.java, id)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/tool/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all tools")
-    fun getAllToolHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getAllToolHistory(): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Tool::class.java)
-        return ResponseEntity.ok(history.map { it.toResponse() })
-    }
-
-    @PostMapping("/agent/{id}/rollback")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Rollback agent to revision (Envers)")
-    fun rollbackAgent(
-        @PathVariable id: UUID,
-        @RequestBody request: RollbackAgentRequestVm,
-    ): ResponseEntity<Agent> {
-        val rolledBack = agentRollbackService.rollbackAgentToRevision(
-            agentId = id,
-            targetRevision = request.revision,
-            includeSecrets = request.includeSecrets,
-        )
-        return ResponseEntity.ok(rolledBack)
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/conversation/{id}/revisions")
@@ -130,25 +109,25 @@ class AuditController(
     @GetMapping("/conversation/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for a conversation")
-    fun getConversationHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getConversationHistory(@PathVariable id: UUID): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Conversation::class.java, id)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/conversation/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all conversations")
-    fun getAllConversationHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getAllConversationHistory(): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(Conversation::class.java)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/system-setting/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for system settings")
-    fun getSystemSettingHistory(@PathVariable id: UUID): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getSystemSettingHistory(@PathVariable id: UUID): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(SystemSetting::class.java, id)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/logs")
@@ -164,9 +143,9 @@ class AuditController(
     @GetMapping("/system-setting/history")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get complete audit history for all system settings")
-    fun getAllSystemSettingHistory(): ResponseEntity<List<AuditHistoryResponse>> {
+    fun getAllSystemSettingHistory(): ResponseEntity<List<Map<String, Any?>>> {
         val history = auditService.getRevisionHistory(SystemSetting::class.java)
-        return ResponseEntity.ok(history.map { it.toResponse() })
+        return ResponseEntity.ok(history.map { it.toMap() })
     }
 
     @GetMapping("/revision/{revision}")
@@ -177,11 +156,11 @@ class AuditController(
         return ResponseEntity.ok(entities)
     }
 
-    private fun <T> RevisionInfo<T>.toResponse(): AuditHistoryResponse {
-        return AuditHistoryResponse(
-            revision = this.revisionEntity.id ?: 0,
-            revisionType = this.revisionType.name,
-            entity = this.entity,
+    private fun <T> RevisionInfo<T>.toMap(): Map<String, Any?> {
+        return mapOf(
+            "revision" to (this.revisionEntity.id ?: 0),
+            "revisionType" to (this.revisionType.name),
+            "entity" to (this.entity),
         )
     }
 }
