@@ -8,10 +8,13 @@ import jakarta.persistence.Entity
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.envers.Audited
+import org.hibernate.envers.NotAudited
 import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "tool")
+@Audited
 data class Tool(
     @Column(nullable = false, length = 100)
     var name: String,
@@ -27,8 +30,10 @@ data class Tool(
     @Column(name = "connection_config", columnDefinition = "jsonb")
     var connectionConfig: Map<String, Any>? = null,
     @Column(name = "base_url")
+    @NotAudited
     var baseUrl: String? = null,
 ) : SoftDeletableEntity() {
     @OneToMany(mappedBy = "tool", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @NotAudited
     var agents: MutableSet<AgentTool> = mutableSetOf()
 }
