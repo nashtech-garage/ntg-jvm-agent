@@ -17,6 +17,9 @@ export const API_PATH = {
     const query = params.toString();
     return query ? `/api/agents?${query}` : '/api/agents';
   },
+  MODEL_PROVIDERS: '/api/model-providers',
+  PROVIDER_MODELS: (providerId: string, type: 'chat' | 'embedding') =>
+    `/api/model-providers/${providerId}/models?type=${type}`,
   USER_BY_ID: (id: string | number) => `/api/users/${id}`,
 } as const;
 
