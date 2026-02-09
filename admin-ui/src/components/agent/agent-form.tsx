@@ -9,7 +9,7 @@ import {
 } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
@@ -29,6 +29,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 import { AgentFormParams } from '@/types/agent';
+import { useModelProviders } from '@/hooks/agent/use-model-providers';
+import { useProviderModels } from '@/hooks/agent/use-provider-models';
+import { ProviderSelect } from './provider-select';
+import { ModelSelect, ModelTextInput } from './model-select';
+import { EmbeddingSuggestions } from './embedding-suggestions';
 
 import type * as monaco from 'monaco-editor';
 import dynamic from 'next/dynamic';
@@ -46,6 +51,7 @@ const formSchema = z.object({
   apiKey: z.string().min(1, 'API Key is required'),
   baseUrl: z.string().min(1, 'Base URL is required'),
   chatCompletionsPath: z.string().min(1, 'Chat Completions Path is required'),
+  embeddingModel: z.string().optional(),
   temperature: z.number().min(0).max(2),
   maxTokens: z.number().min(1),
   topP: z.number().min(0).max(1),
@@ -69,6 +75,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
       apiKey: '',
       baseUrl: '',
       chatCompletionsPath: '/v1/chat/completions',
+      embeddingModel: '',
       temperature: 0.7,
       maxTokens: 2048,
       topP: 1,
@@ -78,8 +85,78 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
     },
   });
 
+  const provider = form.watch('provider');
+  const [baseUrlDirty, setBaseUrlDirty] = useState(false);
+  const hasAppliedDefaultsRef = useRef(false);
+
+  const { providers, defaultsMap } = useModelProviders();
+
+  const {
+    models: chatModels,
+    isLoading: isChatModelsLoading,
+    error: chatModelsError,
+  } = useProviderModels(!provider ? null : provider, 'chat');
+
+  const {
+    models: embeddingModels,
+    isLoading: isEmbeddingModelsLoading,
+    error: embeddingModelsError,
+  } = useProviderModels(!provider ? null : provider, 'embedding');
+
+  const providerOptions = useMemo(
+    () => [...providers].sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [providers]
+  );
+
+  useEffect(() => {
+    if (!provider) return;
+
+    const isFirstRun = !hasAppliedDefaultsRef.current;
+    if (isFirstRun && initialValues?.provider === provider) {
+      hasAppliedDefaultsRef.current = true;
+      return;
+    }
+
+    hasAppliedDefaultsRef.current = true;
+
+    form.resetField('model');
+    form.resetField('embeddingModel');
+
+    const defaults = defaultsMap.get(provider);
+    if (defaults) {
+      if (!baseUrlDirty) {
+        form.setValue('baseUrl', defaults.baseUrl);
+      }
+      form.setValue('chatCompletionsPath', defaults.chatCompletionsPath);
+
+      if (defaults.embeddingModel) {
+        form.setValue('embeddingModel', defaults.embeddingModel);
+      }
+    }
+  }, [provider, defaultsMap, form, baseUrlDirty, initialValues]);
+
   // Detect if it's create or edit
   const isEdit = !!initialValues?.id;
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    if (chatModels.length && !chatModels.some((model) => model.name === values.model)) {
+      form.setError('model', { message: 'Model không hợp lệ cho provider này' });
+      return;
+    }
+
+    if (
+      values.embeddingModel &&
+      embeddingModels.length &&
+      !embeddingModels.some((model) => model.name === values.embeddingModel)
+    ) {
+      form.setError('embeddingModel', {
+        message: 'Embedding model không hợp lệ cho provider này',
+      });
+      return;
+    }
+
+    await onSubmit(values);
+  });
 
   return (
     <div className="space-y-6">
@@ -92,7 +169,7 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
 
         <CardContent>
           <Form {...form}>
-            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <Tabs defaultValue="general">
                 <TabsList>
                   <TabsTrigger value="general">General</TabsTrigger>
@@ -146,15 +223,58 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                 {/* ------------------- PROVIDER ------------------- */}
                 <TabsContent value="provider" className="space-y-4 pt-4">
                   <TwoColumn>
-                    <TextField<AgentFormValues> form={form} name="provider" label="Provider" />
-                    <TextField<AgentFormValues> form={form} name="baseUrl" label="Base URL" />
+                    <FormField
+                      control={form.control}
+                      name="provider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Provider</FormLabel>
+                          <FormControl>
+                            <ProviderSelect
+                              value={field.value}
+                              onChange={(val) => {
+                                field.onChange(val);
+                                setBaseUrlDirty(false);
+                              }}
+                              providers={providerOptions}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="baseUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Base URL</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              onChange={(e) => {
+                                setBaseUrlDirty(true);
+                                field.onChange(e.target.value);
+                              }}
+                            />
+                          </FormControl>
+                          <p className="text-sm text-muted-foreground">
+                            Tự điền theo provider, có thể chỉnh sửa
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </TwoColumn>
+
                   <TextField<AgentFormValues>
                     form={form}
                     name="apiKey"
                     label="API Key"
                     type="password"
                   />
+
                   <TextField<AgentFormValues>
                     form={form}
                     name="chatCompletionsPath"
@@ -166,7 +286,31 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
                 <TabsContent value="model" className="space-y-6 pt-4">
                   {/* ------------------- Provider Models ------------------- */}
                   <h3 className="text-lg font-semibold">Provider Models</h3>
-                  <TextField<AgentFormValues> form={form} name="model" label="Model" />
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Model</FormLabel>
+                        <FormControl>
+                          <ModelSelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            models={chatModels}
+                            isLoading={isChatModelsLoading}
+                            error={chatModelsError as Error | undefined}
+                            disabled={!provider}
+                          />
+                        </FormControl>
+                        {!isChatModelsLoading && !chatModels.length && !chatModelsError && (
+                          <p className="text-sm text-muted-foreground">
+                            Không có model cho provider này.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {/* ------------------- Generation Parameters ------------------- */}
                   <h3 className="text-lg font-semibold">Generation Parameters</h3>
@@ -202,6 +346,29 @@ export default function AgentForm({ onSubmit, initialValues }: Readonly<AgentFor
 
                   {/* ------------------- Advanced Settings ------------------- */}
                   <h3 className="text-lg font-semibold">Advanced Settings</h3>
+
+                  <FormField
+                    control={form.control}
+                    name="embeddingModel"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Embedding Model (tuỳ chọn)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Nhập embedding model nếu cần" />
+                        </FormControl>
+                        <EmbeddingSuggestions
+                          suggestions={embeddingModels}
+                          onSelect={(value) => form.setValue('embeddingModel', value, { shouldDirty: true })}
+                          isVisible={!isEmbeddingModelsLoading && !embeddingModelsError}
+                        />
+                        {embeddingModelsError && (
+                          <p className="text-sm text-destructive">Không tải được gợi ý embedding.</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="settings"
