@@ -6,9 +6,11 @@ import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant
+import io.micrometer.observation.ObservationRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.ChatClientResponse
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.core.io.InputStreamResource
@@ -24,6 +26,8 @@ class ChatStreamService(
     private val dynamicChatModelService: DynamicChatModelService,
     private val callAdvisorRegistry: CallAdvisorRegistry,
     private val tokenFacade: TokenAccountingFacade,
+    private val observationRegistry: ObservationRegistry,
+    private val toolCallingAdvisorBuilder: ToolCallingAdvisor.Builder<*>,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -83,7 +87,7 @@ class ChatStreamService(
                 ${Constant.SYSTEM_PROMPT}
                 ${Constant.SEARCH_TOOL_INSTRUCTION}
                 """.trimIndent(),
-            ).toolCallbacks(
+            ).tools(
                 toolFacade.createToolCallbacks(
                     userId = userId,
                     agentId = request.agentId,
@@ -149,7 +153,14 @@ class ChatStreamService(
             }.thenReturn(Unit)
 
     private fun buildChatClient(agentId: UUID): ChatClient =
-        ChatClient.builder(dynamicChatModelService.getChatModel(agentId)).build()
+        ChatClient
+            .builder(
+                dynamicChatModelService.getChatModel(agentId),
+                observationRegistry,
+                null,
+                null,
+                toolCallingAdvisorBuilder,
+            ).build()
 
     private fun attachUserInput(
         u: ChatClient.PromptUserSpec,

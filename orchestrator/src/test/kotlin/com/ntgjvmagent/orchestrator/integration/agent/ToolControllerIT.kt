@@ -1,17 +1,23 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ninjasquad.springmockk.MockkBean
 import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
+import com.ntgjvmagent.orchestrator.service.McpToolDiscovery
 import com.ntgjvmagent.orchestrator.support.SoftDeleteAssertions.assertSoftDeleted
 import com.ntgjvmagent.orchestrator.utils.AuthType
 import com.ntgjvmagent.orchestrator.utils.Constant
+import io.mockk.every
+import io.mockk.mockk
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.ai.tool.ToolCallback
+import org.springframework.ai.tool.definition.ToolDefinition
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -22,8 +28,18 @@ class ToolControllerIT
         private val repository: ToolRepository,
         private val entityManager: EntityManager,
     ) : BaseIntegrationTest() {
+        @MockkBean
+        lateinit var mcpToolDiscovery: McpToolDiscovery
+
         @BeforeEach
         fun setup() {
+            val definition = mockk<ToolDefinition>()
+            every { definition.name() } returns "getCurrentDatetime"
+            every { definition.description() } returns "Get the current date and time"
+            every { definition.inputSchema() } returns "{\"type\":\"object\",\"properties\":{}}"
+            val callback = mockk<ToolCallback>()
+            every { callback.toolDefinition } returns definition
+            every { mcpToolDiscovery.discover(any(), any(), any(), any()) } returns listOf(callback)
             repository.deleteAll()
         }
 
@@ -35,9 +51,9 @@ class ToolControllerIT
                 )
             val request =
                 ToolRequestDto(
-                    baseUrl = "https://docs.mcp.cloudflare.com",
-                    endpoint = "/sse",
-                    transportType = "SSE",
+                    baseUrl = "http://localhost:19003",
+                    endpoint = "/mcp",
+                    transportType = "STREAMABLE",
                     authorization = auth,
                 )
 

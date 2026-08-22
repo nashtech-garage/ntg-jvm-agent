@@ -4,7 +4,6 @@ import com.ntgjvmagent.orchestrator.model.ChatModelConfig
 import com.ntgjvmagent.orchestrator.model.ProviderType
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.model.ChatModel
-import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.ai.ollama.api.OllamaApi
 import org.springframework.ai.ollama.api.OllamaChatOptions
@@ -22,7 +21,6 @@ import org.springframework.web.reactive.function.client.WebClient
  */
 @Service
 class OllamaChatModelHandler(
-    private val toolCallingManager: ToolCallingManager,
     private val noRetryTemplate: RetryTemplate,
     private val observationRegistry: ObservationRegistry,
 ) : ChatModelHandler {
@@ -52,8 +50,7 @@ class OllamaChatModelHandler(
         return OllamaChatModel
             .builder()
             .ollamaApi(ollamaApi)
-            .defaultOptions(optionsBuilder.build())
-            .toolCallingManager(toolCallingManager)
+            .options(optionsBuilder.build())
             .retryTemplate(noRetryTemplate)
             .observationRegistry(observationRegistry)
             .build()

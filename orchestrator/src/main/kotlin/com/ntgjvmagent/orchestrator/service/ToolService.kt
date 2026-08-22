@@ -1,7 +1,6 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.ntgjvmagent.orchestrator.dto.ExternalToolDto
 import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
@@ -9,28 +8,24 @@ import com.ntgjvmagent.orchestrator.dto.response.ToolResponseDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
-import com.ntgjvmagent.orchestrator.utils.AuthType
 import com.ntgjvmagent.orchestrator.utils.Constant
 import com.ntgjvmagent.orchestrator.utils.McpClientTransportType
-import io.modelcontextprotocol.client.McpClient
-import io.modelcontextprotocol.client.McpSyncClient
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
-import io.modelcontextprotocol.spec.McpClientTransport
 import io.modelcontextprotocol.spec.McpError
 import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
-import org.springframework.ai.mcp.SyncMcpToolCallbackProvider
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.net.http.HttpRequest
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
 @Service
 class ToolService(
     private val repo: ToolRepository,
     private val objectMapper: ObjectMapper,
+    private val mcpToolDiscovery: McpToolDiscovery,
 ) {
     private val logger = LoggerFactory.getLogger(ToolService::class.java)
 
@@ -49,8 +44,18 @@ class ToolService(
     fun create(request: ToolRequestDto) {
         val toolCallback =
             try {
-                initializeToolCallback(request.baseUrl, request.endpoint, request.authorization)
+                mcpToolDiscovery.discover(
+                    request.baseUrl,
+                    request.endpoint,
+                    request.authorization,
+                    parseTransportType(request.transportType),
+                )
+            } catch (e: BadRequestException) {
+                throw e
             } catch (e: McpError) {
+                logger.error(e.message)
+                throw BadRequestException("Verification failed, MCP server info is incorrect")
+            } catch (e: IllegalStateException) {
                 logger.error(e.message)
                 throw BadRequestException("Verification failed, MCP server info is incorrect")
             }
@@ -138,80 +143,37 @@ class ToolService(
         }
     }
 
-    fun loadExternalToolCallbackFromDb(): List<ToolCallback> {
-        val externalTools = repo.findActiveExternalTools()
-        val toolCallbacks: MutableList<ToolCallback> = mutableListOf()
-        for (tool in externalTools) {
-            val connectionConfig = tool.getConfig()
-            // Current only support SSE
-            if (McpClientTransportType.SSE.name != connectionConfig["transportType"]) {
-                continue
-            }
+    fun loadExternalToolCallbackFromDb(): List<ToolCallback> =
+        repo.findActiveExternalTools().flatMap(::discoverExternalTool)
 
-            val authorization =
-                objectMapper
-                    .convertValue(
-                        connectionConfig["authorization"],
-                        object : TypeReference<AuthenticationRequestDto>() {},
-                    )
-
-            val tools =
-                try {
-                    initializeToolCallback(tool.getBaseUrl(), connectionConfig["endpoint"] as String, authorization)
-                } catch (e: McpError) {
-                    logger.error(e.message)
+    private fun discoverExternalTool(tool: ExternalToolDto): List<ToolCallback> {
+        val connectionConfig = tool.getConfig()
+        val transportType =
+            runCatching { parseTransportType(connectionConfig["transportType"] as String) }
+                .getOrElse {
+                    logger.warn("Skipping MCP connection with unsupported transport: {}", it.message)
                     return emptyList()
                 }
-            toolCallbacks.addAll(tools)
+        val authorization =
+            objectMapper.convertValue(
+                connectionConfig["authorization"],
+                object : TypeReference<AuthenticationRequestDto>() {},
+            )
+
+        return runCatching {
+            mcpToolDiscovery.discover(
+                tool.getBaseUrl(),
+                connectionConfig["endpoint"] as String,
+                authorization,
+                transportType,
+            )
+        }.getOrElse {
+            logger.warn("Skipping unavailable MCP connection: {}", it.message)
+            emptyList()
         }
-
-        return toolCallbacks
     }
 
-    private fun initializeToolCallback(
-        baseUrl: String,
-        endpoint: String,
-        authorization: AuthenticationRequestDto,
-    ): List<ToolCallback> {
-        val transport = buildHttpClientTransport(baseUrl, endpoint, authorization)
-        val mcpSyncClient =
-            McpClient
-                .sync(
-                    transport,
-                ).build()
-        mcpSyncClient.initialize()
-        val mcpSyncClientList: MutableList<McpSyncClient> = mutableListOf(mcpSyncClient)
-        val mcpToolCallbacks = SyncMcpToolCallbackProvider.syncToolCallbacks(mcpSyncClientList)
-        return mcpToolCallbacks
-    }
-
-    private fun buildHttpClientTransport(
-        baseUrl: String,
-        endpoint: String,
-        authorization: AuthenticationRequestDto,
-    ): McpClientTransport {
-        val customRequestBuilder =
-            HttpRequest
-                .newBuilder()
-                .header("content-type", "application/json")
-                .header("accept", "text/event-stream")
-
-        val authMap =
-            when (authorization.type) {
-                AuthType.BEARER -> mapOf("Authorization" to "Bearer ${authorization.token}")
-                AuthType.API_KEY -> mapOf("X-API-Key" to authorization.token)
-                AuthType.CUSTOM_HEADER -> mapOf(authorization.headerName to authorization.token)
-                else -> emptyMap<String, String>()
-            }
-
-        if (authMap.isNotEmpty()) {
-            customRequestBuilder.header(authMap.keys.first(), authMap.values.first())
-        }
-
-        return HttpClientSseClientTransport
-            .builder(baseUrl)
-            .sseEndpoint(endpoint)
-            .requestBuilder(customRequestBuilder)
-            .build()
-    }
+    private fun parseTransportType(value: String): McpClientTransportType =
+        runCatching { McpClientTransportType.valueOf(value.uppercase()) }
+            .getOrElse { throw BadRequestException("Unsupported MCP transport type: $value") }
 }

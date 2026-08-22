@@ -1,17 +1,23 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
+import com.ninjasquad.springmockk.MockkBean
 import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ToolRequestDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
+import com.ntgjvmagent.orchestrator.service.McpToolDiscovery
 import com.ntgjvmagent.orchestrator.service.ToolService
 import com.ntgjvmagent.orchestrator.utils.Constant
+import io.mockk.every
+import io.mockk.mockk
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.ai.tool.ToolCallback
+import org.springframework.ai.tool.definition.ToolDefinition
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -25,10 +31,21 @@ class ToolServiceIT
         private val service: ToolService,
         private val repo: ToolRepository,
     ) : BaseIntegrationTest() {
+        @MockkBean
+        lateinit var mcpToolDiscovery: McpToolDiscovery
+
         private lateinit var tool: Tool
 
         @BeforeEach
         fun setUp() {
+            val definition = mockk<ToolDefinition>()
+            every { definition.name() } returns "getCurrentDatetime"
+            every { definition.description() } returns "Get the current date and time"
+            every { definition.inputSchema() } returns "{\"type\":\"object\",\"properties\":{}}"
+            val callback = mockk<ToolCallback>()
+            every { callback.toolDefinition } returns definition
+            every { mcpToolDiscovery.discover(any(), any(), any(), any()) } returns listOf(callback)
+
             repo.deleteAll()
             repo.flush()
             tool =
@@ -70,12 +87,13 @@ class ToolServiceIT
         fun `create should save new tool`() {
             val request =
                 ToolRequestDto(
-                    baseUrl = "https://docs.mcp.cloudflare.com",
-                    transportType = "SSE",
-                    endpoint = "/sse",
+                    baseUrl = "http://localhost:19003",
+                    transportType = "STREAMABLE",
+                    endpoint = "/mcp",
                     authorization = AuthenticationRequestDto(),
                 )
             service.create(request)
+            assertTrue(repo.findAll().any { it.name == "getCurrentDatetime" })
         }
 
         @Test
