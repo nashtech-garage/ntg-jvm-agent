@@ -172,7 +172,9 @@ class EmbeddingWorker(
         Document(
             chunk.id.toString(),
             chunk.content,
-            chunk.metadata +
+            chunk.metadata
+                .filterValues { it != null }
+                .mapValues { (_, value) -> requireNotNull(value) } +
                 mapOf(
                     "chunkId" to chunk.id.toString(),
                     "chunkOrder" to chunk.chunkOrder,

@@ -1,7 +1,5 @@
 package com.ntgjvmagent.mcpserver.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.ntgjvmagent.mcpserver.service.DatetimeTool
 import com.ntgjvmagent.mcpserver.service.SearchOnlineTool
 import org.springframework.ai.tool.ToolCallbackProvider
@@ -24,7 +22,4 @@ class McpToolConfig {
 
     @Bean
     fun restTemplate(): RestTemplate = RestTemplate()
-
-    @Bean
-    fun objectMapper(): ObjectMapper = jacksonObjectMapper()
 }

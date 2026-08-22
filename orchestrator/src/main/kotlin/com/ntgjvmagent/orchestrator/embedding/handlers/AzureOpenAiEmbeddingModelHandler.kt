@@ -1,19 +1,14 @@
 package com.ntgjvmagent.orchestrator.embedding.handlers
 
-import com.azure.ai.openai.OpenAIClientBuilder
-import com.azure.core.credential.AzureKeyCredential
-import com.azure.core.http.policy.FixedDelayOptions
-import com.azure.core.http.policy.RetryOptions
 import com.ntgjvmagent.orchestrator.config.LlmProvidersProperties
 import com.ntgjvmagent.orchestrator.embedding.config.EmbeddingModelConfig
 import com.ntgjvmagent.orchestrator.model.ProviderType
 import io.micrometer.observation.ObservationRegistry
-import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingModel
-import org.springframework.ai.azure.openai.AzureOpenAiEmbeddingOptions
 import org.springframework.ai.document.MetadataMode
 import org.springframework.ai.embedding.EmbeddingModel
+import org.springframework.ai.openai.OpenAiEmbeddingModel
+import org.springframework.ai.openai.OpenAiEmbeddingOptions
 import org.springframework.stereotype.Service
-import java.time.Duration
 
 @Service
 class AzureOpenAiEmbeddingModelHandler(
@@ -28,34 +23,22 @@ class AzureOpenAiEmbeddingModelHandler(
                 "Provider configuration for AZURE_OPENAI is missing under llm.providers"
             }
 
-        // Disable retries explicitly
-        val retryOptions =
-            RetryOptions(
-                FixedDelayOptions(
-                    0,
-                    Duration.ZERO,
-                ),
-            ).setShouldRetryCondition { false }
-
-        val client =
-            OpenAIClientBuilder()
-                .credential(AzureKeyCredential(provider.apiKey))
-                .endpoint(provider.baseUrl)
-                .retryOptions(retryOptions)
-                .buildClient()
-
         val options =
-            AzureOpenAiEmbeddingOptions
+            OpenAiEmbeddingOptions
                 .builder()
-                // Azure OpenAI uses DEPLOYMENT NAME, not model family
+                .baseUrl(provider.baseUrl)
+                .apiKey(provider.apiKey)
+                .azure(true)
                 .deploymentName(config.model)
+                .model(config.model)
+                .maxRetries(0)
                 .build()
 
-        return AzureOpenAiEmbeddingModel(
-            client,
-            MetadataMode.EMBED,
-            options,
-            observationRegistry,
-        )
+        return OpenAiEmbeddingModel
+            .builder()
+            .metadataMode(MetadataMode.EMBED)
+            .options(options)
+            .observationRegistry(observationRegistry)
+            .build()
     }
 }

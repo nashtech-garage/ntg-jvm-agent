@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.integration
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.entity.User
 import com.ntgjvmagent.orchestrator.integration.config.AsyncTestConfig
 import com.ntgjvmagent.orchestrator.integration.config.DisableSchedulingConfig
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.springframework.ai.mcp.client.common.autoconfigure.McpClientAutoConfiguration
 import org.springframework.ai.mcp.client.common.autoconfigure.McpToolCallbackAutoConfiguration
-import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -37,6 +35,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multi
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import reactor.core.scheduler.Schedulers
+import tools.jackson.databind.ObjectMapper
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -44,7 +43,6 @@ import reactor.core.scheduler.Schedulers
     exclude = [
         McpClientAutoConfiguration::class,
         McpToolCallbackAutoConfiguration::class,
-        ToolCallingAutoConfiguration::class,
     ],
 )
 @AutoConfigureMockMvc
