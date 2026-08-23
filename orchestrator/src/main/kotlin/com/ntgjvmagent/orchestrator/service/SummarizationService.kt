@@ -1,16 +1,18 @@
 package com.ntgjvmagent.orchestrator.service
 
+import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant
-import org.springframework.ai.chat.prompt.Prompt
+import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
 class SummarizationService(
     private val dynamicChatModelService: DynamicChatModelService,
+    private val chatClientFactory: AgentChatClientFactory,
     private val tokenFacade: TokenAccountingFacade,
 ) {
     fun create(
@@ -73,8 +75,14 @@ class SummarizationService(
             estimatedInputTokens = estimatedInputTokens,
         )
 
-        val chatModel = dynamicChatModelService.getChatModel(agentId)
-        val response = chatModel.call(Prompt(promptText))
+        val response =
+            chatClientFactory
+                .create(agentId)
+                .prompt()
+                .user(promptText)
+                .call()
+                .chatResponse()
+                ?: ChatResponse.builder().build()
 
         val output =
             response.result

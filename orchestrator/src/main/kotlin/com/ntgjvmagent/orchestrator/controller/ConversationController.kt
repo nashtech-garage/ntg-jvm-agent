@@ -3,7 +3,10 @@ package com.ntgjvmagent.orchestrator.controller
 import com.ntgjvmagent.orchestrator.component.CurrentUserProvider
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.ConversationIntentRequestDto
+import com.ntgjvmagent.orchestrator.dto.response.ConversationIntentResponseDto
 import com.ntgjvmagent.orchestrator.service.ConversationCommandService
+import com.ntgjvmagent.orchestrator.service.ConversationIntentService
 import com.ntgjvmagent.orchestrator.service.ConversationQueryService
 import com.ntgjvmagent.orchestrator.service.ConversationStreamingService
 import com.ntgjvmagent.orchestrator.service.MessageService
@@ -32,6 +35,7 @@ class ConversationController(
     private val conversationCommandService: ConversationCommandService,
     private val conversationQueryService: ConversationQueryService,
     private val conversationStreamingService: ConversationStreamingService,
+    private val conversationIntentService: ConversationIntentService,
     private val currentUserProvider: CurrentUserProvider,
     private val messageService: MessageService,
 ) {
@@ -44,6 +48,14 @@ class ConversationController(
     ): Flux<ServerSentEvent<Any>> {
         val userId = currentUserProvider.getUserId()
         return conversationStreamingService.streamConversation(req, userId)
+    }
+
+    @PostMapping("/intent")
+    fun classifyIntent(
+        @Valid @RequestBody request: ConversationIntentRequestDto,
+    ): ResponseEntity<ConversationIntentResponseDto> {
+        val userId = currentUserProvider.getUserId()
+        return ResponseEntity.ok(conversationIntentService.classify(userId, request))
     }
 
     @GetMapping()
