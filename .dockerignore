@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+**/.DS_Store
+**/node_modules
+**/.next
+**/target
+**/data
+**/*.log

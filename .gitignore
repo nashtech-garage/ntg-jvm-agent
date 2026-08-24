@@ -33,5 +33,6 @@ build/
 .vscode/
 
 ### Environment Files ###
+.env
 .env.local
 /orchestrator/data/

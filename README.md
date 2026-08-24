@@ -24,7 +24,23 @@ This project aims to practice building a chatbot in Kotlin
 - Make sure Docker and Docker Compose are installed on your machine.
 - Update the OPEN_API_KEY value in your .env file with your GitHub personal access token.
 - Open a terminal of your choice, navigate to the ntg-jvm-agent directory, and run:
-      **docker compose up**
+      **docker compose up --build**
+
+For a faster local rebuild of only the orchestrator, reuse the JAR already verified on the host:
+
+```bash
+cd orchestrator
+./mvnw clean verify
+cd ..
+docker build \
+  --file orchestrator/Dockerfile.local \
+  --tag ghcr.io/nashtech-garage/ntg-jvm-agent-orchestrator:latest \
+  orchestrator
+docker compose up -d orchestrator
+```
+
+`Dockerfile.local` intentionally contains no Maven build stage; it consumes
+`orchestrator/target/orchestrator-*.jar` produced by the command above.
 
 ### Run Locally
 Backend:
