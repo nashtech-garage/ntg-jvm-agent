@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.component
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -12,6 +13,7 @@ class ToolExecutionFacade(
     private val agentToolRepository: AgentToolRepository,
     private val filteredToolCallbackProvider: FilteredToolCallbackProvider,
     private val globalToolCallbackProvider: GlobalToolCallbackProvider,
+    private val localToolCatalog: LocalToolCatalog,
     private val tokenMeteringService: TokenMeteringService,
 ) {
     fun createToolCallbacks(
@@ -26,9 +28,13 @@ class ToolExecutionFacade(
 
         val allCallbacks = globalToolCallbackProvider.getToolCallbacks()
 
-        return filteredToolCallbackProvider
-            .filterCallbacksByToolNames(allCallbacks, allowedToolNames)
-            .filterNotNull()
+        val assignedCallbacks =
+            filteredToolCallbackProvider
+                .filterCallbacksByToolNames(allCallbacks, allowedToolNames)
+                .filterNotNull()
+
+        return (localToolCatalog.getToolCallbacks() + assignedCallbacks)
+            .distinctBy { it.toolDefinition.name() }
             .map { callback ->
                 MeteredToolCallback(
                     delegate = callback,

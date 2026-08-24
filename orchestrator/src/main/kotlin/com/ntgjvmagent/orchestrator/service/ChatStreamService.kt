@@ -10,7 +10,7 @@ import com.ntgjvmagent.orchestrator.utils.Constant
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.ChatClientResponse
-import org.springframework.ai.chat.client.advisor.api.CallAdvisor
+import org.springframework.ai.chat.client.advisor.api.Advisor
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
@@ -71,7 +71,7 @@ class ChatStreamService(
     private fun buildSharedResponseFlux(
         userId: UUID,
         chatClient: ChatClient,
-        advisors: List<CallAdvisor>,
+        advisors: List<Advisor>,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
         correlationId: String,
@@ -85,11 +85,12 @@ class ChatStreamService(
                 ${Constant.SEARCH_TOOL_INSTRUCTION}
                 """.trimIndent(),
             ).tools(
-                toolFacade.createToolCallbacks(
-                    userId = userId,
-                    agentId = request.agentId,
-                    correlationId = correlationId,
-                ),
+                *toolFacade
+                    .createToolCallbacks(
+                        userId = userId,
+                        agentId = request.agentId,
+                        correlationId = correlationId,
+                    ).toTypedArray(),
             ).user { u ->
                 attachUserInput(u, accountingContext.inputText, request)
             }.stream()
