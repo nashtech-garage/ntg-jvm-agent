@@ -35,13 +35,13 @@ class AppListener(
                 val toolDefinition = callback.toolDefinition
                 val toolName = toolDefinition.name()
                 val tool = allToolEntities.find { it.name == toolName }
+                val definition =
+                    objectMapper
+                        .readValue(
+                            toolDefinition.inputSchema(),
+                            object : TypeReference<Map<String, Any>>() {},
+                        )
                 if (tool == null) {
-                    val definition =
-                        objectMapper
-                            .readValue(
-                                toolDefinition.inputSchema(),
-                                object : TypeReference<Map<String, Any>>() {},
-                            )
                     val toolEntity =
                         ToolMapper
                             .toEntity(
@@ -54,6 +54,10 @@ class AppListener(
                                 ),
                             )
                     toolRepo.save(toolEntity)
+                } else if (tool.description != toolDefinition.description() || tool.definition != definition) {
+                    tool.description = toolDefinition.description()
+                    tool.definition = definition
+                    toolRepo.save(tool)
                 }
             }
         }

@@ -1,29 +1,24 @@
 package com.ntgjvmagent.mcpserver.service
 
-import com.ntgjvmagent.mcpserver.utils.Constant
-import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.time.Clock
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Service
-class DatetimeTool {
+class DatetimeTool(
+    private val clock: Clock,
+) {
     @Tool(
-        description = "Return current datetime in UTC format",
+        description = "Return the current UTC datetime as an ISO-8601 timestamp",
     )
-    fun getCurrentDatetime(): ToolResponseMessage.ToolResponse {
-        val now = LocalDateTime.now(ZoneOffset.UTC)
-        return ToolResponseMessage.ToolResponse(
-            UUID.randomUUID().toString(),
-            "Result of getCurrentDatetime tool",
-            now.format(FORMATTER),
+    fun getCurrentDatetime(): CurrentDatetimeResponse =
+        CurrentDatetimeResponse(
+            datetimeUtc = Instant.now(clock).truncatedTo(ChronoUnit.SECONDS).toString(),
         )
-    }
-
-    companion object {
-        private val FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern(Constant.FULL_DATETIME_FORMAT)
-    }
 }
+
+data class CurrentDatetimeResponse(
+    val datetimeUtc: String,
+)
