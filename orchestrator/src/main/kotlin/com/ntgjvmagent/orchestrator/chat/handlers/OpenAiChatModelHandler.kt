@@ -36,7 +36,7 @@ class OpenAiChatModelHandler(
 
         config.temperature?.let { optionsBuilder.temperature(it.toDouble()) }
         config.topP?.let { optionsBuilder.topP(it.toDouble()) }
-        config.maxTokens?.let { optionsBuilder.maxTokens(it) }
+        config.maxTokens?.let { optionsBuilder.maxCompletionTokens(it) }
         config.frequencyPenalty?.let { optionsBuilder.frequencyPenalty(it.toDouble()) }
         config.presencePenalty?.let { optionsBuilder.presencePenalty(it.toDouble()) }
 

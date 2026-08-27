@@ -42,7 +42,8 @@ class ProviderMigrationTest {
             assertEquals("test-key", apiKey)
             assertEquals("test-chat", this.model)
             assertEquals(0.25, temperature)
-            assertEquals(321, maxTokens)
+            assertNull(maxTokens)
+            assertEquals(321, maxCompletionTokens)
             assertEquals(0, maxRetries)
             assertFalse(isMicrosoftFoundry)
         }
@@ -63,6 +64,7 @@ class ProviderMigrationTest {
 
         assertNull(model.options.temperature)
         assertNull(model.options.maxTokens)
+        assertNull(model.options.maxCompletionTokens)
     }
 
     @Test
