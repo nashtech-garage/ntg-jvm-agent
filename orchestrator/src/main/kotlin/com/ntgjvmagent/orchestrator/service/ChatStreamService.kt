@@ -1,9 +1,11 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
+import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.Sinks
 import java.util.UUID
 
 @Service
@@ -32,7 +35,7 @@ class ChatStreamService(
         userId: UUID,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
-    ): Flux<String> {
+    ): Flux<ChatStreamEvent> {
         val correlationId =
             accountingContext.correlationId
                 ?: error("correlationId must not be null")
@@ -40,11 +43,25 @@ class ChatStreamService(
         val chatClient = chatClientFactory.create(request.agentId)
         val advisors = callAdvisorRegistry.resolveForAgent(request.agentId)
 
+        val toolEvents = Sinks.many().unicast().onBackpressureBuffer<ChatStreamEvent.Tool>()
+        val toolCallObserver =
+            ToolCallObservingAdvisor { event ->
+                val result = toolEvents.tryEmitNext(ChatStreamEvent.Tool(event))
+                if (result.isFailure) {
+                    logger.debug(
+                        "Tool event was not emitted: result={}, toolCallId={}, phase={}",
+                        result,
+                        event.id,
+                        event.phase,
+                    )
+                }
+            }
+
         val responseFlux =
             buildSharedResponseFlux(
                 userId,
                 chatClient,
-                advisors,
+                advisors + toolCallObserver,
                 request,
                 accountingContext,
                 correlationId,
@@ -61,11 +78,17 @@ class ChatStreamService(
                 correlationId,
             )
 
-        return textStream
-            .doFinally {
-                // responseFlux is cached, accounting is late subscriber
-                accountingMono.subscribe()
-            }
+        val messageEvents: Flux<ChatStreamEvent> =
+            textStream
+                .map<ChatStreamEvent> { ChatStreamEvent.Message(it) }
+                .doFinally {
+                    toolEvents.tryEmitComplete()
+                    // responseFlux is cached, accounting is late subscriber
+                    accountingMono.subscribe()
+                }
+
+        // Subscribe to the side channel first so synchronous model responses cannot outrun it.
+        return Flux.merge(toolEvents.asFlux(), messageEvents)
     }
 
     private fun buildSharedResponseFlux(

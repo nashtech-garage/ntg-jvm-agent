@@ -1,5 +1,6 @@
 package com.ntgjvmagent.orchestrator.unit.config
 
+import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolLoopLoggingAdvisor
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
 import io.micrometer.observation.ObservationRegistry
@@ -15,7 +16,8 @@ class ToolCallingConfigTest {
         val builder = ToolCallingConfig().toolCallingAdvisorBuilder(ObservationRegistry.NOOP)
 
         assertEquals(Ordered.LOWEST_PRECEDENCE - 100, builder.advisorOrder)
-        assertTrue(builder.advisorOrder < ToolLoopLoggingAdvisor.ORDER)
+        assertTrue(builder.advisorOrder < ToolCallObservingAdvisor.ORDER)
+        assertTrue(ToolCallObservingAdvisor.ORDER < ToolLoopLoggingAdvisor.ORDER)
         assertNotNull(builder.build())
     }
 }

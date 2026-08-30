@@ -3,6 +3,8 @@ package com.ntgjvmagent.orchestrator.unit.chat
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.ntgjvmagent.orchestrator.advisor.ToolCallEvent
+import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolLoopLoggingAdvisor
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
@@ -50,6 +52,8 @@ class ToolCallingAdvisorLoopTest {
         val localToolCatalog = LocalToolCatalog(SupportPolicyTool())
         val tools = productionToolCallbacks(localToolCatalog)
         val loggingAdvisor = ToolLoopLoggingAdvisor()
+        val toolCallEvents = mutableListOf<ToolCallEvent>()
+        val observingAdvisor = ToolCallObservingAdvisor(toolCallEvents::add)
         val logAppender = attachLogAppender()
 
         val answer =
@@ -57,7 +61,7 @@ class ToolCallingAdvisorLoopTest {
                 createFactory(model, observationRegistry)
                     .create(agentId)
                     .prompt()
-                    .advisors(loggingAdvisor)
+                    .advisors(loggingAdvisor, observingAdvisor)
                     .tools(*tools.toTypedArray())
                     .user(CANONICAL_PROMPT)
                     .stream()
@@ -94,6 +98,21 @@ class ToolCallingAdvisorLoopTest {
             },
         )
         assertTrue(messages.any { it.contains("requestedToolCount=0") })
+        assertEquals(
+            listOf(
+                ToolCallEvent(
+                    id = "support-policy-call-1",
+                    name = SupportPolicyTool.TOOL_NAME,
+                    phase = ToolCallEvent.Phase.STARTED,
+                ),
+                ToolCallEvent(
+                    id = "support-policy-call-1",
+                    name = SupportPolicyTool.TOOL_NAME,
+                    phase = ToolCallEvent.Phase.COMPLETED,
+                ),
+            ),
+            toolCallEvents,
+        )
     }
 
     private fun productionToolCallbacks(localToolCatalog: LocalToolCatalog): List<ToolCallback> {

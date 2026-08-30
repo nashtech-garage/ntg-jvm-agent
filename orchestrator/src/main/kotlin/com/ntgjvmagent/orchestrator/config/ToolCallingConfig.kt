@@ -10,7 +10,7 @@ import org.springframework.core.Ordered
 @Configuration
 class ToolCallingConfig {
     companion object {
-        private const val TOOL_CALLING_ADVISOR_OFFSET = 100
+        const val TOOL_CALLING_ADVISOR_ORDER = Ordered.LOWEST_PRECEDENCE - 100
     }
 
     @Bean
@@ -23,5 +23,5 @@ class ToolCallingConfig {
                     .observationRegistry(observationRegistry)
                     .resolutionFallbackEnabled(false)
                     .build(),
-            ).advisorOrder(Ordered.LOWEST_PRECEDENCE - TOOL_CALLING_ADVISOR_OFFSET)
+            ).advisorOrder(TOOL_CALLING_ADVISOR_ORDER)
 }

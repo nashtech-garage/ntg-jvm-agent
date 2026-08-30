@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
+import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import org.slf4j.LoggerFactory
 import org.springframework.http.codec.ServerSentEvent
@@ -52,21 +53,13 @@ class ConversationStreamingService(
         // 3. Stream chat response
         // --------------------------------------------------
         val stream =
-            chatModelService
-                .call(
-                    userId = userId,
-                    request = correlatedRequest,
-                    history = recent,
-                    summary = summary,
-                ).doOnNext { token ->
-                    answerBuilder.append(token.replace("\r\n", "\n"))
-                }.map { token ->
-                    ServerSentEvent
-                        .builder<Any>()
-                        .event("message")
-                        .data(token)
-                        .build()
-                }
+            buildChatEventStream(
+                userId = userId,
+                request = correlatedRequest,
+                history = recent,
+                summary = summary,
+                answerBuilder = answerBuilder,
+            )
 
         // --------------------------------------------------
         // 4. Persist AFTER stream completes
@@ -103,6 +96,44 @@ class ConversationStreamingService(
     }
 
     // ---------------- helpers ----------------
+
+    private fun buildChatEventStream(
+        userId: UUID,
+        request: ChatRequestDto,
+        history: List<String>,
+        summary: String,
+        answerBuilder: StringBuilder,
+    ): Flux<ServerSentEvent<Any>> =
+        chatModelService
+            .call(
+                userId = userId,
+                request = request,
+                history = history,
+                summary = summary,
+            ).doOnNext { event ->
+                if (event is ChatStreamEvent.Message) {
+                    answerBuilder.append(event.content.replace("\r\n", "\n"))
+                }
+            }.map(::toServerSentEvent)
+
+    private fun toServerSentEvent(event: ChatStreamEvent): ServerSentEvent<Any> =
+        when (event) {
+            is ChatStreamEvent.Message -> {
+                ServerSentEvent
+                    .builder<Any>()
+                    .event("message")
+                    .data(event.content)
+                    .build()
+            }
+
+            is ChatStreamEvent.Tool -> {
+                ServerSentEvent
+                    .builder<Any>()
+                    .event("tool")
+                    .data(event.event)
+                    .build()
+            }
+        }
 
     private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> {
         val history =

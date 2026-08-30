@@ -4,9 +4,11 @@ import { useCallback, useRef, useState } from 'react';
 import { ChatResponse } from '@/models/chat-response';
 import { FileSelectInfo } from '@/models/file-select-info';
 import { customizeFetch } from '@/utils/custom-fetch';
+import { ToolCallEvent } from '@/models/tool-call-event';
 
 type StreamHandlers<TComplete> = {
   onToken: (token: string) => void;
+  onToolCall: (event: ToolCallEvent) => void;
   onComplete: (final: TComplete) => void;
   onError: (message: string) => void;
 };
@@ -81,6 +83,22 @@ function dispatchSseEvent<TComplete>(
         handlers.onError('Invalid completion payload');
       }
       return true;
+    }
+
+    case 'tool': {
+      if (!parsed.data) {
+        handlers.onError('Empty tool event payload');
+        return true;
+      }
+
+      try {
+        const toolCall = JSON.parse(parsed.data) as ToolCallEvent;
+        handlers.onToolCall(toolCall);
+      } catch {
+        handlers.onError('Invalid tool event payload');
+        return true;
+      }
+      return false;
     }
 
     case 'error': {
@@ -171,6 +189,7 @@ export function useChatStream() {
           reader,
           {
             onToken: handlers.onToken,
+            onToolCall: handlers.onToolCall,
             onComplete: handlers.onComplete,
             onError: handlers.onError,
           },

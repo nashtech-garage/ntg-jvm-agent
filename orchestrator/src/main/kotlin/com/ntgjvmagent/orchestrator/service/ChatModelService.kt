@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.component.PromptBuilder
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
@@ -22,7 +23,7 @@ class ChatModelService(
         request: ChatRequestDto,
         history: List<String> = emptyList(),
         summary: String = "",
-    ): Flux<String> {
+    ): Flux<ChatStreamEvent> {
         val combinedPrompt = promptBuilder.build(request, history, summary)
         val agentConfig = dynamicChatModelService.getAgentConfig(request.agentId)
 

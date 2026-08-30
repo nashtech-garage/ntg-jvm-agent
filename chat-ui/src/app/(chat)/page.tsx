@@ -17,6 +17,7 @@ import { Reaction } from '@/types/reaction';
 import { useToaster } from '@/contexts/ToasterContext';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import { customizeFetch } from '@/utils/custom-fetch';
+import { ToolCallEvent } from '@/models/tool-call-event';
 
 function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
   return {
@@ -51,6 +52,7 @@ export default function Page() {
     setActiveConversationId,
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
   const router = useRouter();
   const { showError } = useToaster();
   const hasStartedStreamingRef = useRef(false);
@@ -100,9 +102,19 @@ export default function Page() {
     setIsTyping(false);
   };
 
+  const handleToolCall = (event: ToolCallEvent) => {
+    setToolCalls((previous) => {
+      const index = previous.findIndex((toolCall) => toolCall.id === event.id);
+      if (index === -1) return [...previous, event];
+
+      return previous.map((toolCall, currentIndex) => (currentIndex === index ? event : toolCall));
+    });
+  };
+
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
     hasStartedStreamingRef.current = false;
     setIsTyping(true);
+    setToolCalls([]);
 
     // Show question immediately
     const questionMessage = buildQuestionMessage(q, files);
@@ -119,6 +131,7 @@ export default function Page() {
         },
         {
           onToken: handleTokenUpdate,
+          onToolCall: handleToolCall,
           onComplete: handleFinalResponse,
           onError: (msg: string) => {
             showError(msg);
@@ -187,6 +200,7 @@ export default function Page() {
                 isTyping={isTyping}
                 agentAvatar={selectedAgent?.avatar}
                 agentName={selectedAgent?.name}
+                toolCalls={toolCalls}
                 onReaction={handleReaction}
               />
             </div>
