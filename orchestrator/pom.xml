@@ -21,6 +21,7 @@
   <properties>
     <java.version>21</java.version>
     <spring-ai.version>2.0.1</spring-ai.version>
+    <spring-ai-session.version>0.8.0</spring-ai-session.version>
     <springdoc.version>3.0.1</springdoc.version>
     <resilience4j.version>2.3.0</resilience4j.version>
     <swagger-annotations.version>2.2.41</swagger-annotations.version>
@@ -34,6 +35,13 @@
         <groupId>org.springframework.ai</groupId>
         <artifactId>spring-ai-bom</artifactId>
         <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springaicommunity</groupId>
+        <artifactId>spring-ai-session-bom</artifactId>
+        <version>${spring-ai-session.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -145,6 +153,10 @@
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springaicommunity</groupId>
+      <artifactId>spring-ai-starter-session-jdbc</artifactId>
     </dependency>
 
     <!-- Flyway -->
