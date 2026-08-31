@@ -41,7 +41,7 @@ function cleanupStreamingMessage(
 }
 
 export default function Page() {
-  const { ask } = useChatStream();
+  const { ask, isStreaming } = useChatStream();
 
   const {
     chatMessages,
@@ -53,6 +53,7 @@ export default function Page() {
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
+  const [reasoning, setReasoning] = useState('');
   const router = useRouter();
   const { showError } = useToaster();
   const hasStartedStreamingRef = useRef(false);
@@ -111,10 +112,15 @@ export default function Page() {
     });
   };
 
+  const handleReasoning = (delta: string) => {
+    setReasoning((previous) => previous + delta);
+  };
+
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
     hasStartedStreamingRef.current = false;
     setIsTyping(true);
     setToolCalls([]);
+    setReasoning('');
 
     // Show question immediately
     const questionMessage = buildQuestionMessage(q, files);
@@ -131,6 +137,7 @@ export default function Page() {
         },
         {
           onToken: handleTokenUpdate,
+          onReasoning: handleReasoning,
           onToolCall: handleToolCall,
           onComplete: handleFinalResponse,
           onError: (msg: string) => {
@@ -201,6 +208,8 @@ export default function Page() {
                 agentAvatar={selectedAgent?.avatar}
                 agentName={selectedAgent?.name}
                 toolCalls={toolCalls}
+                reasoning={reasoning}
+                isStreaming={isStreaming}
                 onReaction={handleReaction}
               />
             </div>

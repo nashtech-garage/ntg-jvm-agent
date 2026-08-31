@@ -1,9 +1,11 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
+import com.ntgjvmagent.orchestrator.advisor.ModelReasoningObservingAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
+import com.ntgjvmagent.orchestrator.config.ChatReasoningProperties
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
@@ -28,6 +30,7 @@ class ChatStreamService(
     private val chatClientFactory: AgentChatClientFactory,
     private val callAdvisorRegistry: CallAdvisorRegistry,
     private val tokenFacade: TokenAccountingFacade,
+    private val reasoningProperties: ChatReasoningProperties,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -43,25 +46,14 @@ class ChatStreamService(
         val chatClient = chatClientFactory.create(request.agentId)
         val advisors = callAdvisorRegistry.resolveForAgent(request.agentId)
 
-        val toolEvents = Sinks.many().unicast().onBackpressureBuffer<ChatStreamEvent.Tool>()
-        val toolCallObserver =
-            ToolCallObservingAdvisor { event ->
-                val result = toolEvents.tryEmitNext(ChatStreamEvent.Tool(event))
-                if (result.isFailure) {
-                    logger.debug(
-                        "Tool event was not emitted: result={}, toolCallId={}, phase={}",
-                        result,
-                        event.id,
-                        event.phase,
-                    )
-                }
-            }
+        val activityEvents = Sinks.many().unicast().onBackpressureBuffer<ChatStreamEvent>()
+        val activityAdvisors = createActivityAdvisors(activityEvents)
 
         val responseFlux =
             buildSharedResponseFlux(
                 userId,
                 chatClient,
-                advisors + toolCallObserver,
+                advisors + activityAdvisors,
                 request,
                 accountingContext,
                 correlationId,
@@ -82,13 +74,38 @@ class ChatStreamService(
             textStream
                 .map<ChatStreamEvent> { ChatStreamEvent.Message(it) }
                 .doFinally {
-                    toolEvents.tryEmitComplete()
+                    activityEvents.tryEmitComplete()
                     // responseFlux is cached, accounting is late subscriber
                     accountingMono.subscribe()
                 }
 
         // Subscribe to the side channel first so synchronous model responses cannot outrun it.
-        return Flux.merge(toolEvents.asFlux(), messageEvents)
+        return Flux.merge(activityEvents.asFlux(), messageEvents)
+    }
+
+    private fun createActivityAdvisors(activityEvents: Sinks.Many<ChatStreamEvent>): List<Advisor> {
+        val toolCallObserver =
+            ToolCallObservingAdvisor { event ->
+                val result = activityEvents.tryEmitNext(ChatStreamEvent.Tool(event))
+                if (result.isFailure) {
+                    logger.debug(
+                        "Tool event was not emitted: result={}, toolCallId={}, phase={}",
+                        result,
+                        event.id,
+                        event.phase,
+                    )
+                }
+            }
+        if (!reasoningProperties.enabled) return listOf(toolCallObserver)
+
+        val reasoningObserver =
+            ModelReasoningObservingAdvisor { content ->
+                val result = activityEvents.tryEmitNext(ChatStreamEvent.Reasoning(content))
+                if (result.isFailure) {
+                    logger.debug("Reasoning event was not emitted: result={}", result)
+                }
+            }
+        return listOf(toolCallObserver, reasoningObserver)
     }
 
     private fun buildSharedResponseFlux(

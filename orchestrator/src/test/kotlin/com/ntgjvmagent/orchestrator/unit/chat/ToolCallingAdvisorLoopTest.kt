@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.unit.chat
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.ntgjvmagent.orchestrator.advisor.ModelReasoningObservingAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolCallEvent
 import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolLoopLoggingAdvisor
@@ -54,6 +55,8 @@ class ToolCallingAdvisorLoopTest {
         val loggingAdvisor = ToolLoopLoggingAdvisor()
         val toolCallEvents = mutableListOf<ToolCallEvent>()
         val observingAdvisor = ToolCallObservingAdvisor(toolCallEvents::add)
+        val reasoningEvents = mutableListOf<String>()
+        val reasoningAdvisor = ModelReasoningObservingAdvisor(reasoningEvents::add)
         val logAppender = attachLogAppender()
 
         val answer =
@@ -61,7 +64,7 @@ class ToolCallingAdvisorLoopTest {
                 createFactory(model, observationRegistry)
                     .create(agentId)
                     .prompt()
-                    .advisors(loggingAdvisor, observingAdvisor)
+                    .advisors(loggingAdvisor, observingAdvisor, reasoningAdvisor)
                     .tools(*tools.toTypedArray())
                     .user(CANONICAL_PROMPT)
                     .stream()
@@ -112,6 +115,13 @@ class ToolCallingAdvisorLoopTest {
                 ),
             ),
             toolCallEvents,
+        )
+        assertEquals(
+            listOf(
+                "I need the support policy before answering. ",
+                "The tool result contains the response target.",
+            ),
+            reasoningEvents,
         )
     }
 
@@ -214,7 +224,12 @@ class ToolCallingAdvisorLoopTest {
                             AssistantMessage
                                 .builder()
                                 .content("")
-                                .toolCalls(listOf(toolCall))
+                                .properties(
+                                    mapOf(
+                                        "reasoningContent" to
+                                            "I need the support policy before answering. ",
+                                    ),
+                                ).toolCalls(listOf(toolCall))
                                 .build(),
                             ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
                         ),
@@ -227,7 +242,13 @@ class ToolCallingAdvisorLoopTest {
                 listOf(
                     Generation(
                         AssistantMessage("The initial response target is 15 minutes."),
-                        ChatGenerationMetadata.builder().finishReason("stop").build(),
+                        ChatGenerationMetadata
+                            .builder()
+                            .finishReason("stop")
+                            .metadata(
+                                "thinking",
+                                "The tool result contains the response target.",
+                            ).build(),
                     ),
                 ),
             )

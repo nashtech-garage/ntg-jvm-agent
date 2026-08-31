@@ -10,4 +10,8 @@ sealed interface ChatStreamEvent {
     data class Tool(
         val event: ToolCallEvent,
     ) : ChatStreamEvent
+
+    data class Reasoning(
+        val content: String,
+    ) : ChatStreamEvent
 }

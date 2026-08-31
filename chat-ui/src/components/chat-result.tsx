@@ -11,6 +11,7 @@ import { Reaction } from '@/types/reaction';
 import clsx from 'clsx';
 import { ToolCallEvent } from '@/models/tool-call-event';
 import ToolCallStatus from '@/components/tool-call-status';
+import ReasoningStatus from '@/components/reasoning-status';
 
 export default function ChatResult({
   results,
@@ -18,6 +19,8 @@ export default function ChatResult({
   agentAvatar,
   agentName,
   toolCalls = [],
+  reasoning = '',
+  isStreaming = false,
   onReaction,
 }: Readonly<{
   results: ChatMessage[];
@@ -25,12 +28,22 @@ export default function ChatResult({
   agentAvatar?: string;
   agentName?: string;
   toolCalls?: ToolCallEvent[];
+  reasoning?: string;
+  isStreaming?: boolean;
   onReaction?: (messageId: string, reaction: Reaction) => void;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const latestResult = results.at(-1);
-  const toolCallsPrecedeLatestAnswer =
-    toolCalls.length > 0 && latestResult?.type === Constants.ANSWER_TYPE;
+  const hasAgentActivity = toolCalls.length > 0 || reasoning.length > 0;
+  const activityPrecedesLatestAnswer =
+    hasAgentActivity && latestResult?.type === Constants.ANSWER_TYPE;
+
+  const agentActivity = (
+    <div className="space-y-3">
+      <ReasoningStatus content={reasoning} isStreaming={isStreaming} />
+      <ToolCallStatus toolCalls={toolCalls} />
+    </div>
+  );
 
   const formatTime = (value: string) => {
     try {
@@ -44,7 +57,7 @@ export default function ChatResult({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [isTyping, results, toolCalls]);
+  }, [isTyping, reasoning, results, toolCalls]);
 
   if (results.length === 0) {
     return (
@@ -65,10 +78,8 @@ export default function ChatResult({
     <div className="space-y-6">
       {results.map((r) => (
         <Fragment key={r.id}>
-          {toolCallsPrecedeLatestAnswer && latestResult.id === r.id && (
-            <div className="mb-6">
-              <ToolCallStatus toolCalls={toolCalls} />
-            </div>
+          {activityPrecedesLatestAnswer && latestResult.id === r.id && (
+            <div className="mb-6">{agentActivity}</div>
           )}
           <div>
             {Constants.QUESTION_TYPE === r.type && (
@@ -141,8 +152,8 @@ export default function ChatResult({
           </div>
         </Fragment>
       ))}
-      {!toolCallsPrecedeLatestAnswer && <ToolCallStatus toolCalls={toolCalls} />}
-      {isTyping && toolCalls.length === 0 && (
+      {!activityPrecedesLatestAnswer && agentActivity}
+      {isTyping && !hasAgentActivity && (
         <div className="flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-muted shadow-sm shadow-[0_6px_14px_color-mix(in_oklab,var(--color-border)_70%,transparent)]">
           {agentAvatar ? (
             <Image

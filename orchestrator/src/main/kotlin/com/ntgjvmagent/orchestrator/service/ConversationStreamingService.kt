@@ -133,6 +133,14 @@ class ConversationStreamingService(
                     .data(event.event)
                     .build()
             }
+
+            is ChatStreamEvent.Reasoning -> {
+                ServerSentEvent
+                    .builder<Any>()
+                    .event("reasoning")
+                    .data(event.content)
+                    .build()
+            }
         }
 
     private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> {

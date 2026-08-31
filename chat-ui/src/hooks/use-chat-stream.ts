@@ -8,6 +8,7 @@ import { ToolCallEvent } from '@/models/tool-call-event';
 
 type StreamHandlers<TComplete> = {
   onToken: (token: string) => void;
+  onReasoning: (delta: string) => void;
   onToolCall: (event: ToolCallEvent) => void;
   onComplete: (final: TComplete) => void;
   onError: (message: string) => void;
@@ -66,6 +67,13 @@ function dispatchSseEvent<TComplete>(
     case 'message': {
       if (parsed.data) {
         handlers.onToken(parsed.data);
+      }
+      return false;
+    }
+
+    case 'reasoning': {
+      if (parsed.data) {
+        handlers.onReasoning(parsed.data);
       }
       return false;
     }
@@ -189,6 +197,7 @@ export function useChatStream() {
           reader,
           {
             onToken: handlers.onToken,
+            onReasoning: handlers.onReasoning,
             onToolCall: handlers.onToolCall,
             onComplete: handlers.onComplete,
             onError: handlers.onError,
