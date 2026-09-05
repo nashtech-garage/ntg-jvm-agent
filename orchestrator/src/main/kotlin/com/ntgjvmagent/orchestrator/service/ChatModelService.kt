@@ -1,11 +1,14 @@
 package com.ntgjvmagent.orchestrator.service
 
-import com.ntgjvmagent.orchestrator.component.PromptBuilder
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
+import org.springframework.ai.chat.messages.AssistantMessage
+import org.springframework.ai.chat.messages.Message
+import org.springframework.ai.chat.messages.ToolResponseMessage
+import org.springframework.ai.session.SessionService
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import java.util.UUID
@@ -14,26 +17,23 @@ import java.util.UUID
 class ChatModelService(
     private val chatStreamService: ChatStreamService,
     private val summarizationService: SummarizationService,
-    private val promptBuilder: PromptBuilder,
     private val dynamicChatModelService: DynamicChatModelService,
     private val tokenFacade: TokenAccountingFacade,
+    private val sessionService: SessionService,
 ) {
     fun call(
         userId: UUID,
+        sessionId: UUID,
         request: ChatRequestDto,
-        history: List<String> = emptyList(),
-        summary: String = "",
     ): Flux<ChatStreamEvent> {
-        val combinedPrompt = promptBuilder.build(request, history, summary)
         val agentConfig = dynamicChatModelService.getAgentConfig(request.agentId)
+        val history = loadSessionContext(sessionId, userId)
 
-        // Estimate + enforce CHAT input budget
         val estimatedInputTokens =
             tokenFacade.estimateInput(
                 model = agentConfig.model,
-                combinedPrompt = combinedPrompt,
+                userPrompt = request.question,
                 history = history,
-                summary = summary,
             )
 
         tokenFacade.assertInputBudget(
@@ -48,7 +48,7 @@ class ChatModelService(
                 agentId = request.agentId,
                 operation = TokenOperation.CHAT,
                 model = agentConfig.model,
-                inputText = combinedPrompt,
+                userInputText = request.question,
                 outputText = "",
                 estimatedInputTokens = estimatedInputTokens,
                 correlationId = request.correlationId,
@@ -56,6 +56,7 @@ class ChatModelService(
 
         return chatStreamService.stream(
             userId = userId,
+            sessionId = sessionId,
             request = request,
             accountingContext = accountingContext,
         )
@@ -68,10 +69,36 @@ class ChatModelService(
         question: String,
     ): String? = summarizationService.create(userId, agentId, correlationId, question)
 
-    fun createDynamicSummary(
+    private fun loadSessionContext(
+        sessionId: UUID,
         userId: UUID,
-        agentId: UUID,
-        correlationId: String,
-        messages: List<String>,
-    ): String = summarizationService.update(userId, agentId, correlationId, messages)
+    ): List<String> {
+        val session = sessionService.findById(sessionId.toString()) ?: return emptyList()
+        check(session.userId() == userId.toString()) {
+            "Session cannot be opened by another user"
+        }
+        return sessionService.getMessages(sessionId.toString()).map(::messageForEstimation)
+    }
+
+    private fun messageForEstimation(message: Message): String =
+        when (message) {
+            is AssistantMessage -> {
+                buildString {
+                    append(message.text)
+                    message.toolCalls.forEach { toolCall ->
+                        append('\n').append(toolCall.name()).append(' ').append(toolCall.arguments())
+                    }
+                }
+            }
+
+            is ToolResponseMessage -> {
+                message.responses.joinToString("\n") { response ->
+                    "${response.name()} ${response.responseData()}"
+                }
+            }
+
+            else -> {
+                message.text.orEmpty()
+            }
+        }
 }

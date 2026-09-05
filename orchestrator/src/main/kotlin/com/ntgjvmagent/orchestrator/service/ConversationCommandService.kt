@@ -17,6 +17,7 @@ import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVmImpl
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.ai.session.SessionService
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -29,6 +30,7 @@ class ConversationCommandService(
     private val messageRepo: ChatMessageRepository,
     private val messageMediaRepo: ChatMessageMediaRepository,
     private val userRepository: UserRepository,
+    private val sessionService: SessionService,
 ) {
     // --------------------------------------------------
     // Delete / Update
@@ -38,6 +40,15 @@ class ConversationCommandService(
     fun deleteConversation(conversationId: UUID) {
         val conversation = findConversation(conversationId)
         conversation.isActive = false
+
+        // Nothing ever flips isActive back on, so the conversation -- and with it its memory --
+        // is unreachable from here. Drop the session (its events cascade) instead of leaving it
+        // to accumulate, and clear the pointer so a stale id can never be handed out again.
+        conversation.sessionId?.let { sessionId ->
+            conversation.sessionId = null
+            sessionService.delete(sessionId.toString())
+        }
+
         conversationRepo.save(conversation)
     }
 
@@ -72,6 +83,7 @@ class ConversationCommandService(
         userId: UUID,
         chatReq: ChatRequestDto,
         answer: String,
+        sessionId: UUID,
     ): ChatResponseDto {
         val createdBy =
             userRepository.findByIdOrNull(userId)
@@ -82,6 +94,7 @@ class ConversationCommandService(
             conversationRepo.save(
                 Conversation(
                     title = "",
+                    sessionId = sessionId,
                 ).also {
                     it.createdBy = createdBy
                 },

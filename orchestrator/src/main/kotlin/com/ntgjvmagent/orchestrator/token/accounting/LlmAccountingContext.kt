@@ -8,7 +8,7 @@ data class LlmAccountingContext(
     val agentId: UUID,
     val operation: TokenOperation,
     val model: String,
-    val inputText: String,
+    val userInputText: String,
     val outputText: String,
     val estimatedInputTokens: Int,
     val correlationId: String?,

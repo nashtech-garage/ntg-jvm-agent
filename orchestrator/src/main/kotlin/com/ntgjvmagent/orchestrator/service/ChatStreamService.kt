@@ -2,6 +2,7 @@ package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
 import com.ntgjvmagent.orchestrator.advisor.ModelReasoningObservingAdvisor
+import com.ntgjvmagent.orchestrator.advisor.SuccessfulSessionRequestAdvisor
 import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
@@ -16,6 +17,7 @@ import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.ChatClientResponse
 import org.springframework.ai.chat.client.advisor.api.Advisor
 import org.springframework.ai.chat.model.ChatResponse
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
@@ -23,6 +25,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 
 @Service
 class ChatStreamService(
@@ -36,6 +39,7 @@ class ChatStreamService(
 
     fun stream(
         userId: UUID,
+        sessionId: UUID,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
     ): Flux<ChatStreamEvent> {
@@ -49,34 +53,31 @@ class ChatStreamService(
         val activityEvents = Sinks.many().unicast().onBackpressureBuffer<ChatStreamEvent>()
         val activityAdvisors = createActivityAdvisors(activityEvents)
 
+        val responses = CopyOnWriteArrayList<ChatResponse>()
         val responseFlux =
             buildSharedResponseFlux(
-                userId,
+                sessionId,
                 chatClient,
                 advisors + activityAdvisors,
                 request,
                 accountingContext,
-                correlationId,
-            ).cache() // make response replayable for accounting
+            ).doOnNext { event -> event.chatResponse?.let(responses::add) }
 
         val textStream = buildTextStream(responseFlux)
-
-        val accountingMono =
-            buildAccountingMono(
-                responseFlux,
-                accountingContext,
-                request,
-                userId,
-                correlationId,
-            )
 
         val messageEvents: Flux<ChatStreamEvent> =
             textStream
                 .map<ChatStreamEvent> { ChatStreamEvent.Message(it) }
-                .doFinally {
+                .doOnComplete {
+                    recordAccounting(
+                        responses,
+                        accountingContext,
+                        request,
+                        userId,
+                        correlationId,
+                    )
+                }.doFinally {
                     activityEvents.tryEmitComplete()
-                    // responseFlux is cached, accounting is late subscriber
-                    accountingMono.subscribe()
                 }
 
         // Subscribe to the side channel first so synchronous model responses cannot outrun it.
@@ -109,17 +110,23 @@ class ChatStreamService(
     }
 
     private fun buildSharedResponseFlux(
-        userId: UUID,
+        sessionId: UUID,
         chatClient: ChatClient,
         advisors: List<Advisor>,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
-        correlationId: String,
-    ): Flux<ChatClientResponse> =
-        chatClient
+    ): Flux<ChatClientResponse> {
+        val userId = accountingContext.userId
+        val correlationId = requireNotNull(accountingContext.correlationId)
+        return chatClient
             .prompt()
             .advisors(advisors)
-            .system(
+            .advisors { advisorSpec ->
+                advisorSpec
+                    .param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId.toString())
+                    .param(SessionMemoryAdvisor.USER_ID_CONTEXT_KEY, userId.toString())
+                    .param(SuccessfulSessionRequestAdvisor.RUN_ID_CONTEXT_KEY, correlationId)
+            }.system(
                 """
                 ${Constant.SYSTEM_PROMPT}
                 ${Constant.SEARCH_TOOL_INSTRUCTION}
@@ -132,9 +139,10 @@ class ChatStreamService(
                         correlationId = correlationId,
                     ).toTypedArray(),
             ).user { u ->
-                attachUserInput(u, accountingContext.inputText, request)
+                attachUserInput(u, accountingContext.userInputText, request)
             }.stream()
             .chatClientResponse()
+    }
 
     private fun buildTextStream(responseFlux: Flux<ChatClientResponse>): Flux<String> =
         responseFlux.flatMap { event ->
@@ -151,51 +159,37 @@ class ChatStreamService(
             }
         }
 
-    private fun buildAccountingMono(
-        responseFlux: Flux<ChatClientResponse>,
+    private fun recordAccounting(
+        responses: List<ChatResponse>,
         accountingContext: LlmAccountingContext,
         request: ChatRequestDto,
         userId: UUID,
         correlationId: String,
-    ): Mono<Unit> =
-        responseFlux
-            .flatMap { event ->
-                event.chatResponse?.let { Mono.just(it) } ?: Mono.empty()
-            }.collectList()
-            .doOnNext { responses ->
-                val lastResponse = responses.lastOrNull()
+    ) {
+        val lastResponse = responses.lastOrNull()
+        val outputText = responses.mapNotNull { it.result?.output?.text }.joinToString("")
 
-                val outputText =
-                    responses
-                        .mapNotNull { it.result?.output?.text }
-                        .joinToString("")
+        if (responses.isEmpty()) {
+            logger.warn(
+                "Chat completed without ChatResponse. correlationId={}, agentId={}, userId={}",
+                correlationId,
+                request.agentId,
+                userId,
+            )
+        }
 
-                if (responses.isEmpty()) {
-                    logger.warn(
-                        "Chat completed without ChatResponse. correlationId={}, agentId={}, userId={}",
-                        correlationId,
-                        request.agentId,
-                        userId,
-                    )
-                }
-
-                tokenFacade.recordWithFallback(
-                    ctx =
-                        accountingContext.copy(
-                            outputText = outputText,
-                        ),
-                    response =
-                        lastResponse
-                            ?: ChatResponse.builder().build(),
-                )
-            }.thenReturn(Unit)
+        tokenFacade.recordWithFallback(
+            ctx = accountingContext.copy(outputText = outputText),
+            response = lastResponse ?: ChatResponse.builder().build(),
+        )
+    }
 
     private fun attachUserInput(
         u: ChatClient.PromptUserSpec,
-        combinedPrompt: String,
+        userInputText: String,
         request: ChatRequestDto,
     ) {
-        u.text(combinedPrompt)
+        u.text(userInputText)
 
         request.files
             ?.filter { !it.isEmpty }

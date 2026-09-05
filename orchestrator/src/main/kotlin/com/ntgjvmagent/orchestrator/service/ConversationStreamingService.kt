@@ -1,9 +1,7 @@
 package com.ntgjvmagent.orchestrator.service
 
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
-import com.ntgjvmagent.orchestrator.mapper.ChatMessageMapper
 import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
-import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import org.slf4j.LoggerFactory
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.stereotype.Service
@@ -14,9 +12,8 @@ import java.util.UUID
 @Service
 class ConversationStreamingService(
     private val chatModelService: ChatModelService,
-    private val messageRepo: ChatMessageRepository,
     private val commandService: ConversationCommandService,
-    private val historyLimit: Int = 5,
+    private val conversationSessionService: ConversationSessionService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -34,35 +31,29 @@ class ConversationStreamingService(
                 correlationId = correlationId,
             )
 
-        // --------------------------------------------------
-        // 2. Load history & generate summary
-        // --------------------------------------------------
-        val (older, recent) = loadAndSplitHistory(correlatedRequest)
-
-        val summary =
-            generateSummary(
+        val sessionId =
+            conversationSessionService.resolveSessionId(
+                conversationId = correlatedRequest.conversationId,
                 userId = userId,
                 agentId = correlatedRequest.agentId,
-                correlationId = "$correlationId:summary",
-                older = older,
+                correlationId = correlationId,
             )
 
         val answerBuilder = StringBuilder()
 
         // --------------------------------------------------
-        // 3. Stream chat response
+        // 2. Stream chat response
         // --------------------------------------------------
         val stream =
             buildChatEventStream(
                 userId = userId,
+                sessionId = sessionId,
                 request = correlatedRequest,
-                history = recent,
-                summary = summary,
                 answerBuilder = answerBuilder,
             )
 
         // --------------------------------------------------
-        // 4. Persist AFTER stream completes
+        // 3. Persist AFTER stream completes
         // --------------------------------------------------
         val completion =
             Mono
@@ -73,6 +64,7 @@ class ConversationStreamingService(
                             userId = userId,
                             chatReq = correlatedRequest,
                             answer = answerBuilder.toString(),
+                            sessionId = sessionId,
                         )
                     } else {
                         // Follow-up → append only
@@ -99,17 +91,15 @@ class ConversationStreamingService(
 
     private fun buildChatEventStream(
         userId: UUID,
+        sessionId: UUID,
         request: ChatRequestDto,
-        history: List<String>,
-        summary: String,
         answerBuilder: StringBuilder,
     ): Flux<ServerSentEvent<Any>> =
         chatModelService
             .call(
                 userId = userId,
+                sessionId = sessionId,
                 request = request,
-                history = history,
-                summary = summary,
             ).doOnNext { event ->
                 if (event is ChatStreamEvent.Message) {
                     answerBuilder.append(event.content.replace("\r\n", "\n"))
@@ -141,47 +131,6 @@ class ConversationStreamingService(
                     .data(event.content)
                     .build()
             }
-        }
-
-    private fun loadAndSplitHistory(request: ChatRequestDto): Pair<List<String>, List<String>> {
-        val history =
-            request.conversationId
-                ?.let {
-                    messageRepo
-                        .listMessageByConversationIdOrdered(it)
-                        .map(ChatMessageMapper::toHistoryFormat)
-                }
-                ?: emptyList()
-
-        val split = history.size - historyLimit
-
-        return if (split > 0) {
-            history
-                .withIndex()
-                .partition { it.index < split }
-                .let { (o, r) ->
-                    o.map { it.value } to r.map { it.value }
-                }
-        } else {
-            emptyList<String>() to history
-        }
-    }
-
-    private fun generateSummary(
-        userId: UUID,
-        agentId: UUID,
-        correlationId: String,
-        older: List<String>,
-    ): String =
-        if (older.isNotEmpty()) {
-            chatModelService.createDynamicSummary(
-                userId = userId,
-                agentId = agentId,
-                correlationId = correlationId,
-                messages = older,
-            )
-        } else {
-            ""
         }
 
     private fun handleError(ex: Throwable): Flux<ServerSentEvent<Any>> {

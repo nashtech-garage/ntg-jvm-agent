@@ -33,4 +33,6 @@ data class ChatMessage(
     val messageMedias: MutableList<ChatMessageMedia> = mutableListOf(),
     @Enumerated(EnumType.STRING)
     var reaction: MessageReaction = MessageReaction.NONE,
-) : UserAuditedEntity()
+) : UserAuditedEntity() {
+    override fun toString(): String = "ChatMessage(id=$id, type=$type, reaction=$reaction)"
+}

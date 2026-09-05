@@ -33,17 +33,16 @@ class TokenAccountingFacade(
 
     fun estimateInput(
         model: String,
-        combinedPrompt: String,
+        userPrompt: String,
         history: List<String>,
-        summary: String,
     ): Int {
         val estimator = tokenEstimatorSelector.select(model)
         return estimator.estimateInputTokens(
             model = model,
             systemPrompt = Constant.SYSTEM_PROMPT,
-            userPrompt = combinedPrompt,
+            userPrompt = userPrompt,
             history = history,
-            summary = summary,
+            summary = "",
         )
     }
 

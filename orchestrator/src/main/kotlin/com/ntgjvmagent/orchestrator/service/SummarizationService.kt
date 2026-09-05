@@ -35,26 +35,6 @@ class SummarizationService(
         )
     }
 
-    fun update(
-        userId: UUID,
-        agentId: UUID,
-        correlationId: String,
-        messagesToSummarize: List<String>,
-    ): String {
-        if (messagesToSummarize.isEmpty()) return ""
-
-        val promptText =
-            Constant.SUMMARY_UPDATE_PROMPT
-                .replace("{{latest_message}}", messagesToSummarize.joinToString("\n"))
-
-        return runSummarization(
-            userId = userId,
-            agentId = agentId,
-            promptText = promptText,
-            correlationId = correlationId,
-        ).orEmpty()
-    }
-
     private fun runSummarization(
         userId: UUID,
         agentId: UUID,
@@ -97,7 +77,7 @@ class SummarizationService(
                     agentId = agentId,
                     operation = TokenOperation.SUMMARIZATION,
                     model = agentConfig.model,
-                    inputText = promptText,
+                    userInputText = promptText,
                     outputText = output,
                     estimatedInputTokens = estimatedInputTokens,
                     correlationId = correlationId,

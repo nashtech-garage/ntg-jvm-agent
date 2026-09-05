@@ -75,7 +75,7 @@ class ConversationIntentService(
                     agentId = request.agentId,
                     operation = TokenOperation.CHAT,
                     model = agentConfig.model,
-                    inputText = inputText,
+                    userInputText = inputText,
                     outputText = outputText,
                     estimatedInputTokens = estimatedInputTokens,
                     correlationId = request.correlationId,
