@@ -314,7 +314,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
         val toolFacade = mockk<ToolExecutionFacade>()
         val tokenFacade = mockk<TokenAccountingFacade>(relaxed = true)
         every { chatClientFactory.create(agentId) } returns chatClient
-        every { advisorRegistry.resolveForAgent(agentId) } returns
+        every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
             listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
         every { toolFacade.createToolCallbacks(userId, agentId, any()) } returns
             ToolCallbacks.from(SupportPolicyTool()).toList()

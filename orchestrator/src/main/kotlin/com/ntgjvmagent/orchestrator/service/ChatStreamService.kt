@@ -48,7 +48,12 @@ class ChatStreamService(
                 ?: error("correlationId must not be null")
 
         val chatClient = chatClientFactory.create(request.agentId)
-        val advisors = callAdvisorRegistry.resolveForAgent(request.agentId)
+        val advisors =
+            callAdvisorRegistry.resolveForAgent(
+                agentId = request.agentId,
+                userId = userId,
+                rootCorrelationId = correlationId,
+            )
 
         val activityEvents = Sinks.many().unicast().onBackpressureBuffer<ChatStreamEvent>()
         val activityAdvisors = createActivityAdvisors(activityEvents)
