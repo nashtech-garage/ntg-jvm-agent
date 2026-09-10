@@ -2,11 +2,13 @@ package com.ntgjvmagent.orchestrator.unit.chat
 
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
+import com.ntgjvmagent.orchestrator.config.ToolSearchIndexProperties
 import com.ntgjvmagent.orchestrator.dto.request.ConversationIntentRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.ConversationIntentResponseDto
 import com.ntgjvmagent.orchestrator.service.ConversationIntentService
 import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
+import com.ntgjvmagent.orchestrator.service.SummarizationService
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import io.micrometer.observation.ObservationRegistry
 import io.mockk.every
@@ -19,6 +21,8 @@ import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.model.Generation
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.converter.BeanOutputConverter
+import org.springframework.ai.model.tool.ToolCallingChatOptions
+import org.springframework.ai.tool.toolsearch.index.regex.RegexToolIndex
 import reactor.core.publisher.Flux
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -36,7 +40,7 @@ class ChatClientStructuredOutputTest {
 
         val answer =
             chatClientFactory
-                .create(agentId)
+                .createWithoutToolSearch(agentId)
                 .prompt()
                 .user("Explain what capabilities you have.")
                 .call()
@@ -44,6 +48,24 @@ class ChatClientStructuredOutputTest {
 
         assertEquals("I can answer questions and use attached knowledge.", answer)
         assertTrue(model.lastPrompt.contents.contains("Explain what capabilities you have."))
+    }
+
+    @Test
+    fun `summarization uses the no-search client without a session id`() {
+        val model = RecordingChatModel("Premium P1 support target")
+        val dynamicChatModelService = dynamicChatModelService(model)
+        val tokenFacade = relaxedTokenFacade()
+        val service =
+            SummarizationService(
+                dynamicChatModelService,
+                createFactory(model, dynamicChatModelService),
+                tokenFacade,
+            )
+
+        val summary = service.create(userId, agentId, "summary-contract", "What is the P1 target?")
+
+        assertEquals("Premium P1 support target", summary)
+        verify(exactly = 1) { tokenFacade.recordWithFallback(any(), any()) }
     }
 
     @Test
@@ -162,7 +184,11 @@ class ChatClientStructuredOutputTest {
         AgentChatClientFactory(
             dynamicChatModelService,
             ObservationRegistry.NOOP,
-            ToolCallingConfig().toolCallingAdvisorBuilder(ObservationRegistry.NOOP),
+            ToolCallingConfig().toolCallingAdvisorBuilder(
+                ObservationRegistry.NOOP,
+                RegexToolIndex(),
+                ToolSearchIndexProperties(),
+            ),
         )
 
     private fun dynamicChatModelService(model: ChatModel): DynamicChatModelService {
@@ -189,5 +215,7 @@ class ChatClientStructuredOutputTest {
         }
 
         override fun stream(prompt: Prompt): Flux<ChatResponse> = Flux.just(call(prompt))
+
+        override fun getOptions() = ToolCallingChatOptions.builder().build()
     }
 }

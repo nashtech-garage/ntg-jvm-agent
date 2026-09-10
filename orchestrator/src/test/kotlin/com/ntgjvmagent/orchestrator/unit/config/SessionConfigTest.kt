@@ -36,7 +36,7 @@ class SessionConfigTest {
         val chatClientFactory = mockk<AgentChatClientFactory>()
         val dynamicChatModelService = mockk<DynamicChatModelService>()
         every { dynamicChatModelService.getAgentConfig(agentId) } returns agent(agentId)
-        every { chatClientFactory.create(agentId) } returns
+        every { chatClientFactory.createWithoutToolSearch(agentId) } returns
             ChatClient.builder(mockk<ChatModel>(relaxed = true)).build()
         val factory =
             sessionMemoryAdvisorFactory(
@@ -76,7 +76,7 @@ class SessionConfigTest {
 
         assertNull(field(advisor, "compactionTrigger"))
         assertNull(field(advisor, "compactionStrategy"))
-        verify(exactly = 0) { chatClientFactory.create(any()) }
+        verify(exactly = 0) { chatClientFactory.createWithoutToolSearch(any()) }
     }
 
     @Test

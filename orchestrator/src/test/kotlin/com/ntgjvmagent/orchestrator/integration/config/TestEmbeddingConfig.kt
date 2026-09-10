@@ -16,6 +16,7 @@ import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.embedding.EmbeddingOptions
 import org.springframework.ai.embedding.EmbeddingRequest
 import org.springframework.ai.embedding.EmbeddingResponse
+import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -39,6 +40,8 @@ class TestEmbeddingConfig {
             every { add(any<List<Document>>()) } returns Unit
             every { delete(any<List<String>>()) } returns Unit
             every { similaritySearch(any<String>()) } returns emptyList()
+            // KnowledgeChunkService filters inside the query, so it uses this overload.
+            every { similaritySearch(any<SearchRequest>()) } returns emptyList()
         }
 
     // ---------------------------------------------------------------------

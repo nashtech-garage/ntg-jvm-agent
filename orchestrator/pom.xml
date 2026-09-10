@@ -264,6 +264,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-tool-search-advisor</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>

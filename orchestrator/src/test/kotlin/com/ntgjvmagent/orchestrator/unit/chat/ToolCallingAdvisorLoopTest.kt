@@ -12,9 +12,13 @@ import com.ntgjvmagent.orchestrator.component.FilteredToolCallbackProvider
 import com.ntgjvmagent.orchestrator.component.GlobalToolCallbackProvider
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
+import com.ntgjvmagent.orchestrator.config.ToolSearchIndexProperties
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
+import com.ntgjvmagent.orchestrator.entity.Tool
+import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
 import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
+import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
 import com.ntgjvmagent.orchestrator.tool.SupportPolicyTool
@@ -25,6 +29,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import org.springframework.ai.chat.memory.ChatMemory
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata
@@ -33,8 +38,14 @@ import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.model.Generation
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.model.tool.ToolCallingChatOptions
+import org.springframework.ai.support.ToolCallbacks
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.tool.definition.ToolDefinition
+import org.springframework.ai.tool.toolsearch.ToolIndex
+import org.springframework.ai.tool.toolsearch.ToolReference
+import org.springframework.ai.tool.toolsearch.ToolSearchRequest
+import org.springframework.ai.tool.toolsearch.ToolSearchResponse
+import org.springframework.ai.tool.toolsearch.index.regex.RegexToolIndex
 import reactor.core.publisher.Flux
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -58,13 +69,15 @@ class ToolCallingAdvisorLoopTest {
         val reasoningEvents = mutableListOf<String>()
         val reasoningAdvisor = ModelReasoningObservingAdvisor(reasoningEvents::add)
         val logAppender = attachLogAppender()
+        val toolIndex = RecordingToolIndex(RegexToolIndex())
 
         val answer =
             try {
-                createFactory(model, observationRegistry)
+                createFactory(model, observationRegistry, toolIndex)
                     .create(agentId)
                     .prompt()
                     .advisors(loggingAdvisor, observingAdvisor, reasoningAdvisor)
+                    .advisors { it.param(ChatMemory.CONVERSATION_ID, TOOL_SEARCH_SESSION_ID) }
                     .tools(*tools.toTypedArray())
                     .user(CANONICAL_PROMPT)
                     .stream()
@@ -83,17 +96,30 @@ class ToolCallingAdvisorLoopTest {
             answer,
             "prompts=${model.prompts.size}, options=${model.optionTypes}, toolResult=${model.receivedToolResult}, logs=$messages",
         )
-        assertEquals(2, model.prompts.size)
+        assertEquals(3, model.prompts.size)
         assertTrue(
             model.prompts
                 .first()
                 .contents
                 .contains(CANONICAL_PROMPT),
         )
+        assertEquals(listOf(TOOL_SEARCH_TOOL_NAME), model.availableToolNames.first())
+        assertTrue(
+            model.availableToolNames[1].containsAll(
+                listOf(TOOL_SEARCH_TOOL_NAME, SupportPolicyTool.TOOL_NAME),
+            ),
+        )
+        assertEquals(listOf(TOOL_SEARCH_TOOL_NAME), model.availableToolNames.last())
+        assertTrue(model.receivedSearchResult.contains(SupportPolicyTool.TOOL_NAME))
         assertTrue(model.receivedToolResult.contains("\"initialResponseMinutes\":15"))
         assertTrue(observationNames.contains("spring.ai.tool"))
+        assertEquals(
+            setOf(SupportPolicyTool.TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
+            toolIndex.indexedToolNames.toSet(),
+        )
+        assertFalse(toolIndex.indexedToolNames.contains(UNASSIGNED_EXTERNAL_TOOL))
 
-        assertEquals(2, messages.count { it == "Tool loop model stage started" })
+        assertEquals(3, messages.count { it == "Tool loop model stage started" })
         assertTrue(
             messages.any {
                 it.contains("requestedToolCount=1") &&
@@ -103,6 +129,16 @@ class ToolCallingAdvisorLoopTest {
         assertTrue(messages.any { it.contains("requestedToolCount=0") })
         assertEquals(
             listOf(
+                ToolCallEvent(
+                    id = "tool-search-call-1",
+                    name = TOOL_SEARCH_TOOL_NAME,
+                    phase = ToolCallEvent.Phase.STARTED,
+                ),
+                ToolCallEvent(
+                    id = "tool-search-call-1",
+                    name = TOOL_SEARCH_TOOL_NAME,
+                    phase = ToolCallEvent.Phase.COMPLETED,
+                ),
                 ToolCallEvent(
                     id = "support-policy-call-1",
                     name = SupportPolicyTool.TOOL_NAME,
@@ -118,6 +154,7 @@ class ToolCallingAdvisorLoopTest {
         )
         assertEquals(
             listOf(
+                "I need to discover the support capability. ",
                 "I need the support policy before answering. ",
                 "The tool result contains the response target.",
             ),
@@ -125,17 +162,38 @@ class ToolCallingAdvisorLoopTest {
         )
     }
 
+    @Test
+    fun `tool index is reused across clients for the same session and tool fingerprint`() {
+        val toolIndex = RecordingToolIndex(RegexToolIndex())
+        val factory = createFactory(FinalAnswerModel(), ObservationRegistry.NOOP, toolIndex)
+        val tools = ToolCallbacks.from(SupportPolicyTool())
+
+        repeat(2) {
+            factory
+                .create(agentId)
+                .prompt()
+                .advisors { it.param(ChatMemory.CONVERSATION_ID, TOOL_SEARCH_SESSION_ID) }
+                .tools(*tools)
+                .user("Acknowledge")
+                .call()
+                .content()
+        }
+
+        assertEquals(1, toolIndex.indexBatches)
+    }
+
     private fun productionToolCallbacks(localToolCatalog: LocalToolCatalog): List<ToolCallback> {
         val agentToolRepository = mockk<AgentToolRepository>()
-        every { agentToolRepository.findByAgentId(agentId) } returns emptyList()
+        val assignedTool = Tool(name = ASSIGNED_EXTERNAL_TOOL)
+        every { agentToolRepository.findByAgentId(agentId) } returns
+            listOf(mockk<AgentTool> { every { tool } returns assignedTool })
 
-        val unassignedDefinition = mockk<ToolDefinition>()
-        every { unassignedDefinition.name() } returns "unassignedExternalTool"
-        val unassignedCallback = mockk<ToolCallback>()
-        every { unassignedCallback.toolDefinition } returns unassignedDefinition
+        val assignedCallback = callback(ASSIGNED_EXTERNAL_TOOL, "Read the assigned billing status")
+        val unassignedCallback = callback(UNASSIGNED_EXTERNAL_TOOL, "Read another agent's private status")
 
         val globalToolCallbackProvider = mockk<GlobalToolCallbackProvider>()
-        every { globalToolCallbackProvider.getToolCallbacks() } returns listOf(unassignedCallback)
+        every { globalToolCallbackProvider.getToolCallbacks() } returns
+            listOf(assignedCallback, unassignedCallback)
 
         val callbacks =
             ToolExecutionFacade(
@@ -146,14 +204,33 @@ class ToolCallingAdvisorLoopTest {
                 mockk<TokenMeteringService>(relaxed = true),
             ).createToolCallbacks(userId, agentId, "tool-loop-contract")
 
-        assertEquals(listOf(SupportPolicyTool.TOOL_NAME), callbacks.map { it.toolDefinition.name() })
-        assertFalse(callbacks.any { it.toolDefinition.name() == "unassignedExternalTool" })
+        assertEquals(
+            setOf(SupportPolicyTool.TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
+            callbacks.map { it.toolDefinition.name() }.toSet(),
+        )
+        assertTrue(callbacks.all { it is MeteredToolCallback })
+        assertFalse(callbacks.any { it.toolDefinition.name() == UNASSIGNED_EXTERNAL_TOOL })
         return callbacks
+    }
+
+    private fun callback(
+        name: String,
+        description: String,
+    ): ToolCallback {
+        val definition = mockk<ToolDefinition>()
+        every { definition.name() } returns name
+        every { definition.description() } returns description
+        every { definition.inputSchema() } returns "{}"
+        return mockk {
+            every { toolDefinition } returns definition
+            every { call(any()) } returns "ok"
+        }
     }
 
     private fun createFactory(
         model: ChatModel,
         observationRegistry: ObservationRegistry,
+        toolIndex: ToolIndex,
     ): AgentChatClientFactory {
         val agentConfig = mockk<AgentResponseDto> { every { this@mockk.model } returns "tool-contract-model" }
         val dynamicChatModelService =
@@ -164,7 +241,7 @@ class ToolCallingAdvisorLoopTest {
         return AgentChatClientFactory(
             dynamicChatModelService,
             observationRegistry,
-            ToolCallingConfig().toolCallingAdvisorBuilder(observationRegistry),
+            ToolCallingConfig().toolCallingAdvisorBuilder(observationRegistry, toolIndex, ToolSearchIndexProperties()),
         )
     }
 
@@ -197,6 +274,8 @@ class ToolCallingAdvisorLoopTest {
     private class SupportToolCallingModel : ChatModel {
         val prompts = mutableListOf<Prompt>()
         val optionTypes = mutableListOf<String>()
+        val availableToolNames = mutableListOf<List<String>>()
+        var receivedSearchResult = ""
         var receivedToolResult = ""
 
         override fun call(prompt: Prompt): ChatResponse = responseFor(prompt)
@@ -208,9 +287,44 @@ class ToolCallingAdvisorLoopTest {
         private fun responseFor(prompt: Prompt): ChatResponse {
             prompts.add(prompt)
             optionTypes.add(prompt.options?.javaClass?.name ?: "null")
-            val toolResponse = prompt.instructions.filterIsInstance<ToolResponseMessage>().singleOrNull()
+            availableToolNames +=
+                (prompt.options as ToolCallingChatOptions)
+                    .toolCallbacks
+                    .orEmpty()
+                    .map { it.toolDefinition.name() }
+                    .sorted()
+            val toolResponse = prompt.instructions.filterIsInstance<ToolResponseMessage>().lastOrNull()
 
             if (toolResponse == null) {
+                val toolCall =
+                    AssistantMessage.ToolCall(
+                        "tool-search-call-1",
+                        "function",
+                        TOOL_SEARCH_TOOL_NAME,
+                        """{"query":"support policy response target","maxResults":2}""",
+                    )
+                return ChatResponse(
+                    listOf(
+                        Generation(
+                            AssistantMessage
+                                .builder()
+                                .content("")
+                                .properties(
+                                    mapOf(
+                                        "reasoningContent" to
+                                            "I need to discover the support capability. ",
+                                    ),
+                                ).toolCalls(listOf(toolCall))
+                                .build(),
+                            ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
+                        ),
+                    ),
+                )
+            }
+
+            val response = toolResponse.responses.single()
+            if (response.name() == TOOL_SEARCH_TOOL_NAME) {
+                receivedSearchResult = response.responseData()
                 val toolCall =
                     AssistantMessage.ToolCall(
                         "support-policy-call-1",
@@ -237,7 +351,7 @@ class ToolCallingAdvisorLoopTest {
                 )
             }
 
-            receivedToolResult = toolResponse.responses.single().responseData()
+            receivedToolResult = response.responseData()
             return ChatResponse(
                 listOf(
                     Generation(
@@ -255,9 +369,50 @@ class ToolCallingAdvisorLoopTest {
         }
     }
 
+    private class RecordingToolIndex(
+        private val delegate: ToolIndex,
+    ) : ToolIndex {
+        val indexedToolNames = mutableListOf<String>()
+        var indexBatches = 0
+
+        override fun indexTool(
+            sessionId: String,
+            toolReference: ToolReference,
+        ) {
+            indexedToolNames += toolReference.toolName()
+            delegate.indexTool(sessionId, toolReference)
+        }
+
+        override fun indexTools(
+            sessionId: String,
+            toolReferences: List<ToolReference>,
+        ) {
+            indexBatches++
+            indexedToolNames += toolReferences.map { it.toolName() }
+            delegate.indexTools(sessionId, toolReferences)
+        }
+
+        override fun search(request: ToolSearchRequest): ToolSearchResponse = delegate.search(request)
+
+        override fun clearIndex(sessionId: String) = delegate.clearIndex(sessionId)
+    }
+
+    private class FinalAnswerModel : ChatModel {
+        override fun call(prompt: Prompt): ChatResponse =
+            ChatResponse(listOf(Generation(AssistantMessage("acknowledged"))))
+
+        override fun stream(prompt: Prompt): Flux<ChatResponse> = Flux.just(call(prompt))
+
+        override fun getOptions() = ToolCallingChatOptions.builder().build()
+    }
+
     companion object {
         private const val CANONICAL_PROMPT =
             "Under the NTG support policy, what is the initial response target for a PREMIUM customer with a P1 incident?"
+        private const val TOOL_SEARCH_SESSION_ID = "tool-loop-session"
+        private const val TOOL_SEARCH_TOOL_NAME = "toolSearchTool"
+        private const val ASSIGNED_EXTERNAL_TOOL = "assignedExternalTool"
+        private const val UNASSIGNED_EXTERNAL_TOOL = "unassignedExternalTool"
 
         private val logger =
             LoggerFactory.getLogger(ToolLoopLoggingAdvisor::class.java) as Logger

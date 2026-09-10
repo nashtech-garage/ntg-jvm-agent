@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor
+import org.springframework.ai.chat.client.advisor.toolsearch.ToolSearchToolCallingAdvisor
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.chat.messages.UserMessage
@@ -57,11 +58,14 @@ import org.springframework.ai.session.SessionService
 import org.springframework.ai.session.advisor.IdempotentSessionEventIdGenerator
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor
 import org.springframework.ai.support.ToolCallbacks
+import org.springframework.ai.tool.toolsearch.index.regex.RegexToolIndex
 import org.springframework.beans.factory.annotation.Autowired
 import reactor.core.publisher.Flux
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 import java.util.UUID
+
+private const val TOOL_SEARCH_TOOL_NAME = "toolSearchTool"
 
 class SessionMemoryIT : BaseIntegrationTest() {
     @Autowired
@@ -358,8 +362,14 @@ class SessionMemoryIT : BaseIntegrationTest() {
                 .orEmpty()
 
         val persistedEvents = sessionService.getEvents(sessionId.toString())
-        assertEquals(4, persistedEvents.size)
-        assertEquals(4, persistedEvents.map { it.id }.distinct().size)
+        assertEquals(6, persistedEvents.size)
+        assertEquals(6, persistedEvents.map { it.id }.distinct().size)
+        assertTrue(
+            successEvents
+                .filter { it.event() == "tool" }
+                .mapNotNull { it.data() as? com.ntgjvmagent.orchestrator.advisor.ToolCallEvent }
+                .any { it.name == TOOL_SEARCH_TOOL_NAME },
+        )
 
         every { chatClientFactory.create(agentId) } returns
             ChatClient.builder(FailingModel()).build()
@@ -413,8 +423,10 @@ class SessionMemoryIT : BaseIntegrationTest() {
     )
 
     private fun productionToolCallingAdvisor(): ToolCallingAdvisor =
-        ToolCallingAdvisor
+        ToolSearchToolCallingAdvisor
             .builder()
+            .toolIndex(RegexToolIndex())
+            .conversationHistoryEnabled(false)
             .advisorOrder(ToolCallingConfig.TOOL_CALLING_ADVISOR_ORDER)
             .build()
 
@@ -452,6 +464,29 @@ class SessionMemoryIT : BaseIntegrationTest() {
             val toolResponse = prompt.instructions.filterIsInstance<ToolResponseMessage>().lastOrNull()
 
             if (toolResponse == null) {
+                val toolCall =
+                    AssistantMessage.ToolCall(
+                        "session-tool-search-call-1",
+                        "function",
+                        TOOL_SEARCH_TOOL_NAME,
+                        """{"query":"support policy response target","maxResults":2}""",
+                    )
+                return ChatResponse(
+                    listOf(
+                        Generation(
+                            AssistantMessage
+                                .builder()
+                                .content("")
+                                .properties(mapOf("reasoningContent" to "Discovering the support capability."))
+                                .toolCalls(listOf(toolCall))
+                                .build(),
+                            ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
+                        ),
+                    ),
+                )
+            }
+
+            if (toolResponse.responses.last().name() == TOOL_SEARCH_TOOL_NAME) {
                 requestedToolCalls++
                 val toolCall =
                     AssistantMessage.ToolCall(

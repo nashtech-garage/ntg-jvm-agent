@@ -7,6 +7,8 @@ import com.ntgjvmagent.orchestrator.repository.AgentKnowledgeRepository
 import com.ntgjvmagent.orchestrator.repository.EmbeddingJobRepository
 import com.ntgjvmagent.orchestrator.repository.KnowledgeChunkRepository
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.ai.vectorstore.SearchRequest
+import org.springframework.ai.vectorstore.filter.Filter
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -116,23 +118,34 @@ class KnowledgeChunkService(
             )
         }
 
-        val results =
-            vectorStoreService
-                .getVectorStore()
-                .similaritySearch(query)
-                .take(topK)
-
-        if (results.isEmpty()) return emptyList()
-
         val activeKnowledgeIds =
             chunkRepo
                 .findAllKnowledgeIdsActiveByAgent(agentId)
                 .map(UUID::toString)
-                .toSet()
 
-        return results
-            .filter { it.metadata["knowledgeId"] in activeKnowledgeIds }
-            .map(KnowledgeChunkResponseDto::fromDocument)
+        if (activeKnowledgeIds.isEmpty()) return emptyList()
+
+        // The vector store is shared with the tool search index, so the filter has to be part of
+        // the query: searching unfiltered and discarding non-matches afterwards would let
+        // unrelated documents take up the top-K slots and silently shrink the result set.
+        val results =
+            vectorStoreService
+                .getVectorStore()
+                .similaritySearch(
+                    SearchRequest
+                        .builder()
+                        .query(query)
+                        .topK(topK)
+                        .filterExpression(
+                            Filter.Expression(
+                                Filter.ExpressionType.IN,
+                                Filter.Key(KNOWLEDGE_ID_METADATA),
+                                Filter.Value(activeKnowledgeIds),
+                            ),
+                        ).build(),
+                ).orEmpty()
+
+        return results.map(KnowledgeChunkResponseDto::fromDocument)
     }
 
     @Transactional
@@ -159,5 +172,10 @@ class KnowledgeChunkService(
 
         // 3️ Remove chunks
         chunkRepo.deleteAll(chunks)
+    }
+
+    companion object {
+        /** Metadata key written by EmbeddingWorker and filtered on by RagAdvisorFactory. */
+        const val KNOWLEDGE_ID_METADATA = "knowledgeId"
     }
 }

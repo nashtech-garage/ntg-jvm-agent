@@ -57,7 +57,7 @@ class SummarizationService(
 
         val response =
             chatClientFactory
-                .create(agentId)
+                .createWithoutToolSearch(agentId)
                 .prompt()
                 .user(promptText)
                 .call()

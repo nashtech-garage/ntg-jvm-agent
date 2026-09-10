@@ -43,7 +43,7 @@ class SessionCompactionFactory(
             )
         val compactionClient =
             chatClientFactory
-                .create(agentId)
+                .createWithoutToolSearch(agentId)
                 .mutate()
                 .defaultAdvisors(accountingAdvisor)
                 .build()

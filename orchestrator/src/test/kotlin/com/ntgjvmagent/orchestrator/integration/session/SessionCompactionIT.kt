@@ -118,7 +118,7 @@ class SessionCompactionIT : BaseIntegrationTest() {
         val sessionId = createSession()
         val compactionModel = CompactionModel()
         val conversationModel = CoherentConversationModel()
-        every { chatClientFactory.create(agentId) } returns ChatClient.builder(compactionModel).build()
+        every { chatClientFactory.createWithoutToolSearch(agentId) } returns ChatClient.builder(compactionModel).build()
         val advisor = advisorFactory.create(agentId, userId, ROOT_CORRELATION_ID)
         val client =
             ChatClient
@@ -154,7 +154,7 @@ class SessionCompactionIT : BaseIntegrationTest() {
     fun `budget check still blocks after session context is compacted`() {
         val sessionId = createSession()
         val compactionModel = CompactionModel()
-        every { chatClientFactory.create(agentId) } returns ChatClient.builder(compactionModel).build()
+        every { chatClientFactory.createWithoutToolSearch(agentId) } returns ChatClient.builder(compactionModel).build()
         val advisor = advisorFactory.create(agentId, userId, "chat-budget")
         val client =
             ChatClient
@@ -193,7 +193,7 @@ class SessionCompactionIT : BaseIntegrationTest() {
     @Test
     fun `a failing compaction does not break the chat stream`() {
         val sessionId = createSession()
-        every { chatClientFactory.create(agentId) } returns
+        every { chatClientFactory.createWithoutToolSearch(agentId) } returns
             ChatClient.builder(FailingCompactionModel()).build()
         val advisor = advisorFactory.create(agentId, userId, "chat-failing-compaction")
         val client =

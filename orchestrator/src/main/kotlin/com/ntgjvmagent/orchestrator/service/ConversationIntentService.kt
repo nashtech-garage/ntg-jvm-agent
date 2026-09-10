@@ -53,7 +53,7 @@ class ConversationIntentService(
 
         val responseEntity =
             chatClientFactory
-                .create(request.agentId)
+                .createWithoutToolSearch(request.agentId)
                 .prompt()
                 .system(CLASSIFICATION_PROMPT)
                 .user(request.question)
