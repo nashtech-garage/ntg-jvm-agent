@@ -9,16 +9,14 @@ import { Button } from './ui/button';
 import { useToaster } from '@/contexts/ToasterContext';
 
 export default function AgentDropdown() {
-  const { agents, setAgents, setSelectedAgent } = useChatContext();
+  const { agents, selectedAgent, setAgents, setSelectedAgent } = useChatContext();
   const { showError } = useToaster();
   const [open, setOpen] = useState<boolean>(false);
-  const [selected, setSelected] = useState<Agent | null>(agents[0]);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   const toggle = () => setOpen(!open);
 
   const handleSelect = (agent: Agent) => {
-    setSelected(agent);
     setSelectedAgent(agent);
     setOpen(false);
   };
@@ -40,7 +38,6 @@ export default function AgentDropdown() {
         const agents = await res.json();
         if (agents.length) {
           setAgents(agents);
-          setSelected(agents[0]);
           setSelectedAgent(agents[0]);
         }
       } catch (error) {
@@ -60,20 +57,22 @@ export default function AgentDropdown() {
         onClick={toggle}
         className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-5 text-sm font-medium text-foreground shadow-sm shadow-[0_6px_16px_color-mix(in_oklab,var(--color-border)_70%,transparent)] transition hover:border-primary-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-border"
       >
-        {selected?.avatar ? (
+        {selectedAgent?.avatar ? (
           <Image
-            src={selected.avatar}
-            alt={selected.name}
+            src={selectedAgent.avatar}
+            alt={selectedAgent.name}
             width={24}
             height={24}
             className="h-5 w-5 rounded-full object-cover"
           />
         ) : (
           <div className="h-5 w-5 rounded-full bg-avatar flex items-center justify-center text-xs font-bold text-inverse">
-            {selected?.name?.charAt(0)?.toUpperCase() || 'A'}
+            {selectedAgent?.name?.charAt(0)?.toUpperCase() || 'A'}
           </div>
         )}
-        <div className="flex items-center">{selected ? selected.name : 'Select agent'}</div>
+        <div className="flex items-center">
+          {selectedAgent ? selectedAgent.name : 'Select agent'}
+        </div>
 
         <span className={`transition-transform ${open ? 'rotate-180' : 'rotate-0'}`}>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />

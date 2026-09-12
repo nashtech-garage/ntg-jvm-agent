@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.advisor
 
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog.Companion.TODO_WRITE_TOOL_NAME
 import org.springframework.ai.chat.client.ChatClientRequest
 import org.springframework.ai.chat.client.ChatClientResponse
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor
@@ -79,6 +80,12 @@ class ToolCallObservingAdvisor(
                         id = it.id(),
                         name = it.name(),
                         phase = ToolCallEvent.Phase.COMPLETED,
+                        todoItems =
+                            if (it.name() == TODO_WRITE_TOOL_NAME) {
+                                ToolCallEvent.todoItemsFrom(it.responseData())
+                            } else {
+                                null
+                            },
                     ),
                 )
             }

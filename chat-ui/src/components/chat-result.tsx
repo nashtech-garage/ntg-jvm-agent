@@ -9,9 +9,10 @@ import { Constants } from '@/constants/constant';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Reaction } from '@/types/reaction';
 import clsx from 'clsx';
-import { ToolCallEvent } from '@/models/tool-call-event';
+import { TodoItem, ToolCallEvent } from '@/models/tool-call-event';
 import ToolCallStatus from '@/components/tool-call-status';
 import ReasoningStatus from '@/components/reasoning-status';
+import TodoProgressStatus from '@/components/todo-progress-status';
 
 export default function ChatResult({
   results,
@@ -19,6 +20,7 @@ export default function ChatResult({
   agentAvatar,
   agentName,
   toolCalls = [],
+  todoItems = [],
   reasoning = '',
   isStreaming = false,
   onReaction,
@@ -28,19 +30,21 @@ export default function ChatResult({
   agentAvatar?: string;
   agentName?: string;
   toolCalls?: ToolCallEvent[];
+  todoItems?: TodoItem[];
   reasoning?: string;
   isStreaming?: boolean;
   onReaction?: (messageId: string, reaction: Reaction) => void;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const latestResult = results.at(-1);
-  const hasAgentActivity = toolCalls.length > 0 || reasoning.length > 0;
+  const hasAgentActivity = toolCalls.length > 0 || todoItems.length > 0 || reasoning.length > 0;
   const activityPrecedesLatestAnswer =
     hasAgentActivity && latestResult?.type === Constants.ANSWER_TYPE;
 
   const agentActivity = (
     <div className="space-y-3">
       <ReasoningStatus content={reasoning} isStreaming={isStreaming} />
+      <TodoProgressStatus items={todoItems} />
       <ToolCallStatus toolCalls={toolCalls} />
     </div>
   );
@@ -57,7 +61,7 @@ export default function ChatResult({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [isTyping, reasoning, results, toolCalls]);
+  }, [isTyping, reasoning, results, todoItems, toolCalls]);
 
   if (results.length === 0) {
     return (

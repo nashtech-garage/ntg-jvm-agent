@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
   Dispatch,
   SetStateAction,
@@ -14,6 +15,7 @@ import { Conversation } from '@/models/conversation';
 import { ChatMessage } from '@/models/chat-message';
 import { Agent } from '@/models/agent';
 import { useToaster } from '@/contexts/ToasterContext';
+import { TodoItem, ToolCallEvent } from '@/models/tool-call-event';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -22,11 +24,18 @@ interface ChatContextType {
   name: string;
   agents: Agent[];
   selectedAgent: Agent | null;
+  toolCalls: ToolCallEvent[];
+  todoItems: TodoItem[];
+  reasoning: string;
   setConversations: Dispatch<SetStateAction<Conversation[]>>;
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   setActiveConversationId: Dispatch<SetStateAction<string | null>>;
   setAgents: Dispatch<SetStateAction<Agent[]>>;
   setSelectedAgent: Dispatch<SetStateAction<Agent | null>>;
+  setToolCalls: Dispatch<SetStateAction<ToolCallEvent[]>>;
+  setTodoItems: Dispatch<SetStateAction<TodoItem[]>>;
+  setReasoning: Dispatch<SetStateAction<string>>;
+  clearAgentActivity: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -64,6 +73,15 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [name, setName] = useState<string>('Unknown');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
+  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  const [reasoning, setReasoning] = useState('');
+
+  const clearAgentActivity = useCallback(() => {
+    setToolCalls([]);
+    setTodoItems([]);
+    setReasoning('');
+  }, []);
 
   // Load user info and all conversations on mount
   useEffect(() => {
@@ -85,13 +103,31 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       name,
       agents,
       selectedAgent,
+      toolCalls,
+      todoItems,
+      reasoning,
       setConversations,
       setChatMessages,
       setActiveConversationId,
       setAgents,
       setSelectedAgent,
+      setToolCalls,
+      setTodoItems,
+      setReasoning,
+      clearAgentActivity,
     }),
-    [conversations, chatMessages, activeConversationId, name, agents, selectedAgent]
+    [
+      conversations,
+      chatMessages,
+      activeConversationId,
+      name,
+      agents,
+      selectedAgent,
+      toolCalls,
+      todoItems,
+      reasoning,
+      clearAgentActivity,
+    ]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

@@ -27,8 +27,16 @@ class ConversationStreamingServiceTest {
         val toolEvent =
             ToolCallEvent(
                 id = "call-1",
-                name = "getSupportResponseTarget",
+                name = "TodoWrite",
                 phase = ToolCallEvent.Phase.COMPLETED,
+                todoItems =
+                    listOf(
+                        ToolCallEvent.TodoItem(
+                            content = "Verify the result",
+                            status = "in_progress",
+                            activeForm = "Verifying the result",
+                        ),
+                    ),
             )
 
         every { conversationSessionService.resolveSessionId(any(), any(), any(), any()) } returns UUID.randomUUID()
@@ -51,6 +59,10 @@ class ConversationStreamingServiceTest {
         assertEquals(
             setOf("message", "tool", "reasoning", "complete", "error"),
             (successEvents + errorEvents).mapNotNull { it.event() }.toSet(),
+        )
+        assertEquals(
+            toolEvent,
+            successEvents.single { it.event() == "tool" }.data(),
         )
     }
 

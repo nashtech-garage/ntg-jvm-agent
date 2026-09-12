@@ -2,6 +2,8 @@ package com.ntgjvmagent.orchestrator.integration.session
 
 import com.ntgjvmagent.orchestrator.advisor.CallAdvisorRegistry
 import com.ntgjvmagent.orchestrator.advisor.SuccessfulSessionRequestAdvisor
+import com.ntgjvmagent.orchestrator.advisor.ToolCallEvent
+import com.ntgjvmagent.orchestrator.advisor.ToolCallObservingAdvisor
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
 import com.ntgjvmagent.orchestrator.config.ChatReasoningProperties
@@ -194,12 +196,15 @@ class SessionMemoryIT : BaseIntegrationTest() {
     @Test
     fun `multi-step todo transitions are retained as session events`() {
         val sessionId = UUID.randomUUID()
+        val toolCallEvents = mutableListOf<ToolCallEvent>()
         val client =
             ChatClient
                 .builder(TodoProgressModel())
                 .defaultAdvisors(
                     sessionMemoryAdvisor,
+                    successfulSessionRequestAdvisor,
                     productionToolCallingAdvisor(),
+                    ToolCallObservingAdvisor(toolCallEvents::add),
                 ).build()
 
         val answer =
@@ -222,6 +227,16 @@ class SessionMemoryIT : BaseIntegrationTest() {
 
         assertEquals("All tracked tasks are complete.", answer)
         assertEquals(listOf(INITIAL_TODOS, ADVANCED_TODOS, COMPLETED_TODOS), todoStates)
+        assertEquals(
+            listOf(
+                listOf("in_progress", "pending"),
+                listOf("completed", "in_progress"),
+                listOf("completed", "completed"),
+            ),
+            toolCallEvents
+                .filter { it.name == TODO_WRITE_TOOL_NAME && it.phase == ToolCallEvent.Phase.COMPLETED }
+                .map { event -> event.todoItems.orEmpty().map { it.status } },
+        )
     }
 
     @Test

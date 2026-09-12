@@ -10,8 +10,12 @@ import { useToaster } from '@/contexts/ToasterContext';
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { setChatMessages, setActiveConversationId } = useChatContext();
+  const { setChatMessages, setActiveConversationId, clearAgentActivity } = useChatContext();
   const { showError } = useToaster();
+
+  useEffect(() => {
+    clearAgentActivity();
+  }, [clearAgentActivity, id]);
 
   useEffect(() => {
     const fetchConversation = async () => {

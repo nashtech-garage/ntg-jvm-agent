@@ -20,6 +20,7 @@ export default function Sidebar() {
     setActiveConversationId,
     setChatMessages,
     setConversations,
+    clearAgentActivity,
   } = useChatContext();
   const { showError, showSuccess } = useToaster();
   const [collapsed, setCollapsed] = useState(false);
@@ -48,6 +49,7 @@ export default function Sidebar() {
   }, [openDropdown]);
 
   const changeConversation = async (id: string) => {
+    clearAgentActivity();
     router.push(`/c/${id}`);
   };
 
@@ -94,6 +96,7 @@ export default function Sidebar() {
     if (activeConversationId === id) {
       setActiveConversationId(null);
       setChatMessages([]);
+      clearAgentActivity();
       router.replace(`/`);
     }
     setOpenDropdown(null);
@@ -110,6 +113,7 @@ export default function Sidebar() {
   const newChat = () => {
     setActiveConversationId(null);
     setChatMessages([]);
+    clearAgentActivity();
     router.replace(`/`);
   };
 

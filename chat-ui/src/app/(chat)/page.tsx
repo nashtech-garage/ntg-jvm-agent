@@ -50,10 +50,15 @@ export default function Page() {
     setChatMessages,
     setConversations,
     setActiveConversationId,
+    toolCalls,
+    todoItems,
+    reasoning,
+    setToolCalls,
+    setTodoItems,
+    setReasoning,
+    clearAgentActivity,
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
-  const [reasoning, setReasoning] = useState('');
   const router = useRouter();
   const { showError } = useToaster();
   const hasStartedStreamingRef = useRef(false);
@@ -104,6 +109,10 @@ export default function Page() {
   };
 
   const handleToolCall = (event: ToolCallEvent) => {
+    if (event.todoItems) {
+      setTodoItems(event.todoItems);
+    }
+
     setToolCalls((previous) => {
       const index = previous.findIndex((toolCall) => toolCall.id === event.id);
       if (index === -1) return [...previous, event];
@@ -119,8 +128,7 @@ export default function Page() {
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
     hasStartedStreamingRef.current = false;
     setIsTyping(true);
-    setToolCalls([]);
-    setReasoning('');
+    clearAgentActivity();
 
     // Show question immediately
     const questionMessage = buildQuestionMessage(q, files);
@@ -208,6 +216,7 @@ export default function Page() {
                 agentAvatar={selectedAgent?.avatar}
                 agentName={selectedAgent?.name}
                 toolCalls={toolCalls}
+                todoItems={todoItems}
                 reasoning={reasoning}
                 isStreaming={isStreaming}
                 onReaction={handleReaction}
