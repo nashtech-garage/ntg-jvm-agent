@@ -16,6 +16,7 @@ import com.ntgjvmagent.orchestrator.repository.ToolRepository
 import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog.Companion.TODO_WRITE_TOOL_NAME
 import com.ntgjvmagent.orchestrator.tool.SupportPolicyTool
 import com.ntgjvmagent.orchestrator.utils.Constant
 import io.micrometer.observation.ObservationRegistry
@@ -99,7 +100,10 @@ class ToolSearchIsolationIT
                     .content()
 
             assertFalse(answer.orEmpty().contains(AGENT_B_TOOL))
-            assertEquals(setOf(SupportPolicyTool.TOOL_NAME, AGENT_A_TOOL), toolIndex.indexedToolNames.toSet())
+            assertEquals(
+                setOf(SupportPolicyTool.TOOL_NAME, TODO_WRITE_TOOL_NAME, AGENT_A_TOOL),
+                toolIndex.indexedToolNames.toSet(),
+            )
             assertFalse(toolIndex.indexedToolNames.contains(AGENT_B_TOOL))
             assertTrue(callbacks.all { it is MeteredToolCallback })
         }

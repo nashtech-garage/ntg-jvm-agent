@@ -30,7 +30,10 @@ class SupportPolicyToolTest {
 
     @Test
     fun `tool callback exposes the exact typed schema and canonical result`() {
-        val callback = LocalToolCatalog(tool).getToolCallbacks().single()
+        val callback =
+            LocalToolCatalog(tool)
+                .getToolCallbacks()
+                .single { it.toolDefinition.name() == SupportPolicyTool.TOOL_NAME }
         val definition = callback.toolDefinition
         val schema = JsonMapper.builder().build().readTree(definition.inputSchema())
 

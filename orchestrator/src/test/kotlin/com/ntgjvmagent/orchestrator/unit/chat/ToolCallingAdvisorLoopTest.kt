@@ -21,6 +21,7 @@ import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog.Companion.TODO_WRITE_TOOL_NAME
 import com.ntgjvmagent.orchestrator.tool.SupportPolicyTool
 import io.micrometer.observation.Observation
 import io.micrometer.observation.ObservationHandler
@@ -114,7 +115,7 @@ class ToolCallingAdvisorLoopTest {
         assertTrue(model.receivedToolResult.contains("\"initialResponseMinutes\":15"))
         assertTrue(observationNames.contains("spring.ai.tool"))
         assertEquals(
-            setOf(SupportPolicyTool.TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
+            setOf(SupportPolicyTool.TOOL_NAME, TODO_WRITE_TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
             toolIndex.indexedToolNames.toSet(),
         )
         assertFalse(toolIndex.indexedToolNames.contains(UNASSIGNED_EXTERNAL_TOOL))
@@ -205,7 +206,7 @@ class ToolCallingAdvisorLoopTest {
             ).createToolCallbacks(userId, agentId, "tool-loop-contract")
 
         assertEquals(
-            setOf(SupportPolicyTool.TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
+            setOf(SupportPolicyTool.TOOL_NAME, TODO_WRITE_TOOL_NAME, ASSIGNED_EXTERNAL_TOOL),
             callbacks.map { it.toolDefinition.name() }.toSet(),
         )
         assertTrue(callbacks.all { it is MeteredToolCallback })

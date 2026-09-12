@@ -28,6 +28,8 @@ import com.ntgjvmagent.orchestrator.service.ConversationStreamingService
 import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import com.ntgjvmagent.orchestrator.service.SummarizationService
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
+import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog.Companion.TODO_WRITE_TOOL_NAME
 import com.ntgjvmagent.orchestrator.tool.SupportPolicyTool
 import io.mockk.every
 import io.mockk.mockk
@@ -66,6 +68,14 @@ import reactor.core.scheduler.Schedulers
 import java.util.UUID
 
 private const val TOOL_SEARCH_TOOL_NAME = "toolSearchTool"
+private const val INITIAL_TODOS =
+    """{"todos":{"todos":[{"content":"Inspect the request","status":"in_progress","activeForm":"Inspecting the request"},{"content":"Verify the result","status":"pending","activeForm":"Verifying the result"}]}}"""
+private const val ADVANCED_TODOS =
+    """{"todos":{"todos":[{"content":"Inspect the request","status":"completed","activeForm":"Inspecting the request"},{"content":"Verify the result","status":"in_progress","activeForm":"Verifying the result"}]}}"""
+private const val COMPLETED_TODOS =
+    """{"todos":{"todos":[{"content":"Inspect the request","status":"completed","activeForm":"Inspecting the request"},{"content":"Verify the result","status":"completed","activeForm":"Verifying the result"}]}}"""
+private const val INVALID_TODOS =
+    """{"todos":{"todos":[{"content":"First task","status":"in_progress","activeForm":"Doing the first task"},{"content":"Second task","status":"in_progress","activeForm":"Doing the second task"}]}}"""
 
 class SessionMemoryIT : BaseIntegrationTest() {
     @Autowired
@@ -82,6 +92,9 @@ class SessionMemoryIT : BaseIntegrationTest() {
 
     @Autowired
     private lateinit var conversationRepository: ConversationRepository
+
+    @Autowired
+    private lateinit var localToolCatalog: LocalToolCatalog
 
     @Autowired
     private lateinit var messageRepository: ChatMessageRepository
@@ -176,6 +189,52 @@ class SessionMemoryIT : BaseIntegrationTest() {
         val messages = sessionService.getMessages(sessionId.toString())
         assertTrue(messages.filterIsInstance<AssistantMessage>().any { it.hasToolCalls() })
         assertTrue(messages.filterIsInstance<ToolResponseMessage>().isNotEmpty())
+    }
+
+    @Test
+    fun `multi-step todo transitions are retained as session events`() {
+        val sessionId = UUID.randomUUID()
+        val client =
+            ChatClient
+                .builder(TodoProgressModel())
+                .defaultAdvisors(
+                    sessionMemoryAdvisor,
+                    productionToolCallingAdvisor(),
+                ).build()
+
+        val answer =
+            stream(
+                client = client,
+                sessionId = sessionId,
+                userId = TestAuditorConfig.TEST_USER_ID,
+                text = "Inspect this request and verify the result",
+                tools = localToolCatalog.getToolCallbacks().toTypedArray(),
+            )
+
+        val todoStates =
+            sessionService
+                .getEvents(sessionId.toString())
+                .map { it.message }
+                .filterIsInstance<ToolResponseMessage>()
+                .flatMap { it.responses }
+                .filter { it.name() == TODO_WRITE_TOOL_NAME }
+                .map { it.responseData().substringAfter('\n') }
+
+        assertEquals("All tracked tasks are complete.", answer)
+        assertEquals(listOf(INITIAL_TODOS, ADVANCED_TODOS, COMPLETED_TODOS), todoStates)
+    }
+
+    @Test
+    fun `todo callback rejects more than one task in progress`() {
+        val callback =
+            localToolCatalog
+                .getToolCallbacks()
+                .single { it.toolDefinition.name() == TODO_WRITE_TOOL_NAME }
+
+        val failure = assertThrows<Exception> { callback.call(INVALID_TODOS) }
+        val messages = generateSequence(failure as Throwable?) { it.cause }.mapNotNull { it.message }.toList()
+
+        assertTrue(messages.any { it.contains("Only ONE task can be in_progress") })
     }
 
     @Test
@@ -529,6 +588,84 @@ class SessionMemoryIT : BaseIntegrationTest() {
                 ),
             )
         }
+    }
+
+    private class TodoProgressModel : ChatModel {
+        override fun call(prompt: Prompt): ChatResponse = response(prompt)
+
+        override fun stream(prompt: Prompt): Flux<ChatResponse> = Flux.just(response(prompt))
+
+        override fun getOptions(): ChatOptions = ToolCallingChatOptions.builder().build()
+
+        private fun response(prompt: Prompt): ChatResponse {
+            val toolResponses =
+                prompt.instructions
+                    .filterIsInstance<ToolResponseMessage>()
+                    .flatMap { it.responses }
+            val todoUpdateCount = toolResponses.count { it.name() == TODO_WRITE_TOOL_NAME }
+            val lastToolName = toolResponses.lastOrNull()?.name()
+
+            val toolCall =
+                when {
+                    todoUpdateCount >= 3 -> {
+                        null
+                    }
+
+                    lastToolName != TOOL_SEARCH_TOOL_NAME -> {
+                        AssistantMessage.ToolCall(
+                            "todo-search-call-$todoUpdateCount",
+                            "function",
+                            TOOL_SEARCH_TOOL_NAME,
+                            """{"query":"TodoWrite","maxResults":2}""",
+                        )
+                    }
+
+                    todoUpdateCount == 0 -> {
+                        todoCall("todo-initial", INITIAL_TODOS)
+                    }
+
+                    todoUpdateCount == 1 -> {
+                        todoCall("todo-advanced", ADVANCED_TODOS)
+                    }
+
+                    todoUpdateCount == 2 -> {
+                        todoCall("todo-completed", COMPLETED_TODOS)
+                    }
+
+                    else -> {
+                        null
+                    }
+                }
+
+            if (toolCall != null) {
+                return ChatResponse(
+                    listOf(
+                        Generation(
+                            AssistantMessage
+                                .builder()
+                                .content("")
+                                .toolCalls(listOf(toolCall))
+                                .build(),
+                            ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
+                        ),
+                    ),
+                )
+            }
+
+            return ChatResponse(
+                listOf(
+                    Generation(
+                        AssistantMessage("All tracked tasks are complete."),
+                        ChatGenerationMetadata.builder().finishReason("stop").build(),
+                    ),
+                ),
+            )
+        }
+
+        private fun todoCall(
+            id: String,
+            arguments: String,
+        ) = AssistantMessage.ToolCall(id, "function", TODO_WRITE_TOOL_NAME, arguments)
     }
 
     private class FailingModel : ChatModel {
