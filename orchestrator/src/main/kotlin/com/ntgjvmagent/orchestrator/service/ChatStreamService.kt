@@ -34,6 +34,7 @@ class ChatStreamService(
     private val callAdvisorRegistry: CallAdvisorRegistry,
     private val tokenFacade: TokenAccountingFacade,
     private val reasoningProperties: ChatReasoningProperties,
+    private val agentMemoryService: AgentMemoryService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -123,6 +124,14 @@ class ChatStreamService(
     ): Flux<ChatClientResponse> {
         val userId = accountingContext.userId
         val correlationId = requireNotNull(accountingContext.correlationId)
+        val memoryIndex = agentMemoryService.buildIndexForCurrentUser(request.agentId)
+        val systemPrompt =
+            listOf(
+                Constant.SYSTEM_PROMPT,
+                Constant.SEARCH_TOOL_INSTRUCTION,
+                memoryIndex,
+            ).filter(String::isNotBlank)
+                .joinToString("\n")
         return chatClient
             .prompt()
             .advisors(advisors)
@@ -131,12 +140,8 @@ class ChatStreamService(
                     .param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId.toString())
                     .param(SessionMemoryAdvisor.USER_ID_CONTEXT_KEY, userId.toString())
                     .param(SuccessfulSessionRequestAdvisor.RUN_ID_CONTEXT_KEY, correlationId)
-            }.system(
-                """
-                ${Constant.SYSTEM_PROMPT}
-                ${Constant.SEARCH_TOOL_INSTRUCTION}
-                """.trimIndent(),
-            ).tools(
+            }.system(systemPrompt)
+            .tools(
                 *toolFacade
                     .createToolCallbacks(
                         userId = userId,

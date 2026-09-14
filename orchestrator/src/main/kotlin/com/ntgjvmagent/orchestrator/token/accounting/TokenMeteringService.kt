@@ -112,7 +112,7 @@ class TokenMeteringService(
     ) {
         if (userId == null) return
 
-        if (usage.totalTokens <= 0) return
+        if (usage.totalTokens <= 0 && operation != TokenOperation.TOOL) return
 
         try {
             val normalized = usage.toNormalizedUsage()
@@ -135,7 +135,9 @@ class TokenMeteringService(
             )
 
             // keep cache in sync (best-effort)
-            incrementDailyUsageBestEffort(userId, usage.totalTokens.toLong())
+            if (usage.totalTokens > 0) {
+                incrementDailyUsageBestEffort(userId, usage.totalTokens.toLong())
+            }
         } catch (ex: Exception) {
             handleAccountingFailure(ex, correlationId)
         }

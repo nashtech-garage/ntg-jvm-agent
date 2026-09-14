@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.component
 
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.service.AgentMemoryService
 import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
@@ -15,6 +16,7 @@ class ToolExecutionFacade(
     private val globalToolCallbackProvider: GlobalToolCallbackProvider,
     private val localToolCatalog: LocalToolCatalog,
     private val tokenMeteringService: TokenMeteringService,
+    private val agentMemoryService: AgentMemoryService? = null,
 ) {
     fun createToolCallbacks(
         userId: UUID,
@@ -33,7 +35,9 @@ class ToolExecutionFacade(
                 .filterCallbacksByToolNames(allCallbacks, allowedToolNames)
                 .filterNotNull()
 
-        return (localToolCatalog.getToolCallbacks() + assignedCallbacks)
+        val memoryEnabled = agentMemoryService?.isEnabled() == true
+
+        return (localToolCatalog.getToolCallbacks(agentId, memoryEnabled) + assignedCallbacks)
             .distinctBy { it.toolDefinition.name() }
             .map { callback ->
                 MeteredToolCallback(

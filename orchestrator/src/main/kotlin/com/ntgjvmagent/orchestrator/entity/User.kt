@@ -15,4 +15,5 @@ data class User(
     val enabled: Boolean = true,
     val name: String,
     val email: String,
+    var memoryEnabled: Boolean = false,
 )

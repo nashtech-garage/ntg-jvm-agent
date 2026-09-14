@@ -20,6 +20,7 @@ class ChatModelService(
     private val dynamicChatModelService: DynamicChatModelService,
     private val tokenFacade: TokenAccountingFacade,
     private val sessionService: SessionService,
+    private val agentMemoryService: AgentMemoryService? = null,
 ) {
     fun call(
         userId: UUID,
@@ -28,12 +29,14 @@ class ChatModelService(
     ): Flux<ChatStreamEvent> {
         val agentConfig = dynamicChatModelService.getAgentConfig(request.agentId)
         val history = loadSessionContext(sessionId, userId)
+        val memoryIndex = agentMemoryService?.buildIndexForCurrentUser(request.agentId).orEmpty()
+        val meteredContext = history + listOfNotNull(memoryIndex.takeIf(String::isNotBlank))
 
         val estimatedInputTokens =
             tokenFacade.estimateInput(
                 model = agentConfig.model,
                 userPrompt = request.question,
-                history = history,
+                history = meteredContext,
             )
 
         tokenFacade.assertInputBudget(

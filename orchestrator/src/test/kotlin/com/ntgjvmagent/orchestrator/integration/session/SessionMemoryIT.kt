@@ -22,6 +22,7 @@ import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
+import com.ntgjvmagent.orchestrator.service.AgentMemoryService
 import com.ntgjvmagent.orchestrator.service.ChatModelService
 import com.ntgjvmagent.orchestrator.service.ChatStreamService
 import com.ntgjvmagent.orchestrator.service.ConversationCommandService
@@ -391,9 +392,11 @@ class SessionMemoryIT : BaseIntegrationTest() {
         val advisorRegistry = mockk<CallAdvisorRegistry>()
         val toolFacade = mockk<ToolExecutionFacade>()
         val tokenFacade = mockk<TokenAccountingFacade>(relaxed = true)
+        val agentMemoryService = mockk<AgentMemoryService>()
         every { chatClientFactory.create(agentId) } returns chatClient
         every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
             listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
+        every { agentMemoryService.buildIndexForCurrentUser(agentId) } returns ""
         every { toolFacade.createToolCallbacks(userId, agentId, any()) } returns
             ToolCallbacks.from(SupportPolicyTool()).toList()
         val chatStreamService =
@@ -403,6 +406,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
                 callAdvisorRegistry = advisorRegistry,
                 tokenFacade = tokenFacade,
                 reasoningProperties = ChatReasoningProperties(enabled = true),
+                agentMemoryService = agentMemoryService,
             )
         val dynamicChatModelService = mockk<DynamicChatModelService>()
         every { dynamicChatModelService.getAgentConfig(agentId) } returns
