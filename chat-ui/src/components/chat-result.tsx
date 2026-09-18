@@ -13,6 +13,8 @@ import { TodoItem, ToolCallEvent } from '@/models/tool-call-event';
 import ToolCallStatus from '@/components/tool-call-status';
 import ReasoningStatus from '@/components/reasoning-status';
 import TodoProgressStatus from '@/components/todo-progress-status';
+import UserQuestionCard from '@/components/user-question-card';
+import { PendingQuestion, QuestionAnswers } from '@/models/user-question';
 
 export default function ChatResult({
   results,
@@ -23,6 +25,8 @@ export default function ChatResult({
   todoItems = [],
   reasoning = '',
   isStreaming = false,
+  pendingQuestion,
+  onAnswerQuestion,
   onReaction,
 }: Readonly<{
   results: ChatMessage[];
@@ -33,11 +37,17 @@ export default function ChatResult({
   todoItems?: TodoItem[];
   reasoning?: string;
   isStreaming?: boolean;
+  pendingQuestion?: PendingQuestion | null;
+  onAnswerQuestion?: (answers: QuestionAnswers) => void;
   onReaction?: (messageId: string, reaction: Reaction) => void;
 }>) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const latestResult = results.at(-1);
-  const hasAgentActivity = toolCalls.length > 0 || todoItems.length > 0 || reasoning.length > 0;
+  const hasAgentActivity =
+    toolCalls.length > 0 ||
+    todoItems.length > 0 ||
+    reasoning.length > 0 ||
+    Boolean(pendingQuestion);
   const activityPrecedesLatestAnswer =
     hasAgentActivity && latestResult?.type === Constants.ANSWER_TYPE;
 
@@ -46,6 +56,14 @@ export default function ChatResult({
       <ReasoningStatus content={reasoning} isStreaming={isStreaming} />
       <TodoProgressStatus items={todoItems} />
       <ToolCallStatus toolCalls={toolCalls} />
+      {pendingQuestion && onAnswerQuestion && (
+        <UserQuestionCard
+          key={pendingQuestion.id}
+          pending={pendingQuestion}
+          submitting={isStreaming}
+          onSubmit={onAnswerQuestion}
+        />
+      )}
     </div>
   );
 
@@ -61,7 +79,7 @@ export default function ChatResult({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [isTyping, reasoning, results, todoItems, toolCalls]);
+  }, [isTyping, pendingQuestion, reasoning, results, todoItems, toolCalls]);
 
   if (results.length === 0) {
     return (

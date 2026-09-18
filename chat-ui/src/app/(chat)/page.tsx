@@ -18,6 +18,7 @@ import { useToaster } from '@/contexts/ToasterContext';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import { customizeFetch } from '@/utils/custom-fetch';
 import { ToolCallEvent } from '@/models/tool-call-event';
+import { PendingQuestion, QuestionAnswers } from '@/models/user-question';
 
 function buildQuestionMessage(q: string, files: FileSelectInfo[]) {
   return {
@@ -41,7 +42,7 @@ function cleanupStreamingMessage(
 }
 
 export default function Page() {
-  const { ask, isStreaming } = useChatStream();
+  const { ask, answer, isStreaming } = useChatStream();
 
   const {
     chatMessages,
@@ -53,15 +54,18 @@ export default function Page() {
     toolCalls,
     todoItems,
     reasoning,
+    pendingQuestion,
     setToolCalls,
     setTodoItems,
     setReasoning,
+    setPendingQuestion,
     clearAgentActivity,
   } = useChatContext();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const router = useRouter();
   const { showError } = useToaster();
   const hasStartedStreamingRef = useRef(false);
+  const lastUserQuestionRef = useRef('');
 
   const handleTokenUpdate = (token: string) => {
     if (!hasStartedStreamingRef.current) {
@@ -125,10 +129,43 @@ export default function Page() {
     setReasoning((previous) => previous + delta);
   };
 
+  const handleQuestion = (question: PendingQuestion) => {
+    cleanupStreamingMessage(setChatMessages);
+    setPendingQuestion(question);
+    setIsTyping(false);
+
+    if (!activeConversationId && question.conversationId) {
+      setActiveConversationId(question.conversationId);
+      setConversations((previous) => [
+        {
+          id: question.conversationId,
+          title: lastUserQuestionRef.current || 'Clarification needed',
+          createdAt: new Date().toISOString(),
+        },
+        ...previous,
+      ]);
+      router.replace(`/c/${question.conversationId}`);
+    }
+  };
+
+  const streamHandlers = {
+    onToken: handleTokenUpdate,
+    onReasoning: handleReasoning,
+    onToolCall: handleToolCall,
+    onQuestion: handleQuestion,
+    onComplete: handleFinalResponse,
+    onError: (message: string) => {
+      showError(message);
+      cleanupStreamingMessage(setChatMessages);
+    },
+  };
+
   const handleAsk = async (q: string, files: FileSelectInfo[]) => {
+    lastUserQuestionRef.current = q;
     hasStartedStreamingRef.current = false;
     setIsTyping(true);
     clearAgentActivity();
+    setPendingQuestion(null);
 
     // Show question immediately
     const questionMessage = buildQuestionMessage(q, files);
@@ -143,19 +180,47 @@ export default function Page() {
           files,
           agentId: selectedAgent?.id,
         },
+        streamHandlers
+      );
+    } finally {
+      // Always reset typing state
+      setIsTyping(false);
+    }
+  };
+
+  const handleAnswerQuestion = async (answers: QuestionAnswers) => {
+    if (!pendingQuestion?.conversationId) return;
+
+    const currentPending = pendingQuestion;
+    const answerText = Object.values(answers).join('; ');
+    const optimisticAnswer = buildQuestionMessage(answerText, []);
+    hasStartedStreamingRef.current = false;
+    setPendingQuestion(null);
+    setIsTyping(true);
+    setChatMessages((previous) => [...previous, optimisticAnswer]);
+
+    try {
+      await answer(
         {
-          onToken: handleTokenUpdate,
-          onReasoning: handleReasoning,
-          onToolCall: handleToolCall,
-          onComplete: handleFinalResponse,
-          onError: (msg: string) => {
-            showError(msg);
-            cleanupStreamingMessage(setChatMessages);
+          conversationId: currentPending.conversationId,
+          questionId: currentPending.id,
+          answers,
+        },
+        {
+          ...streamHandlers,
+          onError: (message: string) => {
+            setPendingQuestion(currentPending);
+            showError(message);
+            setChatMessages((previous) =>
+              previous.filter(
+                (chatMessage) =>
+                  chatMessage.id !== 'streaming' && chatMessage.id !== optimisticAnswer.id
+              )
+            );
           },
         }
       );
     } finally {
-      // Always reset typing state
       setIsTyping(false);
     }
   };
@@ -219,6 +284,8 @@ export default function Page() {
                 todoItems={todoItems}
                 reasoning={reasoning}
                 isStreaming={isStreaming}
+                pendingQuestion={pendingQuestion}
+                onAnswerQuestion={handleAnswerQuestion}
                 onReaction={handleReaction}
               />
             </div>

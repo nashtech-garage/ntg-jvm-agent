@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicReference
 
 @Service
 class ChatStreamService(
@@ -60,6 +61,7 @@ class ChatStreamService(
         val activityAdvisors = createActivityAdvisors(activityEvents)
 
         val responses = CopyOnWriteArrayList<ChatResponse>()
+        val pendingQuestion = AtomicReference<com.ntgjvmagent.orchestrator.dto.PendingQuestionDto?>()
         val responseFlux =
             buildSharedResponseFlux(
                 sessionId,
@@ -67,9 +69,10 @@ class ChatStreamService(
                 advisors + activityAdvisors,
                 request,
                 accountingContext,
+                pendingQuestion::set,
             ).doOnNext { event -> event.chatResponse?.let(responses::add) }
 
-        val textStream = buildTextStream(responseFlux)
+        val textStream = buildTextStream(responseFlux).filter { pendingQuestion.get() == null }
 
         val messageEvents: Flux<ChatStreamEvent> =
             textStream
@@ -86,8 +89,15 @@ class ChatStreamService(
                     activityEvents.tryEmitComplete()
                 }
 
-        // Subscribe to the side channel first so synchronous model responses cannot outrun it.
-        return Flux.merge(activityEvents.asFlux(), messageEvents)
+        val terminalQuestion =
+            Flux.defer {
+                pendingQuestion.get()?.let { Flux.just(ChatStreamEvent.Question(it)) } ?: Flux.empty()
+            }
+
+        // A question is emitted only after the model/tool stream completes. Emitting it directly
+        // from the tool callback would make the terminal SSE operator cancel the recursive advisor
+        // chain before its ToolResponseMessage is committed to session history.
+        return Flux.merge(activityEvents.asFlux(), messageEvents).concatWith(terminalQuestion)
     }
 
     private fun createActivityAdvisors(activityEvents: Sinks.Many<ChatStreamEvent>): List<Advisor> {
@@ -121,6 +131,7 @@ class ChatStreamService(
         advisors: List<Advisor>,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
+        onQuestion: (com.ntgjvmagent.orchestrator.dto.PendingQuestionDto) -> Unit,
     ): Flux<ChatClientResponse> {
         val userId = accountingContext.userId
         val correlationId = requireNotNull(accountingContext.correlationId)
@@ -147,6 +158,9 @@ class ChatStreamService(
                         userId = userId,
                         agentId = request.agentId,
                         correlationId = correlationId,
+                        sessionId = sessionId,
+                        conversationId = request.conversationId,
+                        onQuestion = onQuestion,
                     ).toTypedArray(),
             ).user { u ->
                 attachUserInput(u, accountingContext.userInputText, request)

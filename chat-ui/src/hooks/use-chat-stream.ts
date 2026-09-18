@@ -4,15 +4,8 @@ import { useCallback, useRef, useState } from 'react';
 import { ChatResponse } from '@/models/chat-response';
 import { FileSelectInfo } from '@/models/file-select-info';
 import { customizeFetch } from '@/utils/custom-fetch';
-import { ToolCallEvent } from '@/models/tool-call-event';
-
-type StreamHandlers<TComplete> = {
-  onToken: (token: string) => void;
-  onReasoning: (delta: string) => void;
-  onToolCall: (event: ToolCallEvent) => void;
-  onComplete: (final: TComplete) => void;
-  onError: (message: string) => void;
-};
+import { QuestionAnswers } from '@/models/user-question';
+import { dispatchSseEvent, parseSseFrame, type StreamHandlers } from '@/hooks/sse-events';
 
 function buildChatFormData(
   question: string,
@@ -36,87 +29,6 @@ function buildChatFormData(
   }
 
   return formData;
-}
-
-function parseSseFrame(frame: string): { event?: string; data?: string } {
-  let event: string | undefined;
-  const dataLines: string[] = [];
-
-  for (const line of frame.split('\n')) {
-    if (line.startsWith('event:')) {
-      event = line.slice(6).trim();
-    } else if (line.startsWith('data:')) {
-      dataLines.push(line.slice(5));
-    }
-  }
-
-  return {
-    event,
-    data: dataLines.length ? dataLines.join('\n') : undefined,
-  };
-}
-
-function dispatchSseEvent<TComplete>(
-  parsed: { event?: string; data?: string },
-  handlers: StreamHandlers<TComplete>,
-  parseComplete: (raw: string) => TComplete
-): boolean {
-  if (!parsed.event) return false;
-
-  switch (parsed.event) {
-    case 'message': {
-      if (parsed.data) {
-        handlers.onToken(parsed.data);
-      }
-      return false;
-    }
-
-    case 'reasoning': {
-      if (parsed.data) {
-        handlers.onReasoning(parsed.data);
-      }
-      return false;
-    }
-
-    case 'complete': {
-      if (!parsed.data) {
-        handlers.onError('Empty completion payload');
-        return true;
-      }
-
-      try {
-        const parsedData = parseComplete(parsed.data);
-        handlers.onComplete(parsedData);
-      } catch {
-        handlers.onError('Invalid completion payload');
-      }
-      return true;
-    }
-
-    case 'tool': {
-      if (!parsed.data) {
-        handlers.onError('Empty tool event payload');
-        return true;
-      }
-
-      try {
-        const toolCall = JSON.parse(parsed.data) as ToolCallEvent;
-        handlers.onToolCall(toolCall);
-      } catch {
-        handlers.onError('Invalid tool event payload');
-        return true;
-      }
-      return false;
-    }
-
-    case 'error': {
-      handlers.onError(parsed.data ?? 'Unexpected server error');
-      return true;
-    }
-
-    default:
-      return false;
-  }
 }
 
 async function parseSseStream<TComplete>(
@@ -157,16 +69,8 @@ export function useChatStream() {
     setIsStreaming(false);
   }, []);
 
-  const ask = useCallback(
-    async (
-      params: {
-        question: string;
-        conversationId: string | null;
-        files: FileSelectInfo[];
-        agentId?: string;
-      },
-      handlers: StreamHandlers<ChatResponse>
-    ) => {
+  const consume = useCallback(
+    async (request: () => Promise<Response>, handlers: StreamHandlers<ChatResponse>) => {
       abort(); // cancel any previous stream
       setIsStreaming(true);
 
@@ -174,18 +78,7 @@ export function useChatStream() {
       controllerRef.current = controller;
 
       try {
-        const formData = buildChatFormData(
-          params.question,
-          params.conversationId,
-          params.files,
-          params.agentId
-        );
-
-        const res = await customizeFetch('/api/chat', {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-        });
+        const res = await request();
 
         if (!res.body) {
           throw new Error(`Request failed with status ${res.status}`);
@@ -199,6 +92,7 @@ export function useChatStream() {
             onToken: handlers.onToken,
             onReasoning: handlers.onReasoning,
             onToolCall: handlers.onToolCall,
+            onQuestion: handlers.onQuestion,
             onComplete: handlers.onComplete,
             onError: handlers.onError,
           },
@@ -222,8 +116,53 @@ export function useChatStream() {
     [abort]
   );
 
+  const ask = useCallback(
+    async (
+      params: {
+        question: string;
+        conversationId: string | null;
+        files: FileSelectInfo[];
+        agentId?: string;
+      },
+      handlers: StreamHandlers<ChatResponse>
+    ) =>
+      consume(() => {
+        const formData = buildChatFormData(
+          params.question,
+          params.conversationId,
+          params.files,
+          params.agentId
+        );
+        return customizeFetch('/api/chat', {
+          method: 'POST',
+          body: formData,
+          signal: controllerRef.current?.signal,
+        });
+      }, handlers),
+    [consume]
+  );
+
+  const answer = useCallback(
+    async (
+      params: { conversationId: string; questionId: string; answers: QuestionAnswers },
+      handlers: StreamHandlers<ChatResponse>
+    ) =>
+      consume(
+        () =>
+          customizeFetch(`/api/chat/${params.conversationId}/answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionId: params.questionId, answers: params.answers }),
+            signal: controllerRef.current?.signal,
+          }),
+        handlers
+      ),
+    [consume]
+  );
+
   return {
     ask,
+    answer,
     abort,
     isStreaming,
   };

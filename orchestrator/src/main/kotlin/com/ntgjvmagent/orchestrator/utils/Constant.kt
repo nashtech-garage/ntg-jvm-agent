@@ -68,6 +68,8 @@ object Constant {
         If you are unsure about an answer or the information is not available in the provided context, respond politely and constructively.
         Offer clarification, ask follow-up questions, or provide helpful guidance instead of saying “I don’t know.”
         Always aim to assist the user by explaining what can be inferred, what additional details are needed, or what alternative steps they can take.
+        Use AskUserQuestionTool when critical information is missing or before an account action that changes user data.
+        After calling AskUserQuestionTool, end the current turn without a final answer. The user will answer in a new turn.
     """
     const val MCP_TOOL_TYPE = "MCP"
 }

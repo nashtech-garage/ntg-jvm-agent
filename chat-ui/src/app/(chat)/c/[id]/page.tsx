@@ -10,7 +10,8 @@ import { useToaster } from '@/contexts/ToasterContext';
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { setChatMessages, setActiveConversationId, clearAgentActivity } = useChatContext();
+  const { setChatMessages, setActiveConversationId, setPendingQuestion, clearAgentActivity } =
+    useChatContext();
   const { showError } = useToaster();
 
   useEffect(() => {
@@ -20,16 +21,20 @@ export default function ConversationPage() {
   useEffect(() => {
     const fetchConversation = async () => {
       try {
-        const res = await customizeFetch(`/api/chat?conversationId=${id}`);
+        const [res, pendingRes] = await Promise.all([
+          customizeFetch(`/api/chat?conversationId=${id}`),
+          customizeFetch(`/api/chat/${id}/pending-question`),
+        ]);
         const messages = await res.json();
         setChatMessages(messages);
+        setPendingQuestion(pendingRes.status === 204 ? null : await pendingRes.json());
         setActiveConversationId(id);
       } catch (error) {
         showError(`Error fetching conversation: ${error}`);
       }
     };
     fetchConversation();
-  }, [id, setChatMessages, setActiveConversationId, showError]);
+  }, [id, setChatMessages, setActiveConversationId, setPendingQuestion, showError]);
 
   return <ChatPage />;
 }

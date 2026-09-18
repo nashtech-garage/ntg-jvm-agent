@@ -2,14 +2,17 @@ package com.ntgjvmagent.orchestrator.controller
 
 import com.ntgjvmagent.orchestrator.component.CurrentUserProvider
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
+import com.ntgjvmagent.orchestrator.dto.PendingQuestionDto
 import com.ntgjvmagent.orchestrator.dto.ReactionRequestDto
 import com.ntgjvmagent.orchestrator.dto.request.ConversationIntentRequestDto
+import com.ntgjvmagent.orchestrator.dto.request.QuestionAnswerRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.ConversationIntentResponseDto
 import com.ntgjvmagent.orchestrator.service.ConversationCommandService
 import com.ntgjvmagent.orchestrator.service.ConversationIntentService
 import com.ntgjvmagent.orchestrator.service.ConversationQueryService
 import com.ntgjvmagent.orchestrator.service.ConversationStreamingService
 import com.ntgjvmagent.orchestrator.service.MessageService
+import com.ntgjvmagent.orchestrator.service.PendingQuestionService
 import com.ntgjvmagent.orchestrator.viewmodel.ChatMessageResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationResponseVm
 import com.ntgjvmagent.orchestrator.viewmodel.ConversationUpdateRequestVm
@@ -31,6 +34,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/api/conversations")
+@Suppress("LongParameterList")
 class ConversationController(
     private val conversationCommandService: ConversationCommandService,
     private val conversationQueryService: ConversationQueryService,
@@ -38,6 +42,7 @@ class ConversationController(
     private val conversationIntentService: ConversationIntentService,
     private val currentUserProvider: CurrentUserProvider,
     private val messageService: MessageService,
+    private val pendingQuestionService: PendingQuestionService,
 ) {
     @PostMapping(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE],
@@ -56,6 +61,31 @@ class ConversationController(
     ): ResponseEntity<ConversationIntentResponseDto> {
         val userId = currentUserProvider.getUserId()
         return ResponseEntity.ok(conversationIntentService.classify(userId, request))
+    }
+
+    @PostMapping(
+        "/{conversationId}/answer",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.TEXT_EVENT_STREAM_VALUE],
+    )
+    fun answerQuestion(
+        @PathVariable conversationId: UUID,
+        @Valid @RequestBody request: QuestionAnswerRequestDto,
+    ): Flux<ServerSentEvent<Any>> =
+        conversationStreamingService.answerQuestion(
+            conversationId = conversationId,
+            request = request,
+            userId = currentUserProvider.getUserId(),
+        )
+
+    @GetMapping("/{conversationId}/pending-question")
+    fun getPendingQuestion(
+        @PathVariable conversationId: UUID,
+    ): ResponseEntity<PendingQuestionDto> {
+        val pending =
+            pendingQuestionService.findPending(conversationId, currentUserProvider.getUserId())
+                ?: return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(pending)
     }
 
     @GetMapping()

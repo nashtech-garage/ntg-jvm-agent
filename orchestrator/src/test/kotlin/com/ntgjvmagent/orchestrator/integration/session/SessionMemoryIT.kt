@@ -10,6 +10,8 @@ import com.ntgjvmagent.orchestrator.config.ChatReasoningProperties
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
 import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.dto.ChatResponseDto
+import com.ntgjvmagent.orchestrator.dto.PendingQuestionDto
+import com.ntgjvmagent.orchestrator.dto.request.QuestionAnswerRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.entity.ChatMessage
 import com.ntgjvmagent.orchestrator.entity.Conversation
@@ -20,6 +22,7 @@ import com.ntgjvmagent.orchestrator.integration.config.TestAuditorConfig
 import com.ntgjvmagent.orchestrator.model.ChatMessageType
 import com.ntgjvmagent.orchestrator.model.ChatStreamEvent
 import com.ntgjvmagent.orchestrator.model.TokenOperation
+import com.ntgjvmagent.orchestrator.repository.AgentRepository
 import com.ntgjvmagent.orchestrator.repository.ChatMessageRepository
 import com.ntgjvmagent.orchestrator.repository.ConversationRepository
 import com.ntgjvmagent.orchestrator.service.AgentMemoryService
@@ -29,8 +32,10 @@ import com.ntgjvmagent.orchestrator.service.ConversationCommandService
 import com.ntgjvmagent.orchestrator.service.ConversationSessionService
 import com.ntgjvmagent.orchestrator.service.ConversationStreamingService
 import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
+import com.ntgjvmagent.orchestrator.service.PendingQuestionService
 import com.ntgjvmagent.orchestrator.service.SummarizationService
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
+import com.ntgjvmagent.orchestrator.tool.AskUserQuestionContext
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog
 import com.ntgjvmagent.orchestrator.tool.LocalToolCatalog.Companion.TODO_WRITE_TOOL_NAME
 import com.ntgjvmagent.orchestrator.tool.SupportPolicyTool
@@ -71,6 +76,7 @@ import reactor.core.scheduler.Schedulers
 import java.util.UUID
 
 private const val TOOL_SEARCH_TOOL_NAME = "toolSearchTool"
+private const val CLARIFICATION_QUESTION = "Which platform should the app target?"
 private const val INITIAL_TODOS =
     """{"todos":{"todos":[{"content":"Inspect the request","status":"in_progress","activeForm":"Inspecting the request"},{"content":"Verify the result","status":"pending","activeForm":"Verifying the result"}]}}"""
 private const val ADVANCED_TODOS =
@@ -95,6 +101,12 @@ class SessionMemoryIT : BaseIntegrationTest() {
 
     @Autowired
     private lateinit var conversationRepository: ConversationRepository
+
+    @Autowired
+    private lateinit var agentRepository: AgentRepository
+
+    @Autowired
+    private lateinit var pendingQuestionService: PendingQuestionService
 
     @Autowired
     private lateinit var localToolCatalog: LocalToolCatalog
@@ -397,7 +409,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
         every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
             listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
         every { agentMemoryService.buildIndexForCurrentUser(agentId) } returns ""
-        every { toolFacade.createToolCallbacks(userId, agentId, any()) } returns
+        every { toolFacade.createToolCallbacks(userId, agentId, any(), any(), null, any()) } returns
             ToolCallbacks.from(SupportPolicyTool()).toList()
         val chatStreamService =
             ChatStreamService(
@@ -465,6 +477,145 @@ class SessionMemoryIT : BaseIntegrationTest() {
             (successEvents + errorEvents).mapNotNull { it.event() }.toSet(),
         )
         verify(exactly = 1, timeout = 2_000) { tokenFacade.recordWithFallback(any(), any()) }
+    }
+
+    @Test
+    fun `terminal user question retains its tool response before resume`() {
+        val userId = TestAuditorConfig.TEST_USER_ID
+        val agentId = requireNotNull(agentRepository.findAll().first().id)
+        val sessionId = UUID.randomUUID()
+        val owner = userRepository.findById(userId).orElseThrow()
+        val conversation =
+            conversationRepository.save(
+                Conversation(title = "Question pause", sessionId = sessionId).also { it.createdBy = owner },
+            )
+        val conversationId = requireNotNull(conversation.id)
+        sessionService.create(
+            CreateSessionRequest
+                .builder()
+                .id(sessionId.toString())
+                .userId(userId.toString())
+                .build(),
+        )
+
+        val questionModel = QuestionPauseModel()
+        val chatClient =
+            ChatClient
+                .builder(questionModel)
+                .defaultAdvisors(productionToolCallingAdvisor())
+                .build()
+        val chatClientFactory = mockk<AgentChatClientFactory>()
+        val advisorRegistry = mockk<CallAdvisorRegistry>()
+        val toolFacade = mockk<ToolExecutionFacade>()
+        val tokenFacade = mockk<TokenAccountingFacade>(relaxed = true)
+        val agentMemoryService = mockk<AgentMemoryService>()
+        val onQuestion = slot<(PendingQuestionDto) -> Unit>()
+
+        every { chatClientFactory.create(agentId) } returns chatClient
+        every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
+            listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
+        every { agentMemoryService.buildIndexForCurrentUser(agentId) } returns ""
+        every {
+            toolFacade.createToolCallbacks(
+                userId,
+                agentId,
+                any(),
+                sessionId,
+                conversationId,
+                capture(onQuestion),
+            )
+        } answers {
+            localToolCatalog.getToolCallbacks(
+                agentId = agentId,
+                questionContext =
+                    AskUserQuestionContext(
+                        userId = userId,
+                        agentId = agentId,
+                        sessionId = sessionId,
+                        conversationId = conversationId,
+                        correlationId = "question-pause-it",
+                    ),
+                onQuestion = onQuestion.captured,
+            )
+        }
+        every { tokenFacade.estimateInput("test-model", any(), any()) } returns 2
+
+        val chatStreamService =
+            ChatStreamService(
+                toolFacade = toolFacade,
+                chatClientFactory = chatClientFactory,
+                callAdvisorRegistry = advisorRegistry,
+                tokenFacade = tokenFacade,
+                reasoningProperties = ChatReasoningProperties(enabled = false),
+                agentMemoryService = agentMemoryService,
+            )
+        val dynamicChatModelService = mockk<DynamicChatModelService>()
+        every { dynamicChatModelService.getAgentConfig(agentId) } returns
+            mockk<AgentResponseDto> { every { model } returns "test-model" }
+        val chatModelService =
+            ChatModelService(
+                chatStreamService = chatStreamService,
+                summarizationService = mockk<SummarizationService>(),
+                dynamicChatModelService = dynamicChatModelService,
+                tokenFacade = tokenFacade,
+                sessionService = sessionService,
+            )
+        val commandService = mockk<ConversationCommandService>()
+        every { commandService.persistPendingQuestionTurn(userId, any(), sessionId) } returns conversationId
+        every { commandService.appendConversationAnswerTurn(userId, any(), any(), "Plan ready.") } returns
+            mockk<ChatResponseDto>()
+        val conversationSessionService = mockk<ConversationSessionService>()
+        every { conversationSessionService.resolveSessionId(conversationId, userId, agentId, any()) } returns
+            sessionId
+        val service =
+            ConversationStreamingService(
+                chatModelService = chatModelService,
+                commandService = commandService,
+                conversationSessionService = conversationSessionService,
+                pendingQuestionService = pendingQuestionService,
+            )
+
+        val questionEvents =
+            service
+                .streamConversation(
+                    request(agentId, "Plan an English-learning app").copy(conversationId = conversationId),
+                    userId,
+                ).collectList()
+                .block()
+                .orEmpty()
+
+        assertEquals("question", questionEvents.last().event())
+        assertTrue(questionEvents.none { it.event() == "message" || it.event() == "complete" })
+        val pending = questionEvents.last().data() as PendingQuestionDto
+        val sessionMessages = sessionService.getMessages(sessionId.toString())
+        val askCall =
+            sessionMessages
+                .filterIsInstance<AssistantMessage>()
+                .flatMap(AssistantMessage::getToolCalls)
+                .single { it.name() == LocalToolCatalog.ASK_USER_QUESTION_TOOL_NAME }
+        val askResponse =
+            sessionMessages
+                .filterIsInstance<ToolResponseMessage>()
+                .flatMap(ToolResponseMessage::getResponses)
+                .single { it.name() == LocalToolCatalog.ASK_USER_QUESTION_TOOL_NAME }
+        assertEquals(askCall.id(), askResponse.id())
+
+        val answerEvents =
+            service
+                .answerQuestion(
+                    conversationId,
+                    QuestionAnswerRequestDto(
+                        questionId = pending.id,
+                        answers = mapOf(CLARIFICATION_QUESTION to "Mobile"),
+                    ),
+                    userId,
+                ).collectList()
+                .block()
+                .orEmpty()
+
+        assertEquals(listOf("message", "complete"), answerEvents.map { it.event() })
+        assertEquals("Plan ready.", answerEvents.first().data())
+        assertEquals(null, pendingQuestionService.findPending(conversationId, userId))
     }
 
     private fun stream(
@@ -694,5 +845,79 @@ class SessionMemoryIT : BaseIntegrationTest() {
             Flux.error(IllegalStateException("provider unavailable"))
 
         override fun getOptions(): ChatOptions = ToolCallingChatOptions.builder().build()
+    }
+
+    private class QuestionPauseModel : ChatModel {
+        override fun call(prompt: Prompt): ChatResponse = response(prompt)
+
+        override fun stream(prompt: Prompt): Flux<ChatResponse> = Flux.just(response(prompt))
+
+        override fun getOptions(): ChatOptions = ToolCallingChatOptions.builder().build()
+
+        private fun response(prompt: Prompt): ChatResponse {
+            val currentUser =
+                prompt.instructions
+                    .filterIsInstance<UserMessage>()
+                    .last()
+                    .text
+                    .orEmpty()
+            if (currentUser.startsWith("The user answered the pending clarification questions:")) {
+                return finalResponse("Plan ready.")
+            }
+
+            val lastToolName =
+                prompt.instructions
+                    .filterIsInstance<ToolResponseMessage>()
+                    .flatMap(ToolResponseMessage::getResponses)
+                    .lastOrNull()
+                    ?.name()
+            val toolCall =
+                when (lastToolName) {
+                    null -> {
+                        AssistantMessage.ToolCall(
+                            "question-search-call",
+                            "function",
+                            TOOL_SEARCH_TOOL_NAME,
+                            """{"query":"AskUserQuestionTool clarification","maxResults":2}""",
+                        )
+                    }
+
+                    TOOL_SEARCH_TOOL_NAME -> {
+                        AssistantMessage.ToolCall(
+                            "ask-user-call",
+                            "function",
+                            LocalToolCatalog.ASK_USER_QUESTION_TOOL_NAME,
+                            """{"questions":[{"question":"$CLARIFICATION_QUESTION","header":"Platform","options":[{"label":"Mobile","description":"Build a mobile application."},{"label":"Web","description":"Build a web application."}],"multiSelect":false}]}""",
+                        )
+                    }
+
+                    else -> {
+                        return finalResponse("Waiting for the user's answer.")
+                    }
+                }
+
+            return ChatResponse(
+                listOf(
+                    Generation(
+                        AssistantMessage
+                            .builder()
+                            .content("")
+                            .toolCalls(listOf(toolCall))
+                            .build(),
+                        ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
+                    ),
+                ),
+            )
+        }
+
+        private fun finalResponse(text: String) =
+            ChatResponse(
+                listOf(
+                    Generation(
+                        AssistantMessage(text),
+                        ChatGenerationMetadata.builder().finishReason("stop").build(),
+                    ),
+                ),
+            )
     }
 }

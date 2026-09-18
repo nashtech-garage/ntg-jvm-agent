@@ -16,6 +16,7 @@ import { ChatMessage } from '@/models/chat-message';
 import { Agent } from '@/models/agent';
 import { useToaster } from '@/contexts/ToasterContext';
 import { TodoItem, ToolCallEvent } from '@/models/tool-call-event';
+import { PendingQuestion } from '@/models/user-question';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -27,6 +28,7 @@ interface ChatContextType {
   toolCalls: ToolCallEvent[];
   todoItems: TodoItem[];
   reasoning: string;
+  pendingQuestion: PendingQuestion | null;
   setConversations: Dispatch<SetStateAction<Conversation[]>>;
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   setActiveConversationId: Dispatch<SetStateAction<string | null>>;
@@ -35,6 +37,7 @@ interface ChatContextType {
   setToolCalls: Dispatch<SetStateAction<ToolCallEvent[]>>;
   setTodoItems: Dispatch<SetStateAction<TodoItem[]>>;
   setReasoning: Dispatch<SetStateAction<string>>;
+  setPendingQuestion: Dispatch<SetStateAction<PendingQuestion | null>>;
   clearAgentActivity: () => void;
 }
 
@@ -76,11 +79,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
   const [reasoning, setReasoning] = useState('');
+  const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
 
   const clearAgentActivity = useCallback(() => {
     setToolCalls([]);
     setTodoItems([]);
     setReasoning('');
+    setPendingQuestion(null);
   }, []);
 
   // Load user info and all conversations on mount
@@ -106,6 +111,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       toolCalls,
       todoItems,
       reasoning,
+      pendingQuestion,
       setConversations,
       setChatMessages,
       setActiveConversationId,
@@ -114,6 +120,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setToolCalls,
       setTodoItems,
       setReasoning,
+      setPendingQuestion,
       clearAgentActivity,
     }),
     [
@@ -126,6 +133,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       toolCalls,
       todoItems,
       reasoning,
+      pendingQuestion,
       clearAgentActivity,
     ]
   );

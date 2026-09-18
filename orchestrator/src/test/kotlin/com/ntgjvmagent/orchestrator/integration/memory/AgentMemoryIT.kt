@@ -355,7 +355,16 @@ class AgentMemoryIT
             every { chatClientFactory.create(agentId) } returns ChatClient.builder(model).build()
             every { advisorRegistry.resolveForAgent(agentId, TestAuditorConfig.TEST_USER_ID, any()) } returns
                 emptyList()
-            every { toolFacade.createToolCallbacks(TestAuditorConfig.TEST_USER_ID, agentId, any()) } returns emptyList()
+            every {
+                toolFacade.createToolCallbacks(
+                    TestAuditorConfig.TEST_USER_ID,
+                    agentId,
+                    any(),
+                    any(),
+                    null,
+                    any(),
+                )
+            } returns emptyList()
             val service =
                 ChatStreamService(
                     toolFacade = toolFacade,

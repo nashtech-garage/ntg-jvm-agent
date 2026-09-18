@@ -150,6 +150,33 @@ class ConversationCommandService(
         userId: UUID,
         chatReq: ChatRequestDto,
         answer: String,
+    ): ChatResponseDto =
+        appendConversationMessage(
+            userId = userId,
+            chatReq = chatReq,
+            questionContent = chatReq.question,
+            answer = answer,
+        )
+
+    @Transactional
+    fun appendConversationAnswerTurn(
+        userId: UUID,
+        chatReq: ChatRequestDto,
+        questionContent: String,
+        answer: String,
+    ): ChatResponseDto =
+        appendConversationMessage(
+            userId = userId,
+            chatReq = chatReq,
+            questionContent = questionContent,
+            answer = answer,
+        )
+
+    private fun appendConversationMessage(
+        userId: UUID,
+        chatReq: ChatRequestDto,
+        questionContent: String,
+        answer: String,
     ): ChatResponseDto {
         val conversationId =
             chatReq.conversationId
@@ -166,7 +193,7 @@ class ConversationCommandService(
         val question =
             messageRepo.save(
                 ChatMessage(
-                    content = chatReq.question,
+                    content = questionContent,
                     conversation = conversation,
                     type = ChatMessageType.QUESTION,
                 ),
@@ -185,6 +212,43 @@ class ConversationCommandService(
             )
 
         return buildResponse(conversation, answerEntity)
+    }
+
+    @Transactional
+    fun persistPendingQuestionTurn(
+        userId: UUID,
+        chatReq: ChatRequestDto,
+        sessionId: UUID,
+    ): UUID {
+        val createdBy =
+            userRepository.findByIdOrNull(userId)
+                ?: throw EntityNotFoundException("User $userId not found")
+        val conversation =
+            chatReq.conversationId?.let { conversationId ->
+                findConversation(conversationId).also {
+                    if (it.createdBy?.id != userId) {
+                        throw ResourceNotFoundException("Conversation not found: $conversationId")
+                    }
+                    check(it.sessionId == sessionId) { "Pending question session mismatch" }
+                }
+            } ?: conversationRepo.save(
+                Conversation(
+                    title = chatReq.question,
+                    sessionId = sessionId,
+                ).also { it.createdBy = createdBy },
+            )
+
+        val question =
+            messageRepo.save(
+                ChatMessage(
+                    content = chatReq.question,
+                    conversation = conversation,
+                    type = ChatMessageType.QUESTION,
+                ).also { it.createdBy = createdBy },
+            )
+        saveMessageMedia(chatReq, question)
+
+        return requireNotNull(conversation.id)
     }
 
     // --------------------------------------------------
