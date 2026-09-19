@@ -3,8 +3,10 @@ package com.ntgjvmagent.orchestrator.unit.service
 import com.ntgjvmagent.orchestrator.dto.request.AuthenticationRequestDto
 import com.ntgjvmagent.orchestrator.exception.BadRequestException
 import com.ntgjvmagent.orchestrator.service.HttpMcpToolDiscovery
+import com.ntgjvmagent.orchestrator.service.McpSyncClientFactory
 import com.ntgjvmagent.orchestrator.utils.AuthType
 import com.ntgjvmagent.orchestrator.utils.McpClientTransportType
+import io.mockk.mockk
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport
 import org.junit.jupiter.api.Test
@@ -15,7 +17,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 class McpToolDiscoveryTest {
-    private val discovery = HttpMcpToolDiscovery()
+    private val discovery = HttpMcpToolDiscovery(mockk<McpSyncClientFactory>())
 
     @Test
     fun `builds the canonical Streamable HTTP transport and retains legacy SSE`() {
