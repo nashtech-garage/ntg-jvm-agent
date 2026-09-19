@@ -45,7 +45,15 @@ class McpStreamableRoundTripTest(
                 assertEquals("object", datetimeTool.inputSchema()["type"])
                 assertEquals(emptyMap<String, Any>(), datetimeTool.inputSchema()["properties"])
                 assertEquals(emptyList<String>(), datetimeTool.inputSchema()["required"])
-                assertEquals(false, datetimeTool.inputSchema()["additionalProperties"])
+                assertTrue(datetimeTool.annotations().readOnlyHint())
+                assertFalse(datetimeTool.annotations().destructiveHint())
+                assertFalse(datetimeTool.annotations().openWorldHint())
+
+                val searchTool = tools.single { it.name() == "searchOnline" }
+                assertTrue(searchTool.annotations().readOnlyHint())
+                assertFalse(searchTool.annotations().destructiveHint())
+                assertTrue(searchTool.annotations().openWorldHint())
+                assertEquals(listOf("query"), searchTool.inputSchema()["required"])
 
                 val result =
                     client.callTool(

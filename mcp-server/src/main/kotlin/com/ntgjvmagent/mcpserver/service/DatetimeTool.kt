@@ -1,6 +1,6 @@
 package com.ntgjvmagent.mcpserver.service
 
-import org.springframework.ai.tool.annotation.Tool
+import org.springframework.ai.mcp.annotation.McpTool
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Instant
@@ -10,8 +10,17 @@ import java.time.temporal.ChronoUnit
 class DatetimeTool(
     private val clock: Clock,
 ) {
-    @Tool(
+    @McpTool(
+        name = "getCurrentDatetime",
+        title = "Current UTC datetime",
         description = "Return the current UTC datetime as an ISO-8601 timestamp",
+        annotations =
+            McpTool.McpAnnotations(
+                readOnlyHint = true,
+                destructiveHint = false,
+                idempotentHint = false,
+                openWorldHint = false,
+            ),
     )
     fun getCurrentDatetime(): CurrentDatetimeResponse =
         CurrentDatetimeResponse(
