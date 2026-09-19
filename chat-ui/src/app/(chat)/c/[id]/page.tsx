@@ -6,17 +6,25 @@ import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { customizeFetch } from '@/utils/custom-fetch';
 import { useToaster } from '@/contexts/ToasterContext';
+import { shouldClearAgentActivity } from '@/utils/agent-activity';
 
 export default function ConversationPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { setChatMessages, setActiveConversationId, setPendingQuestion, clearAgentActivity } =
-    useChatContext();
+  const {
+    activeConversationId,
+    setChatMessages,
+    setActiveConversationId,
+    setPendingQuestion,
+    clearAgentActivity,
+  } = useChatContext();
   const { showError } = useToaster();
 
   useEffect(() => {
-    clearAgentActivity();
-  }, [clearAgentActivity, id]);
+    if (shouldClearAgentActivity(activeConversationId, id)) {
+      clearAgentActivity();
+    }
+  }, [activeConversationId, clearAgentActivity, id]);
 
   useEffect(() => {
     const fetchConversation = async () => {

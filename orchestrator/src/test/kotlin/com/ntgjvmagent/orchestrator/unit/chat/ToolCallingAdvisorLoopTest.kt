@@ -32,11 +32,13 @@ import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.memory.ChatMemory
 import org.springframework.ai.chat.messages.AssistantMessage
+import org.springframework.ai.chat.messages.SystemMessage
 import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.model.Generation
+import org.springframework.ai.chat.model.ToolContext
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.model.tool.ToolCallingChatOptions
 import org.springframework.ai.support.ToolCallbacks
@@ -183,6 +185,27 @@ class ToolCallingAdvisorLoopTest {
         assertEquals(1, toolIndex.indexBatches)
     }
 
+    @Test
+    fun `natural current-time question discovers and invokes the datetime tool`() {
+        val model = CurrentTimeToolCallingModel()
+        val datetimeTool = callback(DATETIME_TOOL_NAME, DATETIME_TOOL_DESCRIPTION, DATETIME_TOOL_RESULT)
+
+        val answer =
+            createFactory(model, ObservationRegistry.NOOP, RegexToolIndex())
+                .create(agentId)
+                .prompt()
+                .advisors { it.param(ChatMemory.CONVERSATION_ID, "current-time-session") }
+                .tools(datetimeTool)
+                .user("What time is it?")
+                .call()
+                .content()
+
+        assertEquals("The current UTC time is 2026-09-23T00:00:00Z.", answer)
+        assertTrue(model.systemPrompt.contains("You MUST search before answering questions about the current date"))
+        assertTrue(model.receivedSearchResult.contains(DATETIME_TOOL_NAME))
+        assertEquals(DATETIME_TOOL_RESULT, model.receivedDatetimeResult)
+    }
+
     private fun productionToolCallbacks(localToolCatalog: LocalToolCatalog): List<ToolCallback> {
         val agentToolRepository = mockk<AgentToolRepository>()
         val assignedTool = Tool(name = ASSIGNED_EXTERNAL_TOOL)
@@ -217,14 +240,16 @@ class ToolCallingAdvisorLoopTest {
     private fun callback(
         name: String,
         description: String,
+        result: String = "ok",
     ): ToolCallback {
         val definition = mockk<ToolDefinition>()
         every { definition.name() } returns name
         every { definition.description() } returns description
         every { definition.inputSchema() } returns "{}"
-        return mockk {
+        return mockk(relaxed = true) {
             every { toolDefinition } returns definition
-            every { call(any()) } returns "ok"
+            every { call(any()) } returns result
+            every { call(any<String>(), any<ToolContext>()) } returns result
         }
     }
 
@@ -407,11 +432,82 @@ class ToolCallingAdvisorLoopTest {
         override fun getOptions() = ToolCallingChatOptions.builder().build()
     }
 
+    private class CurrentTimeToolCallingModel : ChatModel {
+        var systemPrompt = ""
+        var receivedSearchResult = ""
+        var receivedDatetimeResult = ""
+
+        override fun call(prompt: Prompt): ChatResponse = responseFor(prompt)
+
+        override fun stream(prompt: Prompt): Flux<ChatResponse> = Flux.just(responseFor(prompt))
+
+        override fun getOptions() = ToolCallingChatOptions.builder().build()
+
+        private fun responseFor(prompt: Prompt): ChatResponse {
+            systemPrompt =
+                prompt.instructions
+                    .filterIsInstance<SystemMessage>()
+                    .joinToString("\n") { it.text.orEmpty() }
+            val toolResponse = prompt.instructions.filterIsInstance<ToolResponseMessage>().lastOrNull()
+
+            if (toolResponse == null) {
+                val toolCall =
+                    AssistantMessage.ToolCall(
+                        "datetime-search-call",
+                        "function",
+                        TOOL_SEARCH_TOOL_NAME,
+                        """{"query":"current UTC datetime","maxResults":2}""",
+                    )
+                return toolCallResponse(toolCall)
+            }
+
+            val response = toolResponse.responses.single()
+            if (response.name() == TOOL_SEARCH_TOOL_NAME) {
+                receivedSearchResult = response.responseData()
+                val toolCall =
+                    AssistantMessage.ToolCall(
+                        "datetime-call",
+                        "function",
+                        DATETIME_TOOL_NAME,
+                        "{}",
+                    )
+                return toolCallResponse(toolCall)
+            }
+
+            receivedDatetimeResult = response.responseData()
+            return ChatResponse(
+                listOf(
+                    Generation(
+                        AssistantMessage("The current UTC time is 2026-09-23T00:00:00Z."),
+                        ChatGenerationMetadata.builder().finishReason("stop").build(),
+                    ),
+                ),
+            )
+        }
+
+        private fun toolCallResponse(toolCall: AssistantMessage.ToolCall): ChatResponse =
+            ChatResponse(
+                listOf(
+                    Generation(
+                        AssistantMessage
+                            .builder()
+                            .content("")
+                            .toolCalls(listOf(toolCall))
+                            .build(),
+                        ChatGenerationMetadata.builder().finishReason("tool_calls").build(),
+                    ),
+                ),
+            )
+    }
+
     companion object {
         private const val CANONICAL_PROMPT =
             "Under the NTG support policy, what is the initial response target for a PREMIUM customer with a P1 incident?"
         private const val TOOL_SEARCH_SESSION_ID = "tool-loop-session"
         private const val TOOL_SEARCH_TOOL_NAME = "toolSearchTool"
+        private const val DATETIME_TOOL_NAME = "getCurrentDatetime"
+        private const val DATETIME_TOOL_DESCRIPTION = "Return the current UTC datetime as an ISO-8601 timestamp"
+        private const val DATETIME_TOOL_RESULT = "{\"datetimeUtc\":\"2026-09-23T00:00:00Z\"}"
         private const val ASSIGNED_EXTERNAL_TOOL = "assignedExternalTool"
         private const val UNASSIGNED_EXTERNAL_TOOL = "unassignedExternalTool"
 

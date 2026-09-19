@@ -19,6 +19,14 @@ class ToolCallingConfig {
     companion object {
         const val TOOL_CALLING_ADVISOR_ORDER = Ordered.LOWEST_PRECEDENCE - 100
         const val TOOL_SEARCH_MAX_RESULTS = 5
+        const val TOOL_SEARCH_SYSTEM_MESSAGE_SUFFIX = """
+            You have access to `toolSearchTool`, which discovers tools that can complete the user's request.
+            Use it before answering whenever the request depends on a capability or on information that may be
+            available through tools. You MUST search before answering questions about the current date, current
+            time, time zones, live or real-time information, or application and business data. Do not claim that
+            current information or a capability is unavailable until you have searched for a relevant tool.
+            For requests such as "What time is it?", search for a current UTC datetime tool and use its result.
+        """
     }
 
     @Bean
@@ -35,6 +43,7 @@ class ToolCallingConfig {
             .builder()
             .toolIndex(toolIndex)
             .maxResults(TOOL_SEARCH_MAX_RESULTS)
+            .systemMessageSuffix(TOOL_SEARCH_SYSTEM_MESSAGE_SUFFIX)
             .conversationHistoryEnabled(false)
             // The age bound is what lets ToolIndexCleanupJob sweep by age safely; the session
             // cap stays as the memory bound the library defaults to.

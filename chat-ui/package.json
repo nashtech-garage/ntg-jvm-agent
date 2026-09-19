@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "node --test --experimental-strip-types src/hooks/sse-events.test.mjs",
+    "test": "node --test --experimental-strip-types src/hooks/sse-events.test.mjs src/utils/agent-activity.test.mjs",
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
