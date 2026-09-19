@@ -170,17 +170,7 @@ class ChatStreamService(
 
     private fun buildTextStream(responseFlux: Flux<ChatClientResponse>): Flux<String> =
         responseFlux.flatMap { event ->
-            val text =
-                event.chatResponse
-                    ?.result
-                    ?.output
-                    ?.text
-
-            if (text.isNullOrBlank()) {
-                Mono.empty()
-            } else {
-                Mono.just(text)
-            }
+            chatTextDelta(event)?.let { Mono.just(it) } ?: Mono.empty()
         }
 
     private fun recordAccounting(
@@ -232,3 +222,10 @@ class ChatStreamService(
             }
     }
 }
+
+internal fun chatTextDelta(event: ChatClientResponse): String? =
+    event.chatResponse
+        ?.result
+        ?.output
+        ?.text
+        ?.takeUnless(String::isEmpty)
