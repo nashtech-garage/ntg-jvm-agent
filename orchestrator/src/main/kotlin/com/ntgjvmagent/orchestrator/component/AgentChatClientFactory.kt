@@ -1,6 +1,7 @@
 package com.ntgjvmagent.orchestrator.component
 
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
+import com.ntgjvmagent.orchestrator.config.ToolSearchRoutingProperties
 import com.ntgjvmagent.orchestrator.service.DynamicChatModelService
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.chat.client.ChatClient
@@ -14,10 +15,21 @@ class AgentChatClientFactory(
     private val dynamicChatModelService: DynamicChatModelService,
     private val observationRegistry: ObservationRegistry,
     private val toolCallingAdvisorBuilder: ToolCallingAdvisor.Builder<*>,
+    private val toolSearchRoutingProperties: ToolSearchRoutingProperties,
 ) {
     private val toolSearchAdvisor = toolCallingAdvisorBuilder.build()
 
     fun create(agentId: UUID): ChatClient = create(agentId, toolCallingAdvisorBuilder, toolSearchAdvisor)
+
+    fun createForToolCatalog(
+        agentId: UUID,
+        toolCount: Int,
+    ): ChatClient =
+        if (toolSearchRoutingProperties.shouldUseToolSearch(toolCount)) {
+            create(agentId)
+        } else {
+            createWithoutToolSearch(agentId)
+        }
 
     fun createWithoutToolSearch(agentId: UUID): ChatClient =
         create(

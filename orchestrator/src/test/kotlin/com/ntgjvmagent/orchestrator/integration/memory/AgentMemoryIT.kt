@@ -352,7 +352,7 @@ class AgentMemoryIT
             val advisorRegistry = mockk<CallAdvisorRegistry>()
             val toolFacade = mockk<ToolExecutionFacade>()
             val tokenFacade = mockk<TokenAccountingFacade>(relaxed = true)
-            every { chatClientFactory.create(agentId) } returns ChatClient.builder(model).build()
+            every { chatClientFactory.createForToolCatalog(agentId, 0) } returns ChatClient.builder(model).build()
             every { advisorRegistry.resolveForAgent(agentId, TestAuditorConfig.TEST_USER_ID, any()) } returns
                 emptyList()
             every {

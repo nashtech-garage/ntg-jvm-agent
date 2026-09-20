@@ -18,6 +18,7 @@ import org.springframework.ai.chat.client.ChatClientResponse
 import org.springframework.ai.chat.client.advisor.api.Advisor
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor
+import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
@@ -49,7 +50,6 @@ class ChatStreamService(
             accountingContext.correlationId
                 ?: error("correlationId must not be null")
 
-        val chatClient = chatClientFactory.create(request.agentId)
         val advisors =
             callAdvisorRegistry.resolveForAgent(
                 agentId = request.agentId,
@@ -62,14 +62,24 @@ class ChatStreamService(
 
         val responses = CopyOnWriteArrayList<ChatResponse>()
         val pendingQuestion = AtomicReference<com.ntgjvmagent.orchestrator.dto.PendingQuestionDto?>()
+        val toolCallbacks =
+            toolFacade.createToolCallbacks(
+                userId = userId,
+                agentId = request.agentId,
+                correlationId = correlationId,
+                sessionId = sessionId,
+                conversationId = request.conversationId,
+                onQuestion = pendingQuestion::set,
+            )
+        val chatClient = chatClientFactory.createForToolCatalog(request.agentId, toolCallbacks.size)
         val responseFlux =
             buildSharedResponseFlux(
                 sessionId,
                 chatClient,
+                toolCallbacks,
                 advisors + activityAdvisors,
                 request,
                 accountingContext,
-                pendingQuestion::set,
             ).doOnNext { event -> event.chatResponse?.let(responses::add) }
 
         val textStream = buildTextStream(responseFlux).filter { pendingQuestion.get() == null }
@@ -128,10 +138,10 @@ class ChatStreamService(
     private fun buildSharedResponseFlux(
         sessionId: UUID,
         chatClient: ChatClient,
+        toolCallbacks: List<ToolCallback>,
         advisors: List<Advisor>,
         request: ChatRequestDto,
         accountingContext: LlmAccountingContext,
-        onQuestion: (com.ntgjvmagent.orchestrator.dto.PendingQuestionDto) -> Unit,
     ): Flux<ChatClientResponse> {
         val userId = accountingContext.userId
         val correlationId = requireNotNull(accountingContext.correlationId)
@@ -152,17 +162,8 @@ class ChatStreamService(
                     .param(SessionMemoryAdvisor.USER_ID_CONTEXT_KEY, userId.toString())
                     .param(SuccessfulSessionRequestAdvisor.RUN_ID_CONTEXT_KEY, correlationId)
             }.system(systemPrompt)
-            .tools(
-                *toolFacade
-                    .createToolCallbacks(
-                        userId = userId,
-                        agentId = request.agentId,
-                        correlationId = correlationId,
-                        sessionId = sessionId,
-                        conversationId = request.conversationId,
-                        onQuestion = onQuestion,
-                    ).toTypedArray(),
-            ).user { u ->
+            .tools(*toolCallbacks.toTypedArray())
+            .user { u ->
                 attachUserInput(u, accountingContext.userInputText, request)
             }.stream()
             .chatClientResponse()

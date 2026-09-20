@@ -13,6 +13,7 @@ import com.ntgjvmagent.orchestrator.component.GlobalToolCallbackProvider
 import com.ntgjvmagent.orchestrator.component.ToolExecutionFacade
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
 import com.ntgjvmagent.orchestrator.config.ToolSearchIndexProperties
+import com.ntgjvmagent.orchestrator.config.ToolSearchRoutingProperties
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.entity.Tool
 import com.ntgjvmagent.orchestrator.entity.agent.AgentTool
@@ -106,6 +107,14 @@ class ToolCallingAdvisorLoopTest {
                 .contents
                 .contains(CANONICAL_PROMPT),
         )
+        val systemPrompt =
+            model.prompts
+                .first()
+                .instructions
+                .filterIsInstance<SystemMessage>()
+                .joinToString("\n") { it.text.orEmpty() }
+        assertTrue(systemPrompt.contains("discover relevant tools on-demand"))
+        assertFalse(systemPrompt.contains("What time is it?"))
         assertEquals(listOf(TOOL_SEARCH_TOOL_NAME), model.availableToolNames.first())
         assertTrue(
             model.availableToolNames[1].containsAll(
@@ -186,13 +195,13 @@ class ToolCallingAdvisorLoopTest {
     }
 
     @Test
-    fun `natural current-time question discovers and invokes the datetime tool`() {
-        val model = CurrentTimeToolCallingModel()
+    fun `small catalog exposes and invokes the datetime tool without tool search`() {
+        val model = CurrentTimeDirectToolCallingModel()
         val datetimeTool = callback(DATETIME_TOOL_NAME, DATETIME_TOOL_DESCRIPTION, DATETIME_TOOL_RESULT)
 
         val answer =
             createFactory(model, ObservationRegistry.NOOP, RegexToolIndex())
-                .create(agentId)
+                .createWithoutToolSearch(agentId)
                 .prompt()
                 .advisors { it.param(ChatMemory.CONVERSATION_ID, "current-time-session") }
                 .tools(datetimeTool)
@@ -201,8 +210,9 @@ class ToolCallingAdvisorLoopTest {
                 .content()
 
         assertEquals("The current UTC time is 2026-09-23T00:00:00Z.", answer)
-        assertTrue(model.systemPrompt.contains("You MUST search before answering questions about the current date"))
-        assertTrue(model.receivedSearchResult.contains(DATETIME_TOOL_NAME))
+        assertEquals(2, model.availableToolNames.size)
+        assertEquals(listOf(DATETIME_TOOL_NAME), model.availableToolNames.first())
+        assertFalse(model.availableToolNames.flatten().contains(TOOL_SEARCH_TOOL_NAME))
         assertEquals(DATETIME_TOOL_RESULT, model.receivedDatetimeResult)
     }
 
@@ -268,6 +278,7 @@ class ToolCallingAdvisorLoopTest {
             dynamicChatModelService,
             observationRegistry,
             ToolCallingConfig().toolCallingAdvisorBuilder(observationRegistry, toolIndex, ToolSearchIndexProperties()),
+            ToolSearchRoutingProperties(),
         )
     }
 
@@ -432,9 +443,8 @@ class ToolCallingAdvisorLoopTest {
         override fun getOptions() = ToolCallingChatOptions.builder().build()
     }
 
-    private class CurrentTimeToolCallingModel : ChatModel {
-        var systemPrompt = ""
-        var receivedSearchResult = ""
+    private class CurrentTimeDirectToolCallingModel : ChatModel {
+        val availableToolNames = mutableListOf<List<String>>()
         var receivedDatetimeResult = ""
 
         override fun call(prompt: Prompt): ChatResponse = responseFor(prompt)
@@ -444,26 +454,15 @@ class ToolCallingAdvisorLoopTest {
         override fun getOptions() = ToolCallingChatOptions.builder().build()
 
         private fun responseFor(prompt: Prompt): ChatResponse {
-            systemPrompt =
-                prompt.instructions
-                    .filterIsInstance<SystemMessage>()
-                    .joinToString("\n") { it.text.orEmpty() }
+            availableToolNames +=
+                (prompt.options as ToolCallingChatOptions)
+                    .toolCallbacks
+                    .orEmpty()
+                    .map { it.toolDefinition.name() }
+                    .sorted()
             val toolResponse = prompt.instructions.filterIsInstance<ToolResponseMessage>().lastOrNull()
 
             if (toolResponse == null) {
-                val toolCall =
-                    AssistantMessage.ToolCall(
-                        "datetime-search-call",
-                        "function",
-                        TOOL_SEARCH_TOOL_NAME,
-                        """{"query":"current UTC datetime","maxResults":2}""",
-                    )
-                return toolCallResponse(toolCall)
-            }
-
-            val response = toolResponse.responses.single()
-            if (response.name() == TOOL_SEARCH_TOOL_NAME) {
-                receivedSearchResult = response.responseData()
                 val toolCall =
                     AssistantMessage.ToolCall(
                         "datetime-call",
@@ -474,6 +473,7 @@ class ToolCallingAdvisorLoopTest {
                 return toolCallResponse(toolCall)
             }
 
+            val response = toolResponse.responses.single()
             receivedDatetimeResult = response.responseData()
             return ChatResponse(
                 listOf(

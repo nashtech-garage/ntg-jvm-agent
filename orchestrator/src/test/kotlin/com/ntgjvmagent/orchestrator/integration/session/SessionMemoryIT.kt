@@ -405,7 +405,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
         val toolFacade = mockk<ToolExecutionFacade>()
         val tokenFacade = mockk<TokenAccountingFacade>(relaxed = true)
         val agentMemoryService = mockk<AgentMemoryService>()
-        every { chatClientFactory.create(agentId) } returns chatClient
+        every { chatClientFactory.createForToolCatalog(agentId, any()) } returns chatClient
         every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
             listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
         every { agentMemoryService.buildIndexForCurrentUser(agentId) } returns ""
@@ -461,7 +461,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
                 .any { it.name == TOOL_SEARCH_TOOL_NAME },
         )
 
-        every { chatClientFactory.create(agentId) } returns
+        every { chatClientFactory.createForToolCatalog(agentId, any()) } returns
             ChatClient.builder(FailingModel()).build()
         val errorEvents =
             service
@@ -511,7 +511,7 @@ class SessionMemoryIT : BaseIntegrationTest() {
         val agentMemoryService = mockk<AgentMemoryService>()
         val onQuestion = slot<(PendingQuestionDto) -> Unit>()
 
-        every { chatClientFactory.create(agentId) } returns chatClient
+        every { chatClientFactory.createForToolCatalog(agentId, any()) } returns chatClient
         every { advisorRegistry.resolveForAgent(agentId, userId, any()) } returns
             listOf(sessionMemoryAdvisor, successfulSessionRequestAdvisor)
         every { agentMemoryService.buildIndexForCurrentUser(agentId) } returns ""

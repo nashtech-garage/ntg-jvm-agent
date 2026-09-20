@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.unit.chat
 import com.ntgjvmagent.orchestrator.component.AgentChatClientFactory
 import com.ntgjvmagent.orchestrator.config.ToolCallingConfig
 import com.ntgjvmagent.orchestrator.config.ToolSearchIndexProperties
+import com.ntgjvmagent.orchestrator.config.ToolSearchRoutingProperties
 import com.ntgjvmagent.orchestrator.dto.request.ConversationIntentRequestDto
 import com.ntgjvmagent.orchestrator.dto.response.AgentResponseDto
 import com.ntgjvmagent.orchestrator.dto.response.ConversationIntentResponseDto
@@ -189,6 +190,7 @@ class ChatClientStructuredOutputTest {
                 RegexToolIndex(),
                 ToolSearchIndexProperties(),
             ),
+            ToolSearchRoutingProperties(),
         )
 
     private fun dynamicChatModelService(model: ChatModel): DynamicChatModelService {
