@@ -16,7 +16,6 @@ import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.embedding.EmbeddingOptions
 import org.springframework.ai.embedding.EmbeddingRequest
 import org.springframework.ai.embedding.EmbeddingResponse
-import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.vectorstore.VectorStore
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -31,14 +30,7 @@ import org.springframework.ai.embedding.EmbeddingModel as SpringEmbeddingModel
 @TestConfiguration
 class TestEmbeddingConfig {
     // ---------------------------------------------------------------------
-    // 1) ToolCallingManager Mock
-    // ---------------------------------------------------------------------
-    @Bean
-    @Primary
-    fun toolCallingManager(): ToolCallingManager = mockk(relaxed = true)
-
-    // ---------------------------------------------------------------------
-    // 2) Fake VectorStore (CORE TEST SEAM)
+    // 1) Fake VectorStore (CORE TEST SEAM)
     // ---------------------------------------------------------------------
     @Bean
     @Primary
@@ -95,7 +87,7 @@ class TestEmbeddingConfig {
 
             override fun embed(
                 documents: MutableList<Document>,
-                options: EmbeddingOptions,
+                options: EmbeddingOptions?,
                 batchingStrategy: BatchingStrategy,
             ): MutableList<FloatArray> = documents.map { FloatArray(dims) { 0.1f } }.toMutableList()
 

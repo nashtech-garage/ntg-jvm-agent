@@ -20,11 +20,11 @@
 
   <properties>
     <java.version>21</java.version>
-    <kotlin.version>2.3.0</kotlin.version>
-    <spring-ai.version>2.0.0-M1</spring-ai.version>
+    <spring-ai.version>2.0.1</spring-ai.version>
     <springdoc.version>3.0.1</springdoc.version>
     <resilience4j.version>2.3.0</resilience4j.version>
-    <testcontainers.version>1.21.4</testcontainers.version>
+    <swagger-annotations.version>2.2.41</swagger-annotations.version>
+    <okio.version>3.16.4</okio.version>
   </properties>
 
   <!-- Spring AI BOM -->
@@ -36,6 +36,16 @@
         <version>${spring-ai.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-annotations-jakarta</artifactId>
+        <version>${swagger-annotations.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.okio</groupId>
+        <artifactId>okio-jvm</artifactId>
+        <version>${okio.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -62,7 +72,6 @@
     <dependency>
       <groupId>org.hibernate.orm</groupId>
       <artifactId>hibernate-vector</artifactId>
-      <version>7.2.0.Final</version>
     </dependency>
 
     <!-- Web -->
@@ -100,7 +109,7 @@
 
     <!-- Kotlin -->
     <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
+      <groupId>tools.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
 
@@ -117,50 +126,15 @@
     <!-- Spring AI -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-openai</artifactId>
-      <version>${spring-ai.version}</version>
+      <artifactId>spring-ai-openai</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-ollama</artifactId>
-      <version>1.0.0</version>
+      <artifactId>spring-ai-ollama</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-azure-openai</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-bedrock-converse</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-model-anthropic</artifactId>
-      <version>1.1.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework.retry</groupId>
-          <artifactId>spring-retry</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework.retry</groupId>
-          <artifactId>spring-retry</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-advisors-vector-store</artifactId>
+      <artifactId>spring-ai-pgvector-store</artifactId>
     </dependency>
 
     <dependency>
@@ -170,7 +144,7 @@
 
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-starter-mcp-client</artifactId>
+      <artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
     </dependency>
 
     <!-- Flyway -->
@@ -251,12 +225,6 @@
       <version>${resilience4j.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.springframework.retry</groupId>
-      <artifactId>spring-retry</artifactId>
-      <version>2.0.12</version>
-    </dependency>
-
     <!-- Redis -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -290,15 +258,13 @@
 
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${testcontainers.version}</version>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${testcontainers.version}</version>
+      <artifactId>testcontainers-postgresql</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -327,8 +293,9 @@
         <artifactId>kotlin-maven-plugin</artifactId>
         <version>${kotlin.version}</version>
         <configuration>
+          <languageVersion>2.2</languageVersion>
+          <apiVersion>2.2</apiVersion>
           <args>
-            <arg>-Xjsr305=strict</arg>
             <arg>-Xannotation-default-target=param-property</arg>
           </args>
           <compilerPlugins>

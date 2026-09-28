@@ -3,6 +3,7 @@ package com.ntgjvmagent.orchestrator.token
 import com.ntgjvmagent.orchestrator.model.TokenOperation
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
 import org.springframework.ai.chat.metadata.Usage
+import org.springframework.ai.chat.model.ToolContext
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.tool.definition.ToolDefinition
 import java.util.UUID
@@ -16,11 +17,20 @@ class MeteredToolCallback(
 ) : ToolCallback {
     override fun getToolDefinition(): ToolDefinition = delegate.toolDefinition
 
-    override fun call(arguments: String): String {
+    override fun getToolMetadata() = delegate.toolMetadata
+
+    override fun call(arguments: String): String = meter { delegate.call(arguments) }
+
+    override fun call(
+        arguments: String,
+        toolContext: ToolContext?,
+    ): String = meter { delegate.call(arguments, toolContext) }
+
+    private fun meter(execute: () -> String): String {
         val toolName = delegate.toolDefinition.name()
         val toolCorrelationId = "$rootCorrelationId:tool:$toolName"
 
-        val result = delegate.call(arguments)
+        val result = execute()
 
         // Record TOOL invocation (event, not token cost)
         tokenMeteringService.record(

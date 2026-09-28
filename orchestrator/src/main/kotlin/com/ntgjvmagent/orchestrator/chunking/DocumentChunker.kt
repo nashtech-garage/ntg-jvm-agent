@@ -59,8 +59,12 @@ class DocumentChunker(
             Document
                 .builder()
                 .text(cleaned)
-                .metadata(metadata + ("profile" to profile))
-                .build()
+                .metadata(
+                    metadata
+                        .filterValues { it != null }
+                        .mapValues { (_, value) -> requireNotNull(value) } +
+                        ("profile" to profile),
+                ).build()
 
         return splitter.apply(listOf(root)).map { chunk ->
             Document

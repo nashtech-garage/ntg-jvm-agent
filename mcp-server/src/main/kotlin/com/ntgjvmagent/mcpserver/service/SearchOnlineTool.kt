@@ -1,7 +1,5 @@
 package com.ntgjvmagent.mcpserver.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.mcpserver.utils.Constant
 import com.ntgjvmagent.mcpserver.viewmodel.GoogleSearchResponseVm
 import org.slf4j.LoggerFactory
@@ -13,6 +11,8 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
 @Service

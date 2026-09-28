@@ -1,9 +1,9 @@
 package com.ntgjvmagent.orchestrator.component
 
 import com.ntgjvmagent.orchestrator.repository.AgentToolRepository
+import com.ntgjvmagent.orchestrator.service.LeasedToolCallbacks
 import com.ntgjvmagent.orchestrator.token.MeteredToolCallback
 import com.ntgjvmagent.orchestrator.token.accounting.TokenMeteringService
-import org.springframework.ai.tool.ToolCallback
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -18,25 +18,31 @@ class ToolExecutionFacade(
         userId: UUID,
         agentId: UUID,
         correlationId: String,
-    ): List<ToolCallback> {
+    ): LeasedToolCallbacks {
         val allowedToolNames =
             agentToolRepository
                 .findByAgentId(agentId)
                 .map { it.tool.name }
 
         val allCallbacks = globalToolCallbackProvider.getToolCallbacks()
-
-        return filteredToolCallbackProvider
-            .filterCallbacksByToolNames(allCallbacks, allowedToolNames)
-            .filterNotNull()
-            .map { callback ->
-                MeteredToolCallback(
-                    delegate = callback,
-                    tokenMeteringService = tokenMeteringService,
-                    userId = userId,
-                    agentId = agentId,
-                    rootCorrelationId = correlationId,
-                )
-            }
+        return runCatching {
+            val callbacks =
+                filteredToolCallbackProvider
+                    .filterCallbacksByToolNames(allCallbacks.callbacks, allowedToolNames)
+                    .filterNotNull()
+                    .map { callback ->
+                        MeteredToolCallback(
+                            delegate = callback,
+                            tokenMeteringService = tokenMeteringService,
+                            userId = userId,
+                            agentId = agentId,
+                            rootCorrelationId = correlationId,
+                        )
+                    }
+            LeasedToolCallbacks(callbacks) { allCallbacks.close() }
+        }.getOrElse {
+            allCallbacks.close()
+            throw it
+        }
     }
 }

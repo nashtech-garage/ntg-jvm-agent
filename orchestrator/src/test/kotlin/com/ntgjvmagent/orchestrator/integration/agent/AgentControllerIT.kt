@@ -1,6 +1,5 @@
 package com.ntgjvmagent.orchestrator.integration.agent
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.dto.request.AgentRequestDto
 import com.ntgjvmagent.orchestrator.integration.BaseIntegrationTest
 import com.ntgjvmagent.orchestrator.model.ProviderType
@@ -12,6 +11,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
 @DisplayName("AgentController Integration Tests")

@@ -54,9 +54,9 @@ export default function AddToolPage() {
     resolver: zodResolver(McpToolAuthenticationSchema),
     defaultValues: {
       sourceType: MCP_TOOL_AUTHENTICATION_TYPES.NONE,
-      transportType: 'SSE',
+      transportType: 'STREAMABLE',
       baseUrl: '',
-      endpoint: '',
+      endpoint: '/mcp',
     },
   });
 
@@ -249,7 +249,7 @@ export default function AddToolPage() {
                         <Label htmlFor="sse">SSE</Label>
                       </div>
                       <div className="flex items-center gap-3">
-                        <RadioGroupItem value="Streamable" id="streamable" disabled />
+                        <RadioGroupItem value="STREAMABLE" id="streamable" />
                         <Label htmlFor="streamable">Streamable HTTP</Label>
                       </div>
                     </RadioGroup>
@@ -280,7 +280,7 @@ export default function AddToolPage() {
                 <FormItem>
                   <FormLabel>Endpoint</FormLabel>
                   <FormControl>
-                    <Input placeholder="Example:/sse" {...field} />
+                    <Input placeholder="Example: /mcp" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

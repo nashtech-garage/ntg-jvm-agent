@@ -6,11 +6,14 @@ import com.ntgjvmagent.orchestrator.dto.ChatRequestDto
 import com.ntgjvmagent.orchestrator.token.accounting.LlmAccountingContext
 import com.ntgjvmagent.orchestrator.token.accounting.TokenAccountingFacade
 import com.ntgjvmagent.orchestrator.utils.Constant
+import io.micrometer.observation.ObservationRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.ChatClientResponse
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor
 import org.springframework.ai.chat.model.ChatResponse
+import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.io.InputStreamResource
 import org.springframework.stereotype.Service
 import org.springframework.util.MimeTypeUtils
@@ -24,6 +27,8 @@ class ChatStreamService(
     private val dynamicChatModelService: DynamicChatModelService,
     private val callAdvisorRegistry: CallAdvisorRegistry,
     private val tokenFacade: TokenAccountingFacade,
+    private val observationRegistry: ObservationRegistry,
+    private val toolCallingAdvisorBuilder: ToolCallingAdvisor.Builder<*>,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -75,24 +80,29 @@ class ChatStreamService(
         accountingContext: LlmAccountingContext,
         correlationId: String,
     ): Flux<ChatClientResponse> =
-        chatClient
-            .prompt()
-            .advisors(advisors)
-            .system(
-                """
-                ${Constant.SYSTEM_PROMPT}
-                ${Constant.SEARCH_TOOL_INSTRUCTION}
-                """.trimIndent(),
-            ).toolCallbacks(
+        withToolCallbackLease(
+            {
                 toolFacade.createToolCallbacks(
                     userId = userId,
                     agentId = request.agentId,
                     correlationId = correlationId,
-                ),
-            ).user { u ->
-                attachUserInput(u, accountingContext.inputText, request)
-            }.stream()
-            .chatClientResponse()
+                )
+            },
+            { callbacks ->
+                chatClient
+                    .prompt()
+                    .advisors(advisors)
+                    .system(
+                        """
+                        ${Constant.SYSTEM_PROMPT}
+                        ${Constant.SEARCH_TOOL_INSTRUCTION}
+                        """.trimIndent(),
+                    ).tools(callbacks)
+                    .user { u -> attachUserInput(u, accountingContext.inputText, request) }
+                    .stream()
+                    .chatClientResponse()
+            },
+        )
 
     private fun buildTextStream(responseFlux: Flux<ChatClientResponse>): Flux<String> =
         responseFlux.flatMap { event ->
@@ -149,7 +159,14 @@ class ChatStreamService(
             }.thenReturn(Unit)
 
     private fun buildChatClient(agentId: UUID): ChatClient =
-        ChatClient.builder(dynamicChatModelService.getChatModel(agentId)).build()
+        ChatClient
+            .builder(
+                dynamicChatModelService.getChatModel(agentId),
+                observationRegistry,
+                null,
+                null,
+                toolCallingAdvisorBuilder,
+            ).build()
 
     private fun attachUserInput(
         u: ChatClient.PromptUserSpec,
@@ -175,3 +192,8 @@ class ChatStreamService(
             }
     }
 }
+
+internal fun <T : Any> withToolCallbackLease(
+    acquire: () -> LeasedToolCallbacks,
+    stream: (List<ToolCallback>) -> Flux<T>,
+): Flux<T> = Flux.using(acquire, { lease -> stream(lease.callbacks) }, LeasedToolCallbacks::close)

@@ -1,7 +1,5 @@
 package com.ntgjvmagent.orchestrator.component
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.ntgjvmagent.orchestrator.dto.internal.ToolDataDto
 import com.ntgjvmagent.orchestrator.mapper.ToolMapper
 import com.ntgjvmagent.orchestrator.repository.ToolRepository
@@ -10,6 +8,8 @@ import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 
 @Component
 class AppListener(
@@ -28,8 +28,6 @@ class AppListener(
         if (toolCallbacks.isEmpty() && allToolEntities.isEmpty()) {
             return
         }
-
-        val activeTools = allToolEntities.filter { tool -> tool.active }
 
         // Handle case add new tools if not exist
         if (toolCallbacks.isNotEmpty()) {
@@ -58,16 +56,6 @@ class AppListener(
                     toolRepo.save(toolEntity)
                 }
             }
-        }
-
-        // Handle case don't have any tools are registered in MCP => Inactive all tool in DB
-        if (toolCallbacks.isEmpty() && activeTools.isNotEmpty()) {
-            val softDeletedTools =
-                activeTools.map {
-                    it.markDeleted()
-                    it
-                }
-            toolRepo.saveAll(softDeletedTools)
         }
     }
 }

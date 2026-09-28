@@ -8,7 +8,6 @@ import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.ollama.OllamaEmbeddingModel
 import org.springframework.ai.ollama.api.OllamaApi
 import org.springframework.ai.ollama.api.OllamaEmbeddingOptions
-import org.springframework.ai.ollama.management.ModelManagementOptions
 import org.springframework.stereotype.Service
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestClient
@@ -48,11 +47,11 @@ class OllamaEmbeddingModelHandler(
                 .model(config.model)
                 .build()
 
-        return OllamaEmbeddingModel(
-            ollamaApi,
-            options,
-            observationRegistry,
-            ModelManagementOptions.builder().build(),
-        )
+        return OllamaEmbeddingModel
+            .builder()
+            .ollamaApi(ollamaApi)
+            .options(options)
+            .observationRegistry(observationRegistry)
+            .build()
     }
 }
