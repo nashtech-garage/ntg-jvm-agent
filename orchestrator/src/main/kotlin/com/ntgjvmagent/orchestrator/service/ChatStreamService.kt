@@ -112,7 +112,7 @@ class ChatStreamService(
                     ?.output
                     ?.text
 
-            if (text.isNullOrBlank()) {
+            if (text.isNullOrEmpty()) {
                 Mono.empty()
             } else {
                 Mono.just(text)
