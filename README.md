@@ -3,39 +3,35 @@ This project aims to practice building a chatbot in Kotlin
 
 ## Technologies and frameworks
 - Kotlin
-- Spring Boot
-- Spring AI
-- GitHub models
+- Spring Boot 4.0.1
+- Spring AI 2.0.1
+- OpenAI
 - PostgreSQL
 
 ## Getting started
-- Setup [GitHub models](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models) (free): Create your Fine-grained personal access tokens in GitHub https://github.com/settings/personal-access-tokens. The token needs to have **models:read** permissions.
-- Update the application.properties with your GitHub token
-
-- Choose AI Provider:
-  - GitHub Model: Setup [GitHub models](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models) (free): Create your Fine-grained personal access tokens in GitHub https://github.com/settings/personal-access-tokens. The token needs to have **models:read** permissions.
-  - Google Gemini: Setup [Gemini API](https://aistudio.google.com/): Create your API key in Google AI Studio https://aistudio.google.com/api-keys
-- Enable the base URL of your provider in application.properties
-  - GitHub Models: `spring.ai.openai.base-url=https://models.github.ai/inference`
-  - Google Gemini: `spring.ai.openai.chat.base-url=https://generativelanguage.googleapis.com`
-- Update the application.properties with your GitHub token or Gemini API key.
+- Setup [OpenAI API](https://platform.openai.com/api-keys): Create an API key.
+- Configure the OpenAI provider in application.properties:
+  - `llm.providers.openai.base-url=https://api.openai.com/v1`
+  - `llm.providers.openai.api-key=<your-api-key>`
+  - `llm.providers.openai.completions-path=/chat/completions`
+  - `llm.providers.openai.embeddings-path=/embeddings`
 
 ### Run with Docker
 - Make sure Docker and Docker Compose are installed on your machine.
-- Update the OPEN_API_KEY value in your .env file with your GitHub personal access token.
+- Update the OPEN_API_KEY value in your .env file with your OpenAI API key.
 - Open a terminal of your choice, navigate to the ntg-jvm-agent directory, and run:
       **docker compose up**
 
 ### Run Locally
 Backend:
 - Open the authorization-service project.
-  Start the application by running the class:Open mcp-server project, start application by running class:
-  + **MCPServerApplication**
+  Start the application by running the class:
+  + **AuthorizationServerApplication**
 - Open the mcp-server project.
   Start the application by running the class:
     + **MCPServerApplication**
 - Open the orchestration-service project.
-  Update the property spring.ai.openai.api-key in application.properties with your GitHub token.
+  Update the property llm.providers.openai.api-key in application.properties with your OpenAI API key.
   Start the application by running the class:
   + **OrchestratorApplication**
 
@@ -48,6 +44,7 @@ FrontEnd
   + npm run dev
 
 ### Services
+- MCP server: http://localhost:9003/mcp. It uses Streamable HTTP and `/mcp` endpoint.
 - PgAdmin: http://localhost:3560/ Account login: admin@ntg.com / admin. Register a server: postgres, port 5432, username admin, password admin.
 - The Postgresql server: servername: localhost, port: 5432, username: admin, password: admin
 - Grafana: http://localhost:3030/ Account login: admin / admin. Used to visualize metrics, logs, and traces from Prometheus, Loki, and Tempo.
