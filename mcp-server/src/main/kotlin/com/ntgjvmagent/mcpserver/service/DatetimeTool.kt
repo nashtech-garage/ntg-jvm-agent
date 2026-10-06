@@ -2,7 +2,7 @@ package com.ntgjvmagent.mcpserver.service
 
 import com.ntgjvmagent.mcpserver.utils.Constant
 import org.springframework.ai.chat.messages.ToolResponseMessage
-import org.springframework.ai.tool.annotation.Tool
+import org.springframework.ai.mcp.annotation.McpTool
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -11,8 +11,17 @@ import java.util.UUID
 
 @Service
 class DatetimeTool {
-    @Tool(
+    @McpTool(
+        name = "getCurrentDatetime",
+        title = "Current UTC datetime",
         description = "Return current datetime in UTC format",
+        annotations =
+            McpTool.McpAnnotations(
+                readOnlyHint = true,
+                destructiveHint = false,
+                idempotentHint = false,
+                openWorldHint = false,
+            ),
     )
     fun getCurrentDatetime(): ToolResponseMessage.ToolResponse {
         val now = LocalDateTime.now(ZoneOffset.UTC)

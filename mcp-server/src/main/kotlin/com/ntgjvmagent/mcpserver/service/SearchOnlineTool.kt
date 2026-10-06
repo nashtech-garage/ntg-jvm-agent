@@ -4,7 +4,8 @@ import com.ntgjvmagent.mcpserver.utils.Constant
 import com.ntgjvmagent.mcpserver.viewmodel.GoogleSearchResponseVm
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.messages.ToolResponseMessage
-import org.springframework.ai.tool.annotation.Tool
+import org.springframework.ai.mcp.annotation.McpTool
+import org.springframework.ai.mcp.annotation.McpToolParam
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -34,13 +35,25 @@ class SearchOnlineTool(
     @Value("\${google.search.sort}")
     private lateinit var sortParam: String
 
-    @Tool(
+    @McpTool(
+        name = "searchOnline",
+        title = "Search the web",
         description = """
         Search the web for up-to-date information.
         ALWAYS use this tool when the user asks about current events, real-time data, or information like prices, weather, news, etc.
     """,
+        annotations =
+            McpTool.McpAnnotations(
+                readOnlyHint = true,
+                destructiveHint = false,
+                idempotentHint = false,
+                openWorldHint = true,
+            ),
     )
-    fun searchOnline(query: String): ToolResponseMessage.ToolResponse {
+    fun searchOnline(
+        @McpToolParam(description = "Search query", required = true)
+        query: String,
+    ): ToolResponseMessage.ToolResponse {
         val resultToolName = "Result of searchOnline tool"
         val results = callGoogleSearchAPI(query)
         if (results.isEmpty()) {
